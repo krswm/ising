@@ -1,0 +1,53 @@
+html {
+  font-family: system-ui;
+  scrollbar-width: thin;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid;
+}
+
+code {
+  font-family: ui-monospace;
+}
+
+.xScroll {
+  overflow-x: scroll;
+  overflow-y: hidden;
+  white-space: nowrap;
+}
+
+#modelControl {
+  display: grid;
+  grid-template-columns: repeat(3, 200px);
+}
+
+#parameterControl {
+  display: grid;
+  grid-template-columns: repeat(6, 200px);
+}
+
+#JInput {
+  display: grid;
+  grid-template-columns: repeat(3, 50px);
+}
+
+#JInput input {
+  width: 40px;
+}
+
+@media (prefers-color-scheme: light) {
+  html {
+    color-scheme: light;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+/* I began to write this file as a hobby project. */
+/* I did not use any AI tools to write this file. */

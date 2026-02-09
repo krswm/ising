@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Ising model</title>
+    <link rel="stylesheet" href="style.css" />
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"
+    ></script>
+  </head>
+  <body>
+    <div class="xScroll">
+      <h1>Ising Model</h1>
+      <p>
+        \[
+          \varepsilon_{x y}
+          = \sum_{x' y'} J \sigma_{x y} \sigma_{x' y'} - H \sigma_{x y}
+        \]
+      </p>
+      <button id="startButton">Start!</button> 
+      <br />
+      <p>
+        <div
+          style="
+            width: 10px; height: 10px; background-color: oklch(50% 100% 90deg);
+          "
+        ></div>
+        \(\sigma_{x y} = 1\):
+        State A (Up spin / Filled lattice gas / Atom A on binary alloy)
+      </p>
+      <p>
+        <div
+          style="
+            width: 10px; height: 10px; background-color: oklch(50% 100% 270deg);
+          "
+        ></div>
+        \(\sigma_{x y} = - 1\):
+        State B (Down spin / Absent lattice gas / Atom B on binary alloy)
+      </p>
+      <p>
+        If you&rsquo;d like the spins to be half integers,
+        you could just quarter \(J\) and halve \(H\).
+      </p>
+      <p>
+        Number of neighbors \(z\): 4 for 2D Ising model, 2 for 1D.
+      </p>
+      <p>
+        Magnetization (colors on the graph)
+        \(\frac{M}{w h} = \frac{1}{w h} \sum \sigma_{x y}\)
+        <code id="MDisplay"></code>
+      </p>
+      <p>
+        Total energy (gray on the graph)
+        \(\frac{U}{w h z} = \frac{1}{w h z} \sum \varepsilon_{x y}\)
+        <code id="UDisplay"></code>
+      </p>
+    </div>
+    <hr>
+    <div id="modelControl" class="xScroll">
+      <div>Width \(w\)</div>
+      <div>Height \(h\)</div>
+      <div>Model</div>
+      <div><input id="widthInput" type="number" min="1" value="64" /></div>
+      <div><input id="heightInput" type="number" min="1" value="64" /></div>
+      <div>
+        <select id="modelSelect">
+          <option value="ising">Ising model</option>
+          <option value="3State">3-state Ising model</option>
+          <option value="xy">XY model</option>
+          <option value="heisemberg">Heisemberg model</option>
+        </select>
+      </div>
+    </div>
+    <hr>
+    <div id="parameterControl" class="xScroll">
+      <div>Evaluations / 10 ms</div>
+      <div>Interaction coefficient \(J\)</div>
+      <div>External field \(H\)</div>
+      <div>Temperature \(k_{\mathrm{B}} T\)</div>
+      <div>Boundary condition</div>
+      <div>Visualize</div>
+      <div><input id="speedInput" type="number" min="1" value="10000" /></div>
+      <div>
+        <div id="JInput">
+          <div><input id="JInputNW" type="number" value="0" /></div>
+          <div><input id="JInputN" type="number" value="-1" /></div>
+          <div><input id="JInputNE" type="number" value="0" /></div>
+          <div><input id="JInputW" type="number" value="-1" /></div>
+          <div><input id="JInputSelf" type="number" value="0" /></div>
+          <div><input id="JInputE" type="number" value="-1" /></div>
+          <div><input id="JInputSW" type="number" value="0" /></div>
+          <div><input id="JInputS" type="number" value="-1" /></div>
+          <div><input id="JInputSE" type="number" value="0" /></div>
+        </div>
+      </div>
+      <div><input id="HInput" type="number" step="0.1" value="0" /></div>
+      <div>
+        <input id="kTInput" type="number" min="0" step="0.1" value="1" />
+      </div>
+      <div>
+        <select id="boundarySelect">
+          <option value="periodic">Periodic</option>
+          <option value="1">Fixed: 1</option>
+          <option value="0">Fixed: 0</option>
+          <option value="-1">Fixed: &minus;1</option>
+        </select>
+      </div>
+      <div><input id="visualizeInput" type="checkbox" checked /></div>
+    </div>
+    <hr>
+    <div class="xScroll">
+      <canvas
+        id="isingCanvas"
+        style="image-rendering: crisp-edges; vertical-align: top;"
+      >Ising model</canvas>
+      <canvas
+        id="graphCanvas" style="image-rendering: crisp-edges;"
+      >Magnetization graph</canvas>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</head>
+
+<!-- I began to write this file as a hobby project. -->
+<!-- I did not use any AI tools to write this file. -->
