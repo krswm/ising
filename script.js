@@ -55,6 +55,7 @@ class IsingModel {
     this.kT = elem("kTInput").valueAsNumber;
     this.boundary = elem("boundarySelect").value;
     this.visualize = elem("visualizeInput").checked;
+    this.coloring = elem("coloringSelect").value;
 
     // Number of neighbors (z).
     this.numNeighbors = this.height === 1 ? 2 : 4;
@@ -403,8 +404,30 @@ class IsingModel {
               console.assert(false);
           }
         } else if (this.model === "xy") {
-          const deg = this.phis[y][x] / (2 * Math.PI) * 360;
-          this.isingContext.fillStyle = `oklch(50% 100% ${deg}deg)`
+	  if (this.coloring === "normal") {
+	    const deg = this.phis[y][x] / (2 * Math.PI) * 360;
+	    this.isingContext.fillStyle = `oklch(50% 100% ${deg}deg)`;
+	  } else if (this.coloring === "curl") {
+	    if (
+	      x <= 0 || x >= this.width - 1 || y <= 0 || y >= this.height - 1
+	    ) {
+	      this.isingContext.fillStyle = "lime";
+	    } else {
+	      const curl = (
+		+ Math.sin(this.phis[y][x + 1])
+		- Math.cos(this.phis[y + 1][x])
+		- Math.sin(this.phis[y][x - 1])
+		+ Math.cos(this.phis[y - 1][x])
+	      );
+	      if (curl >= 0) {
+		const l = curl * 25;
+		this.isingContext.fillStyle = `oklch(${l}% ${l}% 0deg)`;
+	      } else {
+		const l = -curl * 25;
+		this.isingContext.fillStyle = `oklch(${l}% ${l}% 180deg)`;
+	      }
+	    }
+	  }
         } else if (this.model === "heisemberg") {
           const luma = Math.cos(this.thetas[y][x]) * 50 + 50;
           const deg = this.phis[y][x] / (2 * Math.PI) * 360;
