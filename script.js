@@ -1,144 +1,102 @@
 function mod(a, b) {
-  /// JS's % has a quirk for negative numbers.
-  /// eg: -11 % 10 is -1, not 9.
-  /// This function fixes this.
+  // Return modulo.
+  // Note that JavaScript's % has a quirk for negative numbers.
+  // For instance, -11 % 10 is -1, not 9.
 
   return ((a % b) + b) % b;
 }
 
-class IsingModel {
+class Model {
   constructor() {
-    const elem = (id) => document.getElementById(id);
+    this.canvas = document.getElementById("canvas");
+    this.context = canvas.getContext("2d");
 
-    // Get HTML elements to put the results into.
-    this.isingCanvas = elem("isingCanvas");
-    this.graphCanvas = elem("graphCanvas");
+    for (let id of [
+      "kT", "mm", "zm", "pm", "mz", "zz", "pz", "mp", "zp", "pp", "h"
+    ]) {
+      this[id] = document.getElementById(id).valueAsNumber;
+      document.getElementById(id).addEventListener("change", (event) => {
+        this[id] = event.target.valueAsNumber;
+      });
+    }
 
-    // Get canvas contexts.
-    this.isingContext = isingCanvas.getContext("2d");
-    this.graphContext = graphCanvas.getContext("2d");
+    this.coloring = document.getElementById("coloring").value;
+    document.getElementById("coloring").addEventListener("change", (event) => {
+      this.coloring = event.target.value;
+      if (this.model === "xy" && this.coloring === "normal") {
+        document.getElementById("img").style.display = "flex";
+      } else {
+        document.getElementById("img").style.display = "none";
+      }
+    });
 
-    // Resize the canvas for the graph.
-    this.graphWidth = 512;
-    this.graphHalfHeight = 128;
-    this.graphHeight = 2 * this.graphHalfHeight + 1;
-    this.graphCanvas.width = this.graphWidth;
-    this.graphCanvas.height = this.graphHeight;
+    this.intervalDelay = 10;  // ms
+    this.proposalsPerInterval = (
+      document.getElementById("speed").valueAsNumber * this.intervalDelay
+    );
+    document.getElementById("speed").addEventListener("change", (event) => {
+      this.proposalsPerInterval = (
+        event.target.valueAsNumber * this.intervalDelay
+      );
+    });
 
-    // Start the simulation when the user clicks the "Start!" button.
-    elem("startButton").addEventListener("click", this.start.bind(this));
+    this.start();
   }
 
   start(event) {
-    /// Start the simulation.
-
-    const elem = (id) => document.getElementById(id);
-
-    // Stop the previous simulation.
     clearInterval(this.interval);
 
-    // Get the parameters from the HTML elements.
-    this.width = elem("widthInput").valueAsNumber;
-    this.height = elem("heightInput").valueAsNumber;
-    this.model = elem("modelSelect").value;
-    this.speed = elem("speedInput").valueAsNumber;
-    this.JNW = elem("JInputNW").valueAsNumber;
-    this.JN = elem("JInputN").valueAsNumber;
-    this.JNE = elem("JInputNE").valueAsNumber;
-    this.JW = elem("JInputW").valueAsNumber;
-    this.self = elem("JInputSelf").valueAsNumber;
-    this.JE = elem("JInputE").valueAsNumber;
-    this.JSW = elem("JInputSW").valueAsNumber;
-    this.JS = elem("JInputS").valueAsNumber;
-    this.JSE = elem("JInputSE").valueAsNumber;
-    this.H = elem("HInput").valueAsNumber;
-    this.kT = elem("kTInput").valueAsNumber;
-    this.boundary = elem("boundarySelect").value;
-    this.visualize = elem("visualizeInput").checked;
-    this.coloring = elem("coloringSelect").value;
-
-    // Number of neighbors (z).
-    this.numNeighbors = this.height === 1 ? 2 : 4;
-
-    // Resize the canvas for the ising model.
-    this.isingCanvas.width = this.width;
-    this.isingCanvas.height = this.height;
-    this.isingCanvas.style.width = `${this.width * 4}px`;
-    this.isingCanvas.style.height = `${this.height * 4}px`;
-
+    this.model = document.getElementById("model").value;
+    let initialState;
     if (this.model === "ising") {
-      // Initialize the cell states.
-      // Pick a random value distributed equally for the two states
-      // for each cell.
-      this.states = new Array(this.height);
-      for (let y = 0; y < this.height; y++) {
-        this.states[y] = new Array(this.width);
-        for (let x = 0; x < this.width; x++) {
-          this.states[y][x] = Math.random() < 0.5 ? -1 : 1;
-        }
-      }
-    } else if (this.model === "3State") {
-      this.states = new Array(this.height);
-      for (let y = 0; y < this.height; y++) {
-        this.states[y] = new Array(this.width);
-        for (let x = 0; x < this.width; x++) {
-          this.states[y][x] = [-1, 0, 1][Math.floor(Math.random() * 3)];
-        }
-      }
+      initialState = 1;
+      document.getElementById("hLabel").style.display = "block";
+      document.getElementById("coloringLabel").style.display = "none";
     } else if (this.model === "xy") {
-      this.phis = new Array(this.height);
-      for (let y = 0; y < this.height; y++) {
-        this.phis[y] = new Array(this.width);
-        for (let x = 0; x < this.width; x++) {
-          this.phis[y][x] = Math.random() * 2 * Math.PI;
-        }
-      }
-    } else if (this.model === "heisemberg") {
-      this.phis = new Array(this.height);
-      for (let y = 0; y < this.height; y++) {
-        this.phis[y] = new Array(this.width);
-        for (let x = 0; x < this.width; x++) {
-          this.phis[y][x] = Math.random() * 2 * Math.PI;
-        }
-      }
+      initialState = 0;
+      document.getElementById("hLabel").style.display = "none";
+      document.getElementById("coloringLabel").style.display = "block";
+    }
+    if (this.model === "xy" && this.coloring === "normal") {
+      document.getElementById("img").style.display = "flex";
+    } else {
+      document.getElementById("img").style.display = "none";
+    }
 
-      this.thetas = new Array(this.height);
-      for (let y = 0; y < this.height; y++) {
-        this.thetas[y] = new Array(this.width);
-        for (let x = 0; x < this.width; x++) {
-          this.thetas[y][x] = Math.random() * Math.PI;
-        }
+    this.X = document.getElementById("X").valueAsNumber;
+    this.Y = document.getElementById("Y").valueAsNumber;
+    this.canvas.width = this.X;
+    this.canvas.height = this.Y;
+    this.canvas.style.width = `${this.X * 4}px`;
+    this.canvas.style.height = `${this.Y * 4}px`;
+
+    // The state of the cell at (x, y) is this.states[this.X * y + x].
+    // s = -1, 1 for the Ising model.
+    // 0 <= theta < 2pi for the XY model.
+    this.states = []
+    for (let y = 0; y < this.Y; y++) {
+      for (let x = 0; x < this.X; x++) {
+        this.states.push(initialState);
       }
     }
 
-    // Draw the initial cell states.
     this.drawStates();
 
-    // Erase the graph.
-    this.graphContext.fillStyle = "oklch(0% 0% 0deg)";
-    this.graphContext.fillRect(0, 0, this.graphWidth, this.graphHeight);
-
-    // Initialize the time for the graph.
-    this.grapht = 0;
-
-    // Run the simulation every 10 ms.
-    this.interval = setInterval(this.run.bind(this), 10);
+    this.interval = setInterval(this.run.bind(this), this.intervalDelay);
   }
 
   run() {
     /// Run the simulation using the Metropolis algorithm,
     /// a Monte Carlo (random-based) algorithm for the Ising model.
 
-    const elem = (id) => document.getElementById(id);
-
-    for (let i = 0; i < this.speed; i++) {
+    for (let i = 0; i < this.proposalsPerInterval; i++) {
       // Randomly select a cell to evaluate.
-      const x = Math.floor(Math.random() * this.width);
-      const y = Math.floor(Math.random() * this.height);
+      const x = Math.floor(Math.random() * this.X);
+      const y = Math.floor(Math.random() * this.Y);
 
       if (this.model === "ising") {
         // Get the current state and energy.
-        const currState = this.states[y][x];
+        const currState = this.states[this.X * y + x];
         const currE = this.getEnergy(x, y, currState)
 
         // Get the flipped state and the energy when the stateis flipped.
@@ -147,328 +105,187 @@ class IsingModel {
 
         // Determine the new state (flip or stay) by the probability to flip
         // based on the values of temperature, currE, and flipE.
-        this.states[y][x] = (
+        this.states[this.X * y + x] = (
           Math.random() < (
             this.kT <= 0 ? 0
             : Math.min(Math.exp(- (flipE - currE) / this.kT), 1)
           ) ? flipState : currState
         );
-      } else if (this.model === "3State") {
-        const currState = this.states[y][x];
-        const currE = this.getEnergy(x, y, currState)
+      } else if (this.model === "xy") {
+        const currState = this.states[this.X * y + x];
+        const currE = this.getEnergyFromPhi(x, y, currState);
 
-        const newState = [-1, 0, 1][Math.floor(Math.random() * 3)];
-        const newE = this.getEnergy(x, y, newState)
+        const newState = Math.random() * 2 * Math.PI;
+        const newE = this.getEnergyFromPhi(x, y, newState);
 
-        // Determine the new state (flip or stay) by the probability to flip
-        // based on the values of temperature, currE, and flipE.
-        this.states[y][x] = (
+        this.states[this.X * y + x] = (
           Math.random() < (
             this.kT <= 0 ? 0
             : Math.min(Math.exp(- (newE - currE) / this.kT), 1)
           ) ? newState : currState
         );
-      } else if (this.model === "xy") {
-        const currPhi = this.phis[y][x];
-        const currE = this.getEnergyFromPhi(x, y, currPhi);
-
-        const newPhi = Math.random() * 2 * Math.PI;
-        const newE = this.getEnergyFromPhi(x, y, newPhi);
-
-        this.phis[y][x] = (
-          Math.random() < (
-            this.kT <= 0 ? 0
-            : Math.min(Math.exp(- (newE - currE) / this.kT), 1)
-          ) ? newPhi : currPhi
-        );
-      } else if (this.model === "heisemberg") {
-        const currPhi = this.phis[y][x];
-        const currTheta = this.thetas[y][x];
-        const currE = this.getEnergyFromPhiAndTheta(x, y, currPhi, currTheta);
-
-        const newPhi = Math.random() * 2 * Math.PI;
-        const newTheta = Math.random() * Math.PI;
-        const newE = this.getEnergyFromPhiAndTheta(x, y, newPhi, newTheta);
-
-        const willAccept = (
-          Math.random() < (
-            this.kT <= 0 ? 0
-            : Math.min(Math.exp(- (newE - currE) / this.kT), 1)
-          )
-        );
-
-        if (willAccept) {
-          this.phis[y][x] = newPhi;
-          this.thetas[y][x] = newTheta;
-        }
       }
     }
 
     // Calculate the magnetization and total energy.
     let M = 0;
     let U = 0;
-    if (this.model === "ising" || this.model === "3State") {
-      for (let y = 0; y < this.height; y++) {
-        for (let x = 0; x < this.width; x++) {
-          M += this.states[y][x] / (this.width * this.height);
+    if (this.model === "ising") {
+      for (let y = 0; y < this.Y; y++) {
+        for (let x = 0; x < this.X; x++) {
+          M += this.states[this.X * y + x] / (this.X * this.Y);
           U += (
             this.getEnergy(x, y)
-            / (this.width * this.height * this.numNeighbors)
+            / (this.X * this.Y * 2)
           );
         }
       }
     }
 
-    if (!this.visualize) {
-      return;
-    }
-
     // Update the number displays.
-    elem("MDisplay").innerText = `= ${M.toFixed(3)}`;
-    elem("UDisplay").innerText = `= ${U.toFixed(3)}`;
+    document.getElementById("MDisplay").innerText = `= ${M.toFixed(3)}`;
+    document.getElementById("UDisplay").innerText = `= ${U.toFixed(3)}`;
 
     // Draw the cell states.
     this.drawStates();
-
-    // Draw the graph.
-    this.drawGraph(M, U);
-
-    // Increment time for the graph.
-    this.grapht++;
   }
 
   getEnergy(x, y, currState) {
     /// Get current energy of the cell at (x, y).
 
     const interactionEnergy = (
-        this.JNW  * currState * this.getState(x - 1, y - 1)
-      + this.JN   * currState * this.getState(x,     y - 1)
-      + this.JNE  * currState * this.getState(x + 1, y - 1)
-      + this.JW   * currState * this.getState(x - 1, y    )
-      + this.self * currState * currState
-      + this.JE   * currState * this.getState(x + 1, y    )
-      + this.JSW  * currState * this.getState(x - 1, y + 1)
-      + this.JS   * currState * this.getState(x,     y + 1)
-      + this.JSE  * currState * this.getState(x + 1, y + 1)
+        this.mm * currState * this.getState(x - 1, y - 1)
+      + this.zm * currState * this.getState(x,     y - 1)
+      + this.pm * currState * this.getState(x + 1, y - 1)
+      + this.mz * currState * this.getState(x - 1, y    )
+      + this.zz * currState * currState
+      + this.pz * currState * this.getState(x + 1, y    )
+      + this.mp * currState * this.getState(x - 1, y + 1)
+      + this.zp * currState * this.getState(x,     y + 1)
+      + this.pp * currState * this.getState(x + 1, y + 1)
     );
-    const fieldEnergy = -this.H * currState;
+    const fieldEnergy = this.h * currState;
 
     return interactionEnergy + fieldEnergy;
   }
 
   getEnergyFromPhi(x, y, phi) {
     const interactionEnergy = (
-        this.JNW * Math.cos(this.getPhi(x - 1, y - 1) - phi)
-      + this.JN  * Math.cos(this.getPhi(x,     y - 1) - phi)
-      + this.JNE * Math.cos(this.getPhi(x + 1, y - 1) - phi)
-      + this.JW  * Math.cos(this.getPhi(x - 1, y    ) - phi)
-      + this.JE  * Math.cos(this.getPhi(x + 1, y    ) - phi)
-      + this.JSW * Math.cos(this.getPhi(x - 1, y + 1) - phi)
-      + this.JS  * Math.cos(this.getPhi(x,     y + 1) - phi)
-      + this.JSE * Math.cos(this.getPhi(x + 1, y + 1) - phi)
+        this.mm * Math.cos(this.getState(x - 1, y - 1) - phi)
+      + this.zm * Math.cos(this.getState(x,     y - 1) - phi)
+      + this.pm * Math.cos(this.getState(x + 1, y - 1) - phi)
+      + this.mz * Math.cos(this.getState(x - 1, y    ) - phi)
+      + this.zz
+      + this.pz * Math.cos(this.getState(x + 1, y    ) - phi)
+      + this.mp * Math.cos(this.getState(x - 1, y + 1) - phi)
+      + this.zp * Math.cos(this.getState(x,     y + 1) - phi)
+      + this.pp * Math.cos(this.getState(x + 1, y + 1) - phi)
     );
 
     // TODO: Implement `fieldEnergy`.
     return interactionEnergy;
-  }
-
-  getEnergyFromPhiAndTheta(x, y, phi, theta) {
-    const interactionEnergy = (
-        this.JNW * this.getProduct(x - 1, y - 1, phi, theta)
-      + this.JN  * this.getProduct(x,     y - 1, phi, theta)
-      + this.JNE * this.getProduct(x + 1, y - 1, phi, theta)
-      + this.JW  * this.getProduct(x - 1, y    , phi, theta)
-      + this.JE  * this.getProduct(x + 1, y    , phi, theta)
-      + this.JSW * this.getProduct(x - 1, y + 1, phi, theta)
-      + this.JS  * this.getProduct(x,     y + 1, phi, theta)
-      + this.JSE * this.getProduct(x + 1, y + 1, phi, theta)
-    );
-
-    // TODO: Implement `fieldEnergy`.
-    return interactionEnergy;
-  }
-
-  getProduct(x, y, phi, theta) {
-    const neighborPhi = this.getPhi(x, y);
-    const neighborTheta = this.getTheta(x, y);
-
-    return (
-      Math.sin(theta) * Math.sin(neighborTheta) * (
-        Math.cos(phi) * Math.cos(neighborPhi)
-        + Math.sin(phi) * Math.sin(neighborPhi)
-      ) + Math.cos(theta) * Math.cos(neighborTheta)
-    );
   }
 
   getState(x, y) {
     /// Get the state of the cell at (x, y),
     /// considering the boundary condition if necessary.
 
-    if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
-      // The cell is not on the boundary.
-
-      return this.states[y][x];
-    } else {
-      // The cell is on the boundary.
-
-      if (this.height === 1 && y !== 0) {
-        // Top and bottom boundary of 1D Ising model.
-
-        return 0;
-      }
-
-      // Return the boundary state.
-      switch (this.boundary) {
-        case "periodic":
-          return this.states[mod(y, this.height)][mod(x, this.width)];
-          break;
-        case "1":
-          return 1;
-          break;
-        case "0":
-          return 0;
-          break;
-        case "-1":
-          return -1;
-          break;
-        default:
-          log.assert(false);
-      }
-    }
-  }
-
-  getPhi(x, y) {
-    if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
-      // The cell is not on the boundary.
-
-      return this.phis[y][x];
-    } else {
-      // The cell is on the boundary.
-
-      if (this.height === 1 && y !== 0) {
-        // Top and bottom boundary of 1D Ising model.
-
-        return 0;
-      }
-
-      // Return the boundary state.
-      // TODO: Implement other boundary conditions.
-      return this.phis[mod(y, this.height)][mod(x, this.width)];
-    }
-  }
-
-  getTheta(x, y) {
-    if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
-      // The cell is not on the boundary.
-
-      return this.thetas[y][x];
-    } else {
-      // The cell is on the boundary.
-
-      if (this.height === 1 && y !== 0) {
-        // Top and bottom boundary of 1D Ising model.
-
-        return 0;
-      }
-
-      // Return the boundary state.
-      // TODO: Implement other boundary conditions.
-      return this.thetas[mod(y, this.height)][mod(x, this.width)];
-    }
+    return this.states[this.X * mod(y, this.Y) + mod(x, this.X)];
   }
 
   drawStates() {
     /// Draw the cell states.
 
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
+    for (let y = 0; y < this.Y; y++) {
+      for (let x = 0; x < this.X; x++) {
 
         // Determine a color.
-        if (this.model === "ising" || this.model === "3State") {
-          switch (this.states[y][x]) {
+        if (this.model === "ising") {
+          switch (this.states[this.X * y + x]) {
             case 1:
-              // this.isingContext.fillStyle = "oklch(50% 100% 90deg)";
-              this.isingContext.fillStyle = "silver";
-              break;
-            case 0:
-              this.isingContext.fillStyle = "oklch(50% 100% 180deg)";
+              this.context.fillStyle = "silver";
               break;
             case -1:
-              // this.isingContext.fillStyle = "oklch(50% 100% 270deg)";
-              this.isingContext.fillStyle = "black";
+              this.context.fillStyle = "black";
               break;
-	    case undefined:
-              this.isingContext.fillStyle = "orange";
-              break;
-            default:
-              console.assert(false);
           }
         } else if (this.model === "xy") {
-	  if (this.coloring === "normal") {
-	    const deg = this.phis[y][x] / (2 * Math.PI) * 360;
-	    this.isingContext.fillStyle = `oklch(50% 100% ${deg}deg)`;
-	  } else if (this.coloring === "curl") {
-	    if (
-	      x <= 0 || x >= this.width - 1 || y <= 0 || y >= this.height - 1
-	    ) {
-	      this.isingContext.fillStyle = "lime";
-	    } else {
-	      const curl = (
-		+ Math.sin(this.phis[y][x + 1])
-		- Math.cos(this.phis[y + 1][x])
-		- Math.sin(this.phis[y][x - 1])
-		+ Math.cos(this.phis[y - 1][x])
-	      );
-	      if (curl >= 0) {
-		const l = curl * 25;
-		this.isingContext.fillStyle = `oklch(${l}% ${l}% 0deg)`;
-	      } else {
-		const l = -curl * 25;
-		this.isingContext.fillStyle = `oklch(${l}% ${l}% 180deg)`;
-	      }
-	    }
-	  }
-        } else if (this.model === "heisemberg") {
-          const luma = Math.cos(this.thetas[y][x]) * 50 + 50;
-          const deg = this.phis[y][x] / (2 * Math.PI) * 360;
-          this.isingContext.fillStyle = `oklch(${luma}% 100% ${deg}deg)`
+          if (this.coloring === "normal") {
+            const deg = this.states[this.X * y + x] * 180 / Math.PI;
+            this.context.fillStyle = `oklch(50% 75% ${deg}deg)`;
+          } else if (this.coloring === "curl") {
+            const curl = (
+              + Math.sin(this.getState(x, y + 1))
+              - Math.cos(this.getState(x + 1, y))
+              - Math.sin(this.getState(x, y - 1))
+              + Math.cos(this.getState(x - 1, y))
+            );
+            if (curl >= 0) {
+              const l = curl * 50;
+              this.context.fillStyle = `oklch(${l}% ${l}% 0deg)`;
+            } else {
+              const l = -curl * 50;
+              this.context.fillStyle = `oklch(${l}% ${l}% 180deg)`;
+            }
+          }
         }
 
         // Fill a pixel.
-        this.isingContext.fillRect(x, y, 1, 1);
+        this.context.fillRect(x, y, 1, 1);
       }
     }
   }
-
-  drawGraph(M, U) {
-    const t = this.grapht % this.graphWidth;
-
-    // Erase vertically.
-    this.graphContext.fillStyle = "oklch(0% 0% 0deg)";
-    this.graphContext.fillRect(t, 0, 1, this.graphHeight);
-
-    // Draw zero.
-    this.graphContext.fillStyle = "oklch(25% 0% 0deg)";
-    this.graphContext.fillRect(t, this.graphHalfHeight + 1, 1, 1);
-
-    // Draw M.
-    // Change the color based on the sign of M.
-    this.graphContext.fillStyle = (
-      M >= 0 ? "oklch(50% 100% 90deg)" : "oklch(50% 100% 270deg)"
-    );
-    this.graphContext.fillRect(
-      t, -Math.floor(M * this.graphHalfHeight) + this.graphHalfHeight, 1, 1
-    );
-
-    // Draw U.
-    this.graphContext.fillStyle = "oklch(50% 0% 0deg)";
-    this.graphContext.fillRect(
-      t, -Math.floor(U * this.graphHalfHeight) + this.graphHalfHeight, 1, 1
-    );
-  }
 }
 
-const isingModel = new IsingModel();
+function changeModelP(willRerender) {
+  const modelP = document.getElementById("modelP")
+  modelP.innerHTML = {
+    ising: (
+      "\\[\\begin{gathered} "
+      + "E_{\\substack{x \\vphantom{\\Delta} \\\\ y \\vphantom{\\Delta}}} "
+      + "= \\sum_{\\substack{\\Delta x \\\\ \\Delta y}} "
+      + "J_{\\substack{\\Delta x \\\\ \\Delta y}} \\, "
+      + "s_{\\substack{x \\vphantom{\\Delta} \\\\ y \\vphantom{\\Delta}}} \\, "
+      + "s_{\\substack{x + \\Delta x \\\\ y + \\Delta y}} "
+      + "+ h \\, "
+      + "s_{\\substack{x \\vphantom{\\Delta} \\\\ y \\vphantom{\\Delta}}} \\\\ "
+      + "(s_{\\substack{x \\vphantom{\\Delta} \\\\ y \\vphantom{\\Delta}}} "
+      + "= - 1, 1) "
+      + "\\end{gathered}\\]"
+    ),
+    xy: (
+      "\\[\\begin{gathered} "
+      + "E_{\\substack{x \\vphantom{\\Delta} \\\\ y \\vphantom{\\Delta}}} "
+      + "= \\sum_{\\substack{\\Delta x \\\\ \\Delta y}} "
+      + "J_{\\substack{\\Delta x \\\\ \\Delta y}} \\cos ("
+      + "\\theta_{\\substack{x + \\Delta x \\\\ y + \\Delta y}} "
+      + "- \\theta_{\\substack{x \\vphantom{\\Delta} \\\\ "
+      + "y \\vphantom{\\Delta}}}) \\\\ "
+      + "(0 \\le \\theta_{\\substack{x \\vphantom{\\Delta} \\\\ "
+      + "y \\vphantom{\\Delta}}} < 2 \\pi) "
+      + "\\end{gathered}\\]"
+    ),
+  }[document.getElementById("model").value];
+  if (willRerender) {
+    renderMathInElement(modelP);
+  }
+}
+changeModelP(false);
+
+const model = new Model();
+
+let isPlaying = true;
+document.getElementById("playPause").addEventListener("click", (event) => {
+  if (isPlaying) {
+    clearInterval(model.interval);
+    event.target.innerHTML = "Play";
+    isPlaying = false;
+  } else {
+    model.interval = setInterval(model.run.bind(model), this.intervalDelay);
+    event.target.innerHTML = "Pause";
+    isPlaying = true;
+  }
+});
 
 // I began to write this file as a hobby project.
 // I did not use any AI tools to write this file.

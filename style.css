@@ -1,52 +1,101 @@
-html {
-  font-family: system-ui;
-  scrollbar-width: thin;
-}
-
-hr {
-  border: none;
-  border-top: 1px solid;
-}
-
-code {
-  font-family: ui-monospace;
-}
-
-.xScroll {
-  overflow-x: scroll;
+body {
+  box-sizing: border-box;
+  display: flex;
+  gap: 16px;
+  height: 100vh;
+  margin: 0px;
+  overflow-x: hidden;
   overflow-y: hidden;
-  white-space: nowrap;
+  padding: 16px;
+  width: 100vw;
+
+  font-family: system-ui;
 }
 
-#modelControl {
-  display: grid;
-  grid-template-columns: repeat(3, 200px);
+#controller {
+  display: flex;
+  flex-basis: 384px;  /* 0x180 */
+  flex-direction: column;
+  flex-grow: 0;
+  flex-shrink: 0;
+  gap: 32px;
+  overflow-y: scroll;
 }
 
-#parameterControl {
-  display: grid;
-  grid-template-columns: repeat(7, 200px);
+#controller > div {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 0;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+#controller > div > p {
+  margin: 0px;
+}
+
+#controller > div > h1 {
+  margin: 0px;
+
+  font-size: 1.5em;
+}
+
+#controller > div > h2 {
+  margin: 0px;
+
+  font-size: 1em;
+}
+
+#controller > div input, #controller > div select {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+#controller > div > button {
+  height: 32px;
+}
+
+#controller > div .katex-display {
+  margin: 0px;
+}
+
+#img {
+  display: none;
+  justify-content: center;
 }
 
 #JInput {
   display: grid;
-  grid-template-columns: repeat(3, 50px);
+  grid-template-columns: repeat(7, 32px);
+  grid-template-rows: repeat(7, 32px);
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  gap: 4px;
 }
 
-#JInput input {
-  width: 40px;
+#JInput > div {
+  font-size: 0.75em;
 }
 
-@media (prefers-color-scheme: light) {
-  html {
-    color-scheme: light;
-  }
+#JInput > input {
+  appearance: textfield;
+  height: 100%;
+  text-align: center;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+#visualizer {
+  align-items: center;
+  display: flex;
+  flex-basis: auto;
+  flex-grow: 1;
+  flex-shrink: 1;
+  height: 100%;
+  justify-content: center;
+}
+
+canvas {
+  image-rendering: crisp-edges;
 }
 
 /* I began to write this file as a hobby project. */

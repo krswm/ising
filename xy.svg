@@ -1,0 +1,59 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  version="1.1"
+  width="160"
+  height="160"
+  viewBox="-5 -5 10 10"
+>
+  <style>
+    text {
+      dominant-baseline: central;
+      fill: white;
+      font-family: system-ui;
+      font-size: 1px;
+      text-anchor: middle;
+    }
+
+    .frac {
+      font-variant-numeric: diagonal-fractions;
+    }
+  </style>
+
+  <!--
+  Since a rectangles has width and height 2, it has x and y offset of 1.
+  2.828 = 2 * sqrt(2).
+  -->
+  <rect
+    x="3"      y="-1"     width="2" height="2" fill="oklch(50% 75% 0deg)"
+  />
+  <rect
+    x="1.828"  y="1.828"  width="2" height="2" fill="oklch(50% 75% 45deg)"
+  />
+  <rect
+    x="-1"      y="3"     width="2" height="2" fill="oklch(50% 75% 90deg)"
+  />
+  <rect
+    x="-3.828" y="1.828"  width="2" height="2" fill="oklch(50% 75% 135deg)"
+  />
+  <rect
+    x="-5"     y="-1"     width="2" height="2" fill="oklch(50% 75% 180deg)"
+  />
+  <rect
+    x="-3.828" y="-3.828" width="2" height="2" fill="oklch(50% 75% 225deg)"
+  />
+  <rect
+    x="-1"      y="-5"    width="2" height="2" fill="oklch(50% 75% 270deg)"
+  />
+  <rect
+    x="1.828"  y="-3.828" width="2" height="2" fill="oklch(50% 75% 315deg)"
+  />
+
+  <text x="4"      y="0"                  >0</text>
+  <text x="2.828"  y="2.828"  class="frac">1/4π</text>
+  <text x="0"      y="4"      class="frac">1/2π</text>
+  <text x="-2.828" y="2.828"  class="frac">3/4π</text>
+  <text x="-4"     y="0"      class="frac">π</text>
+  <text x="-2.828" y="-2.828" class="frac">5/4π</text>
+  <text x="0"      y="-4"     class="frac">3/2π</text>
+  <text x="2.828"  y="-2.828" class="frac">7/4π</text>
+</svg>
