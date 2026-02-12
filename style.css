@@ -66,12 +66,12 @@ body {
 
 #JInput {
   display: grid;
+  gap: 4px;
   grid-template-columns: repeat(7, 32px);
-  grid-template-rows: repeat(7, 32px);
+  grid-template-rows: repeat(5, 32px);
   align-items: center;
   text-align: center;
   justify-content: center;
-  gap: 4px;
 }
 
 #JInput > div {
@@ -84,12 +84,18 @@ body {
   text-align: center;
 }
 
+#download {
+  display: none;
+}
+
 #visualizer {
   align-items: center;
   display: flex;
   flex-basis: auto;
+  flex-direction: column;
   flex-grow: 1;
   flex-shrink: 1;
+  gap: 8px;
   height: 100%;
   justify-content: center;
 }

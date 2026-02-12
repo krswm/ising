@@ -1,3 +1,16 @@
+let isPlaying = true;
+document.getElementById("playPause").addEventListener("click", (event) => {
+  if (isPlaying) {
+    clearInterval(model.interval);
+    event.target.innerHTML = "Play";
+    isPlaying = false;
+  } else {
+    model.interval = setInterval(model.run.bind(model), 10);
+    event.target.innerHTML = "Pause";
+    isPlaying = true;
+  }
+});
+
 function mod(a, b) {
   // Return modulo.
   // Note that JavaScript's % has a quirk for negative numbers.
@@ -6,39 +19,30 @@ function mod(a, b) {
   return ((a % b) + b) % b;
 }
 
+function spinDifference(sa, sb) {
+  let diff = sb - sa;
+  diff = mod(diff, 2 * Math.PI);
+  if (diff < Math.PI) {
+    return diff;
+  } else {
+    return diff - 2 * Math.PI;
+  }
+}
+
 class Model {
   constructor() {
     this.canvas = document.getElementById("canvas");
-    this.context = canvas.getContext("2d");
+    this.context = this.canvas.getContext("2d");
 
-    for (let id of [
-      "kT", "mm", "zm", "pm", "mz", "zz", "pz", "mp", "zp", "pp", "h"
-    ]) {
+    this.vorticityCanvas = document.getElementById("vorticity");
+    this.vorticityContext = this.vorticityCanvas.getContext("2d");
+
+    for (let id of ["kT", "J0", "J1", "J2", "J3", "J4", "h", "Deltat"]) {
       this[id] = document.getElementById(id).valueAsNumber;
       document.getElementById(id).addEventListener("change", (event) => {
-        this[id] = event.target.valueAsNumber;
+	this[id] = event.target.valueAsNumber;
       });
     }
-
-    this.coloring = document.getElementById("coloring").value;
-    document.getElementById("coloring").addEventListener("change", (event) => {
-      this.coloring = event.target.value;
-      if (this.model === "xy" && this.coloring === "normal") {
-        document.getElementById("img").style.display = "flex";
-      } else {
-        document.getElementById("img").style.display = "none";
-      }
-    });
-
-    this.intervalDelay = 10;  // ms
-    this.proposalsPerInterval = (
-      document.getElementById("speed").valueAsNumber * this.intervalDelay
-    );
-    document.getElementById("speed").addEventListener("change", (event) => {
-      this.proposalsPerInterval = (
-        event.target.valueAsNumber * this.intervalDelay
-      );
-    });
 
     this.start();
   }
@@ -50,14 +54,18 @@ class Model {
     let initialState;
     if (this.model === "ising") {
       initialState = 1;
+      document.getElementById("isingStatistics").style.display = "block";
+      document.getElementById("xyStatistics").style.display = "none";
       document.getElementById("hLabel").style.display = "block";
-      document.getElementById("coloringLabel").style.display = "none";
+      document.getElementById("vorticity").style.display = "none";
     } else if (this.model === "xy") {
       initialState = 0;
+      document.getElementById("isingStatistics").style.display = "none";
+      document.getElementById("xyStatistics").style.display = "block";
       document.getElementById("hLabel").style.display = "none";
-      document.getElementById("coloringLabel").style.display = "block";
+      document.getElementById("vorticity").style.display = "block";
     }
-    if (this.model === "xy" && this.coloring === "normal") {
+    if (this.model === "xy") {
       document.getElementById("img").style.display = "flex";
     } else {
       document.getElementById("img").style.display = "none";
@@ -69,6 +77,10 @@ class Model {
     this.canvas.height = this.Y;
     this.canvas.style.width = `${this.X * 4}px`;
     this.canvas.style.height = `${this.Y * 4}px`;
+    this.vorticityCanvas.width = this.X;
+    this.vorticityCanvas.height = this.Y;
+    this.vorticityCanvas.style.width = `${this.X * 4}px`;
+    this.vorticityCanvas.style.height = `${this.Y * 4}px`;
 
     // The state of the cell at (x, y) is this.states[this.X * y + x].
     // s = -1, 1 for the Ising model.
@@ -80,110 +92,232 @@ class Model {
       }
     }
 
+    this.A = document.getElementById("A").valueAsNumber;
+    this.EHistory = [];
+    this.MHistory = [];
+    for (let i = 0; i < this.A; i++) {
+      this.EHistory.push(undefined);
+      this.MHistory.push(undefined);
+    }
+
     this.drawStates();
 
-    this.interval = setInterval(this.run.bind(this), this.intervalDelay);
+    this.interval = setInterval(this.run.bind(this), 10);
   }
 
   run() {
-    /// Run the simulation using the Metropolis algorithm,
-    /// a Monte Carlo (random-based) algorithm for the Ising model.
-
-    for (let i = 0; i < this.proposalsPerInterval; i++) {
-      // Randomly select a cell to evaluate.
-      const x = Math.floor(Math.random() * this.X);
-      const y = Math.floor(Math.random() * this.Y);
-
-      if (this.model === "ising") {
-        // Get the current state and energy.
-        const currState = this.states[this.X * y + x];
-        const currE = this.getEnergy(x, y, currState)
-
-        // Get the flipped state and the energy when the stateis flipped.
-        const flipState = -currState;
-        const flipE = -currE;
-
-        // Determine the new state (flip or stay) by the probability to flip
-        // based on the values of temperature, currE, and flipE.
-        this.states[this.X * y + x] = (
-          Math.random() < (
-            this.kT <= 0 ? 0
-            : Math.min(Math.exp(- (flipE - currE) / this.kT), 1)
-          ) ? flipState : currState
-        );
-      } else if (this.model === "xy") {
-        const currState = this.states[this.X * y + x];
-        const currE = this.getEnergyFromPhi(x, y, currState);
-
-        const newState = Math.random() * 2 * Math.PI;
-        const newE = this.getEnergyFromPhi(x, y, newState);
-
-        this.states[this.X * y + x] = (
-          Math.random() < (
-            this.kT <= 0 ? 0
-            : Math.min(Math.exp(- (newE - currE) / this.kT), 1)
-          ) ? newState : currState
-        );
-      }
+    for (let i = 0; i < this.Deltat; i++) {
+      this.proposeNewConfigulation();
     }
-
-    // Calculate the magnetization and total energy.
-    let M = 0;
-    let U = 0;
-    if (this.model === "ising") {
-      for (let y = 0; y < this.Y; y++) {
-        for (let x = 0; x < this.X; x++) {
-          M += this.states[this.X * y + x] / (this.X * this.Y);
-          U += (
-            this.getEnergy(x, y)
-            / (this.X * this.Y * 2)
-          );
-        }
-      }
-    }
-
-    // Update the number displays.
-    document.getElementById("MDisplay").innerText = `= ${M.toFixed(3)}`;
-    document.getElementById("UDisplay").innerText = `= ${U.toFixed(3)}`;
-
-    // Draw the cell states.
+    this.calculateStatistics();
     this.drawStates();
   }
 
-  getEnergy(x, y, currState) {
-    /// Get current energy of the cell at (x, y).
+  autorun(event) {
+    const kTMax = document.getElementById("kTMax").valueAsNumber;
+    const kTStep = document.getElementById("kTStep").valueAsNumber;
+    const tMax = document.getElementById("tMax").valueAsNumber;
 
-    const interactionEnergy = (
-        this.mm * currState * this.getState(x - 1, y - 1)
-      + this.zm * currState * this.getState(x,     y - 1)
-      + this.pm * currState * this.getState(x + 1, y - 1)
-      + this.mz * currState * this.getState(x - 1, y    )
-      + this.zz * currState * currState
-      + this.pz * currState * this.getState(x + 1, y    )
-      + this.mp * currState * this.getState(x - 1, y + 1)
-      + this.zp * currState * this.getState(x,     y + 1)
-      + this.pp * currState * this.getState(x + 1, y + 1)
-    );
-    const fieldEnergy = this.h * currState;
+    let csv = "kT,EPerCell,MPerCell,CPerCell,chiPerCell\n";
 
-    return interactionEnergy + fieldEnergy;
+    for (let k = 1; this.kT < kTMax; k++) {
+      this.kT = k * kTStep;
+      document.getElementById("kT").value = this.kT;
+      for (let j = 0; j < tMax; j++) {
+	for (let i = 0; i < this.Deltat; i++) {
+	  this.proposeNewConfigulation();
+	}
+	this.calculateStatistics();
+      }
+      const [EPerCell, MPerCell, CPerCell, chiPerCell] = (
+	this.calculateStatistics()
+      );
+      const line = (
+	`${this.kT},${EPerCell},${MPerCell},${CPerCell},${chiPerCell}\n`
+      );
+      console.log(line);
+      csv += line;
+    }
+
+    event.target.innerHTML = "Download CSV";
+    event.target.onclick = () => {
+      const download = document.getElementById("download");
+      const blob = new Blob([csv], {type: "text/csv"});
+      const url = window.URL.createObjectURL(blob);
+      download.href = url;
+      download.download = "ising.csv";
+      download.click();
+    }
   }
 
-  getEnergyFromPhi(x, y, phi) {
-    const interactionEnergy = (
-        this.mm * Math.cos(this.getState(x - 1, y - 1) - phi)
-      + this.zm * Math.cos(this.getState(x,     y - 1) - phi)
-      + this.pm * Math.cos(this.getState(x + 1, y - 1) - phi)
-      + this.mz * Math.cos(this.getState(x - 1, y    ) - phi)
-      + this.zz
-      + this.pz * Math.cos(this.getState(x + 1, y    ) - phi)
-      + this.mp * Math.cos(this.getState(x - 1, y + 1) - phi)
-      + this.zp * Math.cos(this.getState(x,     y + 1) - phi)
-      + this.pp * Math.cos(this.getState(x + 1, y + 1) - phi)
-    );
+  proposeNewConfigulation() {
+    // Randomly select a cell to change its state.
+    const x = Math.floor(Math.random() * this.X);
+    const y = Math.floor(Math.random() * this.Y);
 
-    // TODO: Implement `fieldEnergy`.
-    return interactionEnergy;
+    if (this.model === "ising") {
+      const energyDifference = (
+	+ this.J0 * this.getState(x,     y    )
+	+ this.J1 * this.getState(x + 1, y    )
+	+ this.J2 * this.getState(x + 1, y + 1)
+	+ this.J3 * this.getState(x,     y + 1)
+	+ this.J4 * this.getState(x - 1, y + 1)
+	+ this.J1 * this.getState(x - 1, y    )
+	+ this.J2 * this.getState(x - 1, y - 1)
+	+ this.J3 * this.getState(x,     y - 1)
+	+ this.J4 * this.getState(x + 1, y - 1)
+	+ this.h
+      ) * -2 * this.states[this.X * y + x];
+
+      if (energyDifference < 0) {
+	// If the new configuration has less energy,
+	// always change the state.
+	this.states[this.X * y + x] *= -1;
+      } else {
+	// If the new configuration has more energy,
+	// change the state by the acceptance ratio.
+	const acceptanceRatio = (
+	  this.kT <= 0 ? 0 : Math.exp(-energyDifference / this.kT)
+	);
+	if (Math.random() < acceptanceRatio) {
+	  this.states[this.X * y + x] *= -1;
+	}
+      }
+    } else if (this.model === "xy") {
+      // Current state.
+      const currState = this.states[this.X * y + x];
+
+      // Proposed state.
+      const propState = Math.random() * 2 * Math.PI;
+
+      const energyDifference = (
+	+ this.J0 * Math.cos(this.getState(x,     y    ))
+	+ this.J1 * Math.cos(this.getState(x + 1, y    ))
+	+ this.J2 * Math.cos(this.getState(x + 1, y + 1))
+	+ this.J3 * Math.cos(this.getState(x,     y + 1))
+	+ this.J4 * Math.cos(this.getState(x - 1, y + 1))
+	+ this.J1 * Math.cos(this.getState(x - 1, y    ))
+	+ this.J2 * Math.cos(this.getState(x - 1, y - 1))
+	+ this.J3 * Math.cos(this.getState(x,     y - 1))
+	+ this.J4 * Math.cos(this.getState(x + 1, y - 1))
+      ) * (Math.cos(propState) - Math.cos(currState)) + (
+	+ this.J0 * Math.sin(this.getState(x,     y    ))
+	+ this.J1 * Math.sin(this.getState(x + 1, y    ))
+	+ this.J2 * Math.sin(this.getState(x + 1, y + 1))
+	+ this.J3 * Math.sin(this.getState(x,     y + 1))
+	+ this.J4 * Math.sin(this.getState(x - 1, y + 1))
+	+ this.J1 * Math.sin(this.getState(x - 1, y    ))
+	+ this.J2 * Math.sin(this.getState(x - 1, y - 1))
+	+ this.J3 * Math.sin(this.getState(x,     y - 1))
+	+ this.J4 * Math.sin(this.getState(x + 1, y - 1))
+      ) * (Math.sin(propState) - Math.sin(currState));
+
+      if (energyDifference < 0) {
+	// If the new configuration has less energy,
+	// always change the state.
+	this.states[this.X * y + x] = propState;
+      } else {
+	// If the new configuration has more energy,
+	// change the state by the acceptance ratio.
+	const acceptanceRatio = (
+	  this.kT <= 0 ? 0 : Math.exp(-energyDifference / this.kT)
+	);
+	if (Math.random() < acceptanceRatio) {
+	  this.states[this.X * y + x] = propState;
+	}
+      }
+    }
+  }
+
+  calculateStatistics() {
+    if (this.model === "ising") {
+      let M = 0;
+      let E = 0;
+      for (let y = 0; y < this.Y; y++) {
+	for (let x = 0; x < this.X; x++) {
+	  M += this.states[this.X * y + x];
+	  E += (
+	    + this.J0 * this.getState(x,     y    )
+	    + this.J1 * this.getState(x + 1, y    )
+	    + this.J2 * this.getState(x + 1, y + 1)
+	    + this.J3 * this.getState(x,     y + 1)
+	    + this.J4 * Math.cos(this.getState(x - 1, y + 1))
+	    + this.h
+	  ) * this.states[this.X * y + x];
+	}
+      }
+
+      this.EHistory.pop();
+      this.EHistory.unshift(E);
+      this.MHistory.pop();
+      this.MHistory.unshift(E);
+      let UExpval = 0;
+      let U2Expval = 0;
+      let MExpval = 0;
+      let M2Expval = 0;
+      for (let a = 0; a < this.A; a++) {
+	UExpval += this.EHistory[a];
+	U2Expval += this.EHistory[a] ** 2;
+	MExpval += this.MHistory[a];
+	M2Expval += this.MHistory[a] ** 2;
+      }
+      UExpval /= this.A;
+      U2Expval /= this.A;
+      MExpval /= this.A;
+      M2Expval /= this.A;
+      const C = (U2Expval - UExpval ** 2) / this.kT ** 2;  // Actually C/k
+      const chi = (M2Expval - MExpval ** 2) / this.kT;
+
+      const MPerCell = M / (this.X * this.Y);
+      const EPerCell = E / (this.X * this.Y);
+      const CPerCell = C / (this.X * this.Y);
+      const chiPerCell = chi / (this.X * this.Y);
+      document.getElementById("M").innerText = MPerCell.toFixed(3);
+      document.getElementById("E").innerText = EPerCell.toFixed(3);
+      document.getElementById("C").innerText = (
+	C ? CPerCell.toFixed(3) : "\u2014"
+      );
+      document.getElementById("chi").innerText = (
+	chi ? chiPerCell.toFixed(3) : "\u2014"
+      );
+
+      return [EPerCell, MPerCell, CPerCell, chiPerCell];
+    } else if (this.model === "xy") {
+      let E = 0;
+      for (let y = 0; y < this.Y; y++) {
+	for (let x = 0; x < this.X; x++) {
+	  const state = this.states[this.X * y + x];
+	  E += (
+	    + this.J0
+	    + this.J1 * Math.cos(this.getState(x + 1, y    ) - state)
+	    + this.J2 * Math.cos(this.getState(x + 1, y + 1) - state)
+	    + this.J3 * Math.cos(this.getState(x,     y + 1) - state)
+	    + this.J4 * Math.cos(this.getState(x - 1, y + 1) - state)
+	  );
+	}
+      }
+
+      this.EHistory.pop();
+      this.EHistory.unshift(E);
+      let UExpval = 0;
+      let U2Expval = 0;
+      for (let a = 0; a < this.A; a++) {
+	UExpval += this.EHistory[a];
+	U2Expval += this.EHistory[a] ** 2;
+      }
+      UExpval /= this.A;
+      U2Expval /= this.A;
+      const C = (U2Expval - UExpval ** 2) / this.kT ** 2;  // Actually C/k
+
+      const EPerCell = E / (this.X * this.Y);
+      const CPerCell = C / (this.X * this.Y);
+      document.getElementById("xyE").innerText = EPerCell.toFixed(3);
+      document.getElementById("xyC").innerText = (
+	C ? CPerCell.toFixed(3) : "\u2014"
+      );
+
+      return [EPerCell, 0, CPerCell, 0];
+    }
   }
 
   getState(x, y) {
@@ -209,29 +343,35 @@ class Model {
               this.context.fillStyle = "black";
               break;
           }
-        } else if (this.model === "xy") {
-          if (this.coloring === "normal") {
-            const deg = this.states[this.X * y + x] * 180 / Math.PI;
-            this.context.fillStyle = `oklch(50% 75% ${deg}deg)`;
-          } else if (this.coloring === "curl") {
-            const curl = (
-              + Math.sin(this.getState(x, y + 1))
-              - Math.cos(this.getState(x + 1, y))
-              - Math.sin(this.getState(x, y - 1))
-              + Math.cos(this.getState(x - 1, y))
-            );
-            if (curl >= 0) {
-              const l = curl * 50;
-              this.context.fillStyle = `oklch(${l}% ${l}% 0deg)`;
-            } else {
-              const l = -curl * 50;
-              this.context.fillStyle = `oklch(${l}% ${l}% 180deg)`;
-            }
-          }
-        }
 
-        // Fill a pixel.
-        this.context.fillRect(x, y, 1, 1);
+	  this.context.fillRect(x, y, 1, 1);
+        } else if (this.model === "xy") {
+	  const deg = this.states[this.X * y + x] * 180 / Math.PI;
+	  this.context.fillStyle = `oklch(50% 75% ${deg}deg)`;
+
+	  this.context.fillRect(x, y, 1, 1);
+
+	  const s0 = this.getState(x,     y    );
+	  const s1 = this.getState(x,     y + 1);
+	  const s2 = this.getState(x + 1, y + 1);
+	  const s3 = this.getState(x + 1, y    );
+	  const vorticity = (
+	    + spinDifference(s0, s1)
+	    + spinDifference(s1, s2)
+	    + spinDifference(s2, s3)
+	    + spinDifference(s3, s0)
+	  );
+
+	  if (vorticity >= 0) {
+	    const l = vorticity * 15;
+	    this.vorticityContext.fillStyle = `oklch(${l}% ${l}% 0deg)`;
+	  } else {
+	    const l = -vorticity * 15;
+	    this.vorticityContext.fillStyle = `oklch(${l}% ${l}% 180deg)`;
+	  }
+
+	  this.vorticityContext.fillRect(x, y, 1, 1);
+        }
       }
     }
   }
@@ -242,27 +382,26 @@ function changeModelP(willRerender) {
   modelP.innerHTML = {
     ising: (
       "\\[\\begin{gathered} "
-      + "E_{\\substack{x \\vphantom{\\Delta} \\\\ y \\vphantom{\\Delta}}} "
-      + "= \\sum_{\\substack{\\Delta x \\\\ \\Delta y}} "
+      + "E = \\sum_{\\substack{x \\ \\Delta x \\\\ y \\ \\Delta y}} "
       + "J_{\\substack{\\Delta x \\\\ \\Delta y}} \\, "
       + "s_{\\substack{x \\vphantom{\\Delta} \\\\ y \\vphantom{\\Delta}}} \\, "
       + "s_{\\substack{x + \\Delta x \\\\ y + \\Delta y}} "
-      + "+ h \\, "
+      + "+ h "
+      + "\\sum_{\\substack{x \\vphantom{\\Delta} \\\\ y \\vphantom{\\Delta}}} "
       + "s_{\\substack{x \\vphantom{\\Delta} \\\\ y \\vphantom{\\Delta}}} \\\\ "
-      + "(s_{\\substack{x \\vphantom{\\Delta} \\\\ y \\vphantom{\\Delta}}} "
-      + "= - 1, 1) "
+      + "\\Big(s_{\\substack{x \\vphantom{\\Delta} \\\\ "
+      + "y \\vphantom{\\Delta}}} = - 1, 1 \\Big) "
       + "\\end{gathered}\\]"
     ),
     xy: (
       "\\[\\begin{gathered} "
-      + "E_{\\substack{x \\vphantom{\\Delta} \\\\ y \\vphantom{\\Delta}}} "
-      + "= \\sum_{\\substack{\\Delta x \\\\ \\Delta y}} "
+      + "E = \\sum_{\\substack{x \\ \\Delta x \\\\ y \\ \\Delta y}} "
       + "J_{\\substack{\\Delta x \\\\ \\Delta y}} \\cos ("
       + "\\theta_{\\substack{x + \\Delta x \\\\ y + \\Delta y}} "
       + "- \\theta_{\\substack{x \\vphantom{\\Delta} \\\\ "
       + "y \\vphantom{\\Delta}}}) \\\\ "
-      + "(0 \\le \\theta_{\\substack{x \\vphantom{\\Delta} \\\\ "
-      + "y \\vphantom{\\Delta}}} < 2 \\pi) "
+      + "\\Big(0 \\le \\theta_{\\substack{x \\vphantom{\\Delta} \\\\ "
+      + "y \\vphantom{\\Delta}}} < 2 \\pi \\Big) "
       + "\\end{gathered}\\]"
     ),
   }[document.getElementById("model").value];
@@ -273,19 +412,6 @@ function changeModelP(willRerender) {
 changeModelP(false);
 
 const model = new Model();
-
-let isPlaying = true;
-document.getElementById("playPause").addEventListener("click", (event) => {
-  if (isPlaying) {
-    clearInterval(model.interval);
-    event.target.innerHTML = "Play";
-    isPlaying = false;
-  } else {
-    model.interval = setInterval(model.run.bind(model), this.intervalDelay);
-    event.target.innerHTML = "Pause";
-    isPlaying = true;
-  }
-});
 
 // I began to write this file as a hobby project.
 // I did not use any AI tools to write this file.
