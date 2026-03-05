@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ising Model</title>
+    <link rel="stylesheet" href="new_style.css" />
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@4.0.0/tex-mml-chtml.js"
+    ></script>
+  </head>
+  <body>
+    <div id="output">
+      <div id="canvasContainer">
+        <canvas id="canvas"></canvas>
+      </div>
+      <div id="statsContainer">
+        <div id="stats">
+          <!-- I used \smash to vertically align maths. -->
+
+          <div class="name">Energy</div>
+          <div>\(\smash{E}\)</div>
+          <div></div>
+          <div></div>
+          <div>=</div>
+          <div class="value">&minus;1.111</div>
+          <div>&times;</div>
+          <div>\(\smash{N}\)</div>
+
+          <div class="name">Magnetization</div>
+          <div>\(\smash{M}\)</div>
+          <div>=</div>
+          <div>\(\displaystyle \smash{\sum_i s_i}\)</div>
+          <div>=</div>
+          <div class="value">2.345</div>
+          <div>&times;</div>
+          <div>\(\smash{N}\)</div>
+
+          <div class="name">Heat capacity</div>
+          <div>\(\displaystyle \smash{\frac{C}{k_{\mathrm{B}}}}\)</div>
+          <div>=</div>
+          <div>
+            \(\displaystyle \smash{
+              \frac{\langle E^2 \rangle - \langle E \rangle^2}
+              {(k_{\mathrm{B}} T)^2}
+            }\)
+          </div>
+          <div>=</div>
+          <div class="value">123.456</div>
+          <div>&times;</div>
+          <div>\(\smash{N}\)</div>
+
+          <div class="name">Susceptibility</div>
+          <div>\(\chi\)</div>
+          <div>=</div>
+          <div>
+            \(\displaystyle \smash{
+              \frac{\langle M^2 \rangle - \langle M \rangle^2}
+              {k_{\mathrm{B}} T}
+            }\)
+          </div>
+          <div>=</div>
+          <div class="value">2.345</div>
+          <div>&times;</div>
+          <div>\(\smash{N}\)</div>
+        </div>
+      </div>
+    </div>
+    <div id="input">
+      Foo bar.
+      \[E = - J \sum_{\langle i \, j \rangle} s_i s_j - h \sum_i s_i\]
+      Baz que.
+      \[
+        E
+	      = - \sum_{\substack{x \, \Delta x \\ y \, \Delta y}}
+        J_{\substack{\Delta x \\ \Delta y}}
+        s_{\substack{x \vphantom{\Delta} \\ y \vphantom{\Delta}}}
+        s_{\substack{x + \Delta x \\ y + \Delta y}}
+        - h \sum_{\substack{x \vphantom{\Delta} \\ y \vphantom{\Delta}}}
+        s_{\substack{x \vphantom{\Delta} \\ y \vphantom{\Delta}}}
+      \]
+      Hello, world!
+    </div>
+  </body>
+</html>
+
+<!-- Not gen AI generated. -->

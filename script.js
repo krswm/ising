@@ -1,11 +1,16 @@
 let isPlaying = true;
 document.getElementById("playPause").addEventListener("click", (event) => {
   if (isPlaying) {
-    clearInterval(model.interval);
+    if (model.requestId) {
+      cancelAnimationFrame(model.requestId);
+      model.requestId = undefined;
+    }
     event.target.innerHTML = "Play";
     isPlaying = false;
   } else {
-    model.interval = setInterval(model.run.bind(model), 10);
+    if (!model.requestId) {
+      model.requestId = requestAnimationFrame(model.run.bind(model));
+    }
     event.target.innerHTML = "Pause";
     isPlaying = true;
   }
@@ -48,7 +53,8 @@ class Model {
   }
 
   start(event) {
-    clearInterval(this.interval);
+    cancelAnimationFrame(this.requestId);
+    this.requestId = undefined;
 
     this.model = document.getElementById("model").value;
     let initialState;
@@ -102,15 +108,23 @@ class Model {
 
     this.drawStates();
 
-    this.interval = setInterval(this.run.bind(this), 10);
+    if (!self.requestId) {
+      self.requestId = requestAnimationFrame(this.run.bind(this));
+    }
   }
 
-  run() {
+  run(timestamp) {
+    self.requestId = undefined;
+
     for (let i = 0; i < this.Deltat; i++) {
       this.proposeNewConfigulation();
     }
     this.calculateStatistics();
     this.drawStates();
+
+    if (!self.requestId) {
+      self.requestId = requestAnimationFrame(this.run.bind(this));
+    }
   }
 
   autorun(event) {
