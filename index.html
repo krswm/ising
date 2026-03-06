@@ -2,108 +2,102 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Ising Model</title>
     <link rel="stylesheet" href="style.css" />
-
-    <!-- KaTeX -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.css"
-      integrity="sha384-Wsr4Nh3yrvMf2KCebJchRJoVo1gTU6kcP05uRSh5NV3sj9+a8IomuJoQzf3sMq4T"
-      crossorigin="anonymous"
-    >
     <script
-      defer
-      src="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/katex.min.js"
-      integrity="sha384-+W9OcrYK2/bD7BmUAk+xeFAyKp0QjyRQUCxeU31dfyTt/FrPsUgaBTLLkVf33qWt"
-      crossorigin="anonymous"
-    >
-    </script>
-    <script
-      defer
-      src="https://cdn.jsdelivr.net/npm/katex@0.16.28/dist/contrib/auto-render.min.js"
-      integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh"
-      crossorigin="anonymous"
-      onload="renderMathInElement(document.body);"
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@4.0.0/tex-mml-chtml.js"
     ></script>
   </head>
   <body>
-    <div id="controller">
-      <div>
+    <div id="output">
+      <div id="canvasContainer">
+        <canvas id="canvas"></canvas>
+      </div>
+      <div id="statsContainer">
+        <div id="stats">
+          <!-- I used \smash to vertically align maths. -->
+
+          <div class="name">Energy</div>
+          <div>\(\smash{E}\)</div>
+          <div></div>
+          <div></div>
+          <div>\(\smash{=}\)</div>
+          <div id="E" class="value">&minus;1.111</div>
+          <div>\(\times\)</div>
+          <div>\(\smash{N}\)</div>
+
+          <div class="name">Magnetization</div>
+          <div>\(\smash{M}\)</div>
+          <div>\(\smash{=}\)</div>
+          <div>\(\smash{\displaystyle \sum_i s_i}\)</div>
+          <div>\(\smash{=}\)</div>
+          <div id="M" class="value">2.345</div>
+          <div>\(\times\)</div>
+          <div>\(\smash{N}\)</div>
+
+          <div class="name">Heat capacity</div>
+          <div>\(\displaystyle \smash{\frac{C}{k_{\mathrm{B}}}}\)</div>
+          <div>\(\smash{=}\)</div>
+          <div>
+            \(\smash{
+              \displaystyle \frac
+              {\langle E^2 \rangle - \langle E \rangle^2}{(k_{\mathrm{B}} T)^2}
+            }\)
+          </div>
+          <div>\(\smash{=}\)</div>
+          <div id="C" class="value">123.456</div>
+          <div>\(\times\)</div>
+          <div>\(\smash{N}\)</div>
+
+          <div class="name">Susceptibility</div>
+          <div>\(\chi\)</div>
+          <div>\(\smash{=}\)</div>
+          <div>
+            \(\smash{
+              \displaystyle \frac
+              {\langle M^2 \rangle - \langle M \rangle^2}{k_{\mathrm{B}} T}
+            }\)
+          </div>
+          <div>\(\smash{=}\)</div>
+          <div id="chi" class="value">2.345</div>
+          <div>\(\times\)</div>
+          <div>\(\smash{N}\)</div>
+        </div>
+      </div>
+    </div>
+    <div id="input">
+      <header>
         <h1>Ising Model</h1>
-        <h2>with the Monte Carlo Method</h2>
-        <a href="https://github.com/krswm/lbm/">Source</a>
-      </div>
-      <div>
-        <h2>Statistics</h2>
-	<div id="isingStatistics">
-	  <p>
-	    Energy per cell
-	    \[\frac{E}{X Y}\]
-	  </p>
-	  <p id="E"></p>
-	  <p>
-	    Magnetization per cell
-	    \[
-	      \frac{M}{X Y} \quad
-	      \Big( M =
-	      \sum_{\substack{x \vphantom{\Delta} \\ y \vphantom{\Delta}}}
-	      s_{\substack{x \vphantom{\Delta} \\ y \vphantom{\Delta}}}\Big)
-	    \]
-	  </p>
-	  <p id="M"></p>
-	  <p>
-	    Heat capacity per cell
-	    \[
-	      \frac{C / k_\mathrm{B}}{X Y} \quad
-	      \Big( C / k_\mathrm{B} = \frac{\langle E^2 \rangle
-	      - \langle E \rangle^2}{(k_\mathrm{B} T)^2} \Big)
-	    \]
-	  </p>
-	  <p id="C"></p>
-	  <p>
-	    Magnetic susceptibility per cell
-	    \[
-	      \frac{\chi}{X Y} \quad
-	      \Big( \chi = \frac{\langle M^2 \rangle
-	      - \langle M \rangle^2}{k_\mathrm{B} T} \Big)
-	    \]
-	  </p>
-	  <p id="chi"></p>
-	</div>
-	<div id="xyStatistics">
-	  <p>
-	    Energy per cell
-	    \[\frac{E}{X Y}\]
-	  </p>
-	  <p id="xyE"></p>
-	  <p>
-	    Heat capacity per cell
-	    \[
-	      \frac{C / k_\mathrm{B}}{X Y} \quad
-	      \Big( C / k_\mathrm{B} = \frac{\langle E^2 \rangle
-	      - \langle E \rangle^2}{(k_\mathrm{B} T)^2} \Big)
-	    \]
-	  </p>
-	  <p id="xyC"></p>
-	</div>
-      </div>
+        <p>Simulated with the Monte Carlo Method</p>
+      </header>
+
+      <label>
+        Temperature \(k_{\mathrm{B}} T\)
+        <div class="slider">
+          <input type="range" />
+          <input id="kT" type="number" min="0" step="0.1" value="1" />
+        </div>
+      </label>
+
+      <!-- TODO: Clean this up. -->
       <div>
         <h2>Model</h2>
         <select
           id="model" onchange="changeModelP(true);">
-          <option value="xy">XY model</option>
           <option value="ising">Ising model</option>
+          <option value="xy">XY model</option>
         </select>
         <p id="modelP"></p>
         <label>
           Width \(X\)
-          <input id="X" type="number" min="1" value="64" />
+          <input id="X" type="number" min="1" value="16" />
         </label>
         <label>
           Height \(Y\)
-          <input id="Y" type="number" min="1" value="64" />
+          <input id="Y" type="number" min="1" value="16" />
         </label>
         <button id="startButton" onclick="model.start();">
           Apply
@@ -111,10 +105,6 @@
       </div>
       <div>
         <h2>Parameters</h2>
-        <label>
-          Temperature \(k_{\mathrm{B}} T\)
-          <input id="kT" type="number" min="0" step="0.1" value="1" />
-        </label>
         <label>
           Interaction \(J_{\substack{\Delta x \\ \Delta y}}\)
           <div id="JInput">
@@ -127,8 +117,8 @@
             <div>\(\Delta x\)</div>
 
             <div>\(0\)</div>
-	    <div></div>
-	    <div></div>
+            <div></div>
+            <div></div>
             <input id="J0" type="number" value="0" />
             <input id="J1" type="number" value="-1" />
             <input value="0" disabled />
@@ -167,15 +157,15 @@
         <button id="playPause">Pause</button> 
       </div>
       <div>
-	<h2>Interval</h2>
-	<p>
-	  The program calculates the expected value of a physical quantity
-	  \(f(t)\) (\(E^2\), \(E\), \(M^2\), or \(M\)) as:
-	  \[
-	    \langle f \rangle
-	    = \frac{1}{A} \sum_{a = 0}^{A - 1} f(t - a \, \Delta t)
-	  \]
-	</p>
+        <h2>Interval</h2>
+        <p>
+          The program calculates the expected value of a physical quantity
+          \(f(t)\) (\(E^2\), \(E\), \(M^2\), or \(M\)) as:
+          \[
+            \langle f \rangle
+            = \frac{1}{A} \sum_{a = 0}^{A - 1} f(t - a \, \Delta t)
+          \]
+        </p>
         <label>
           Sampling interval \(\Delta t\) (1ms in the visualization)
           <input id="Deltat" type="number" min="1" value="1000" />
@@ -186,34 +176,29 @@
         </label>
       </div>
       <div>
-	<h2>Autorun</h2>
-	<p>
-	  The program automatically runs the simulation
-	  while changing the temperature to obtain the statistics.
-	</p>
-	<label>
-	  Autorun until this temperature:
-          <input id="kTMax" type="number" min="0" step="0.1" value="4" />
-	</label>
-	<label>
-	  Step by the temperature difference:
-          <input id="kTStep" type="number" min="0.1" step="0.1" value="0.1" />
-	</label>
-	<label>
-	  On each temperature, run intervals:
-          <input id="tMax" type="number" min="0" step="500" value="1000" />
-	</label>
-	<button id="autorun" onclick="model.autorun(event);">Autorun</button>
-	<a id="download"></a>
+        <h2>Autorun</h2>
+        <p>
+          The program automatically runs the simulation
+          while changing the temperature to obtain the statistics.
+        </p>
+        <label>
+          Autorun until this temperature:
+                <input id="kTMax" type="number" min="0" step="0.1" value="4" />
+        </label>
+        <label>
+          Step by the temperature difference:
+                <input id="kTStep" type="number" min="0.1" step="0.1" value="0.1" />
+        </label>
+        <label>
+          On each temperature, run intervals:
+                <input id="tMax" type="number" min="0" step="500" value="1000" />
+        </label>
+        <button id="autorun" onclick="model.autorun(event);">Autorun</button>
+        <a id="download"></a>
       </div>
-    </div>
-    <div id="visualizer">
-      <canvas id="canvas">Ising model</canvas>
-      <canvas id="vorticity">Vorticity</canvas>
     </div>
     <script src="script.js"></script>
   </body>
-</head>
+</html>
 
-<!-- I began to write this file as a hobby project. -->
-<!-- I did not use any AI tools to write this file. -->
+<!-- Not gen AI generated. -->

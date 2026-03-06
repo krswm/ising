@@ -24,6 +24,14 @@ function mod(a, b) {
   return ((a % b) + b) % b;
 }
 
+function formatNumber(number) {
+  if (isFinite(number)) {
+    return number.toFixed(3).replace("-", "\u2212");  // Minus
+  } else {
+    return "\u2014";  // Em dash
+  }
+}
+
 function spinDifference(sa, sb) {
   let diff = sb - sa;
   diff = mod(diff, 2 * Math.PI);
@@ -39,8 +47,10 @@ class Model {
     this.canvas = document.getElementById("canvas");
     this.context = this.canvas.getContext("2d");
 
+    /*
     this.vorticityCanvas = document.getElementById("vorticity");
     this.vorticityContext = this.vorticityCanvas.getContext("2d");
+    */
 
     for (let id of ["kT", "J0", "J1", "J2", "J3", "J4", "h", "Deltat"]) {
       this[id] = document.getElementById(id).valueAsNumber;
@@ -60,16 +70,20 @@ class Model {
     let initialState;
     if (this.model === "ising") {
       initialState = 1;
+      /*
       document.getElementById("isingStatistics").style.display = "block";
       document.getElementById("xyStatistics").style.display = "none";
       document.getElementById("hLabel").style.display = "block";
       document.getElementById("vorticity").style.display = "none";
+      */
     } else if (this.model === "xy") {
       initialState = 0;
+      /*
       document.getElementById("isingStatistics").style.display = "none";
       document.getElementById("xyStatistics").style.display = "block";
       document.getElementById("hLabel").style.display = "none";
       document.getElementById("vorticity").style.display = "block";
+      */
     }
     if (this.model === "xy") {
       document.getElementById("img").style.display = "flex";
@@ -81,12 +95,14 @@ class Model {
     this.Y = document.getElementById("Y").valueAsNumber;
     this.canvas.width = this.X;
     this.canvas.height = this.Y;
-    this.canvas.style.width = `${this.X * 4}px`;
-    this.canvas.style.height = `${this.Y * 4}px`;
+    this.canvas.style.width = `${this.X * 32}px`;
+    this.canvas.style.height = `${this.Y * 32}px`;
+    /*
     this.vorticityCanvas.width = this.X;
     this.vorticityCanvas.height = this.Y;
     this.vorticityCanvas.style.width = `${this.X * 4}px`;
     this.vorticityCanvas.style.height = `${this.Y * 4}px`;
+    */
 
     // The state of the cell at (x, y) is this.states[this.X * y + x].
     // s = -1, 1 for the Ising model.
@@ -286,14 +302,10 @@ class Model {
       const EPerCell = E / (this.X * this.Y);
       const CPerCell = C / (this.X * this.Y);
       const chiPerCell = chi / (this.X * this.Y);
-      document.getElementById("M").innerText = MPerCell.toFixed(3);
-      document.getElementById("E").innerText = EPerCell.toFixed(3);
-      document.getElementById("C").innerText = (
-	C ? CPerCell.toFixed(3) : "\u2014"
-      );
-      document.getElementById("chi").innerText = (
-	chi ? chiPerCell.toFixed(3) : "\u2014"
-      );
+      document.getElementById("M").innerText = formatNumber(MPerCell);
+      document.getElementById("E").innerText = formatNumber(EPerCell);
+      document.getElementById("C").innerText = formatNumber(CPerCell);
+      document.getElementById("chi").innerText = formatNumber(chiPerCell);
 
       return [EPerCell, MPerCell, CPerCell, chiPerCell];
     } else if (this.model === "xy") {
@@ -358,33 +370,33 @@ class Model {
               break;
           }
 
-	  this.context.fillRect(x, y, 1, 1);
-        } else if (this.model === "xy") {
-	  const deg = this.states[this.X * y + x] * 180 / Math.PI;
-	  this.context.fillStyle = `oklch(50% 75% ${deg}deg)`;
+          this.context.fillRect(x, y, 1, 1);
+              } else if (this.model === "xy") {
+          const deg = this.states[this.X * y + x] * 180 / Math.PI;
+          this.context.fillStyle = `oklch(50% 75% ${deg}deg)`;
 
-	  this.context.fillRect(x, y, 1, 1);
+          this.context.fillRect(x, y, 1, 1);
 
-	  const s0 = this.getState(x,     y    );
-	  const s1 = this.getState(x,     y + 1);
-	  const s2 = this.getState(x + 1, y + 1);
-	  const s3 = this.getState(x + 1, y    );
-	  const vorticity = (
-	    + spinDifference(s0, s1)
-	    + spinDifference(s1, s2)
-	    + spinDifference(s2, s3)
-	    + spinDifference(s3, s0)
-	  );
+          const s0 = this.getState(x,     y    );
+          const s1 = this.getState(x,     y + 1);
+          const s2 = this.getState(x + 1, y + 1);
+          const s3 = this.getState(x + 1, y    );
+          const vorticity = (
+            + spinDifference(s0, s1)
+            + spinDifference(s1, s2)
+            + spinDifference(s2, s3)
+            + spinDifference(s3, s0)
+          );
 
-	  if (vorticity >= 0) {
-	    const l = vorticity * 15;
-	    this.vorticityContext.fillStyle = `oklch(${l}% ${l}% 0deg)`;
-	  } else {
-	    const l = -vorticity * 15;
-	    this.vorticityContext.fillStyle = `oklch(${l}% ${l}% 180deg)`;
-	  }
+          if (vorticity >= 0) {
+            const l = vorticity * 15;
+            this.vorticityContext.fillStyle = `oklch(${l}% ${l}% 0deg)`;
+          } else {
+            const l = -vorticity * 15;
+            this.vorticityContext.fillStyle = `oklch(${l}% ${l}% 180deg)`;
+          }
 
-	  this.vorticityContext.fillRect(x, y, 1, 1);
+          this.vorticityContext.fillRect(x, y, 1, 1);
         }
       }
     }
