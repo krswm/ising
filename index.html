@@ -68,19 +68,46 @@
         </div>
       </div>
     </div>
-    <div id="input">
+    <div id="control">
       <header>
         <h1>Ising Model</h1>
         <p>Simulated with the Monte Carlo Method</p>
       </header>
 
-      <label>
-        Temperature \(k_{\mathrm{B}} T\)
-        <div class="slider">
-          <input type="range" />
-          <input id="kT" type="number" min="0" step="0.1" value="1" />
+      <div class="slider" id="T">
+        <div>
+          <div>Temperature</div>
+          <div>\(k_{\mathrm{B}} T =\)</div>
+          <input type="number" value="2" min="0" step="0.1" />
         </div>
-      </label>
+        <input type="range" value="2" min="0" max="4" step="0.001" />
+      </div>
+
+      <div class="slider" id="J">
+        <div>
+          <div>Interaction</div>
+          <div>\(J =\)</div>
+          <input type="number" value="1" step="0.1" />
+        </div>
+        <input type="range" value="1" min="-1" max="1" step="0.001" />
+      </div>
+
+      <div class="slider" id="h">
+        <div>
+          <div>Field</div>
+          <div>\(h =\)</div>
+          <input type="number" value="0" step="0.1" />
+        </div>
+        <input type="range" value="0" min="-2" max="2" step="0.001" />
+      </div>
+
+      <div id="N">
+        <div>Size</div>
+        <div>\(N =\)</div>
+        <input id="Nx" type="number" value="16" min="1" />
+        <div>\(\times\)</div>
+        <input id="Ny" type="number" value="16" min="1" />
+      </div>
 
       <!-- TODO: Clean this up. -->
       <div>
@@ -91,14 +118,6 @@
           <option value="xy">XY model</option>
         </select>
         <p id="modelP"></p>
-        <label>
-          Width \(X\)
-          <input id="X" type="number" min="1" value="16" />
-        </label>
-        <label>
-          Height \(Y\)
-          <input id="Y" type="number" min="1" value="16" />
-        </label>
         <button id="startButton" onclick="model.start();">
           Apply
         </button> 
@@ -168,7 +187,7 @@
         </p>
         <label>
           Sampling interval \(\Delta t\) (1ms in the visualization)
-          <input id="Deltat" type="number" min="1" value="1000" />
+          <input id="Deltat" type="number" min="1" value="50" />
         </label>
         <label>
           Sampling storage \(A\)
@@ -197,6 +216,7 @@
         <a id="download"></a>
       </div>
     </div>
+    <script src="slider.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

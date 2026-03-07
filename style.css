@@ -8,7 +8,7 @@ body {
 
 #output {
   box-sizing: border-box;
-  padding: 1em;
+  padding: 1rem;
 
   overflow: hidden;
 
@@ -41,8 +41,8 @@ body {
 
 #output > #statsContainer > #stats {
   display: grid;
-  grid: repeat(4, 3.5em) / auto auto auto auto auto 6em auto auto;
-  gap: 0em 0.5em;
+  grid: repeat(4, 3.5rem) / auto auto auto auto auto 6rem auto auto;
+  gap: 0rem 0.5rem;
 }
 
 #output > #statsContainer > #stats > div {
@@ -51,7 +51,7 @@ body {
 }
 
 #output > #statsContainer > #stats > div.name {
-  padding-right: 1.5em;
+  padding-right: 1.5rem;
 
   text-align: end;
 }
@@ -59,53 +59,74 @@ body {
 #output > #statsContainer > #stats > div.value {
   text-align: end;
 
-  font-size: 1.5em;
+  font-size: 1.5rem;
   font-variant-numeric: tabular-nums;
 }
 
-#input {
+#control {
   box-sizing: border-box;
-  padding: 1em;
+  padding: 1rem;
 
   overflow: hidden scroll;
 }
 
-#input > header > h1 {
-  margin-bottom: 0em;
+#control > header > h1 {
+  margin-bottom: 0rem;
 }
 
-#input > header > p {
-  margin-top: 0em;
+#control > header > p {
+  margin-top: 0rem;
 }
 
-#input > div.slider {
+#control > div.slider {
   display: flex;
+  flex-direction: column;
 }
 
-#input div.slider > input[type="range"] {
-  flex: 1fr;
+#control > div.slider > div, #control > #N {
+  display: flex;
+  gap: 0.5rem;
+
+  align-items: center;
+
+  width: 100%;
 }
 
-#input div.slider > input[type="number"] {
-  width: 2em;
+#control > div.slider > div > div:nth-child(1),
+#control > #N > div:nth-child(1) {
+  flex: auto;
+}
 
-  font-size: 3em;
+#control input[type="number"] {
+  font-size: 1.5rem;
+
+  width: 6rem;
+
+  border: 1px solid silver;
+  border-radius: 4px;
+  padding: 4px;
+
+  font-family: system-ui;
   font-variant-numeric: tabular-nums;
 }
 
-@media (width < 56em) {
+#control input[type="number"]:hover {
+  border: 1px solid gray;
+}
+
+@media (width < 56rem) {
   #output {
     height: 100vh;
   }
 
-  #input {
+  #control {
     min-height: 100vh;
 
     border-top: solid 1px silver;
   }
 }
 
-@media (width >= 56em) {
+@media (width >= 56rem) {
   body {
     display: flex;
 
@@ -116,8 +137,8 @@ body {
     flex: auto;
   }
 
-  #input {
-    flex: 0 0 24em;
+  #control {
+    flex: 0 0 24rem;
     
     border-left: solid 1px silver;
   }
