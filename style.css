@@ -28,8 +28,6 @@ body {
 
 #output > #canvasContainer > #canvas {
   flex: 1fr;
-
-  image-rendering: crisp-edges;
 }
 
 #output > #statsContainer {
@@ -70,12 +68,16 @@ body {
   overflow: hidden scroll;
 }
 
-#control > header > h1 {
-  margin-bottom: 0rem;
+#control > header {
+  margin: 0rem 0rem 2rem 0rem;
 }
 
-#control > header > p {
-  margin-top: 0rem;
+#control > header > h1 {
+  margin: 0rem;
+}
+
+#control > div.slider, #control > #N {
+  margin: 2rem 0rem;
 }
 
 #control > div.slider {
