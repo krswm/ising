@@ -1,10 +1,15 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Ising Model Simulated with the Monte Carlo Method"
+    />
     <title>Ising Model</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/svg+xml" href="img/up.svg" />
     <script
       id="MathJax-script"
       async
@@ -74,6 +79,13 @@
         <div>Simulated with the Monte Carlo Method</div>
       </header>
 
+      <div id="buttonContainer">
+        <button id="play"><img src="img/play.svg" alt="play" /></button>
+        <button id="pause"><img src="img/pause.svg" alt="pause" /></button>
+        <button id="reset">All <img src="img/up.svg" alt="spin up" /></button>
+        <button id="randomize">Randomize</button>
+      </div>
+
       <div class="slider" id="T">
         <div>
           <div>Temperature</div>
@@ -112,8 +124,6 @@
         <div>\(\times\)</div>
         <input id="Ny" type="number" value="16" min="1" />
       </div>
-
-      <button id="playPause">Pause</button> 
     </div>
     <script src="slider.js"></script>
     <script src="script.js"></script>

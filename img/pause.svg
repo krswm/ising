@@ -1,0 +1,12 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  version="1.1"
+  width="32"
+  height="32"
+  viewBox="0 0 3 3"
+>
+  <rect x="0" y="0" width="1" height="3" fill="black" />
+  <rect x="2" y="0" width="1" height="3" fill="black" />
+</svg>
+
+<!-- Not gen AI generated. -->

@@ -68,12 +68,56 @@ body {
   overflow: hidden scroll;
 }
 
+#control input[type="number"] {
+  font-size: 1.5rem;
+
+  width: 6rem;
+
+  border: 1px solid silver;
+  border-radius: 4px;
+  padding: 4px;
+
+  font-family: system-ui;
+  font-variant-numeric: tabular-nums;
+}
+
+#control input[type="number"]:hover {
+  border: 1px solid gray;
+}
+
 #control > header {
   margin: 0rem 0rem 2rem 0rem;
 }
 
 #control > header > h1 {
   margin: 0rem;
+}
+
+#control > #buttonContainer {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#control > #buttonContainer > button {
+  flex: 1fr;
+
+  border: 1px solid silver;
+  border-radius: 4px;
+  background: none;
+
+  font-size: 1rem;
+}
+
+#control > #buttonContainer > #play {
+  display: none;
+}
+
+#control > #buttonContainer > button:hover {
+  background: gainsboro;
+}
+
+#control > #buttonContainer > button:active {
+  background: silver;
 }
 
 #control > div.slider, #control > #N {
@@ -97,23 +141,6 @@ body {
 #control > div.slider > div > div:nth-child(1),
 #control > #N > div:nth-child(1) {
   flex: auto;
-}
-
-#control input[type="number"] {
-  font-size: 1.5rem;
-
-  width: 6rem;
-
-  border: 1px solid silver;
-  border-radius: 4px;
-  padding: 4px;
-
-  font-family: system-ui;
-  font-variant-numeric: tabular-nums;
-}
-
-#control input[type="number"]:hover {
-  border: 1px solid gray;
 }
 
 @media (width < 56rem) {

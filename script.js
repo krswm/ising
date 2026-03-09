@@ -1,19 +1,26 @@
 let isPlaying = true;
-document.getElementById("playPause").addEventListener("click", (event) => {
-  if (isPlaying) {
-    if (model.requestId) {
-      cancelAnimationFrame(model.requestId);
-      model.requestId = undefined;
-    }
-    event.target.innerHTML = "Play";
-    isPlaying = false;
-  } else {
-    if (!model.requestId) {
-      model.requestId = requestAnimationFrame(model.run.bind(model));
-    }
-    event.target.innerHTML = "Pause";
-    isPlaying = true;
+
+document.getElementById("play").addEventListener("click", (event) => {
+  if (!model.requestId) {
+    model.requestId = requestAnimationFrame(model.run.bind(model));
   }
+
+  document.getElementById("play").style.display = "none";
+  document.getElementById("pause").style.display = "inline-block";
+
+  isPlaying = true;
+});
+
+document.getElementById("pause").addEventListener("click", (event) => {
+  if (model.requestId) {
+    cancelAnimationFrame(model.requestId);
+    model.requestId = undefined;
+  }
+
+  document.getElementById("pause").style.display = "none";
+  document.getElementById("play").style.display = "inline-block";
+
+  isPlaying = false;
 });
 
 function mod(a, b) {
@@ -46,24 +53,6 @@ class Model {
   constructor() {
     this.canvas = document.getElementById("canvas");
     this.context = this.canvas.getContext("2d");
-
-    // +-------8-------+
-    // |       |       |
-    // |       O       |
-    // |       |       |
-    // |       |       |
-    // |       |       |
-    // |       |       |
-    // |       |       |
-    // 8----O-O0O-O----8
-    // |       |       |
-    // |       |       |
-    // |       |       |
-    // |       |       |
-    // |       |       |
-    // |      O|O      |
-    // |       |       |
-    // +-------8-------+
 
     this.arrow = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
 
@@ -223,20 +212,20 @@ class Model {
         // Determine a color.
         switch (this.states[this.Nx * y + x]) {
           case 1:
-            this.context.fillStyle = "hsl(0deg 0% 80%)";
+            this.context.fillStyle = "#E0E0E0";
             this.context.setTransform(1, 0, 0, 1, 0, 0);
             this.context.fillRect(x * 64, y * 64, 64, 64);
 
-            this.context.fillStyle = "hsl(0deg 0% 50%)";
+            this.context.fillStyle = "#808080";
             this.context.setTransform(4, 0, 0, 4, x * 64 + 32, y * 64 + 32);
             this.context.fill(this.arrow);
             break;
           case -1:
-            this.context.fillStyle = "hsl(0deg 0% 20%)";
+            this.context.fillStyle = "#202020";
             this.context.setTransform(1, 0, 0, 1, 0, 0);
             this.context.fillRect(x * 64, y * 64, 64, 64);
 
-            this.context.fillStyle = "hsl(0deg 0% 50%)";
+            this.context.fillStyle = "#808080";
             this.context.setTransform(4, 0, 0, -4, x * 64 + 32, y * 64 + 32);
             this.context.fill(this.arrow);
             break;
