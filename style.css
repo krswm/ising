@@ -7,7 +7,6 @@ body {
 }
 
 #output {
-  box-sizing: border-box;
   padding: 1rem;
 
   overflow: hidden;
@@ -61,11 +60,18 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+#controlContainer {
+  display: flex;
+
+  justify-content: center;
+}
+
 #control {
-  box-sizing: border-box;
   padding: 1rem;
 
   overflow: hidden scroll;
+
+  width: 24rem;
 }
 
 #control input[type="number"] {
@@ -73,7 +79,7 @@ body {
 
   width: 6rem;
 
-  border: 1px solid silver;
+  border: 1px solid #E0E0E0;
   border-radius: 4px;
   padding: 4px;
 
@@ -82,7 +88,7 @@ body {
 }
 
 #control input[type="number"]:hover {
-  border: 1px solid gray;
+  border: 1px solid #C0C0C0;
 }
 
 #control > header {
@@ -101,23 +107,62 @@ body {
 #control > #buttonContainer > button {
   flex: 1fr;
 
-  border: 1px solid silver;
+  border: 1px solid #C0C0C0;
   border-radius: 4px;
   background: none;
 
+  padding: 0.5rem;
+
   font-size: 1rem;
+
+  align-items: baseline;
+}
+
+#control > #buttonContainer > button > img {
+  vertical-align: -0.25rem;
+
+  height: 1.5rem;
+}
+
+#control > #buttonContainer > #play, #control > #buttonContainer > #pause {
+  width: 3rem;
+  height: 3rem;
+
+  display: float;
 }
 
 #control > #buttonContainer > #play {
   display: none;
+
+  background: url("img/play.svg") no-repeat center center;
 }
 
-#control > #buttonContainer > button:hover {
-  background: gainsboro;
+#control > #buttonContainer > #pause {
+  background: url("img/pause.svg") no-repeat center center;
 }
 
-#control > #buttonContainer > button:active {
-  background: silver;
+#control > #buttonContainer > button:hover,
+#control > #buttonContainer > button#pause:hover,
+#control > #buttonContainer > button#play:hover {
+  background-color: #F0F0F0;
+}
+
+#control > #buttonContainer > button:active,
+#control > #buttonContainer > button#pause:active,
+#control > #buttonContainer > button#play:active {
+  background-color: #E0E0E0;
+}
+
+#control > #legendContainer > .legend {
+  flex: none;
+
+  display: flex;
+  gap: 0.5rem;
+  align-content: center;
+}
+
+#control > #legendContainer > .legend > div {
+  align-content: center;
 }
 
 #control > div.slider, #control > #N {
@@ -129,7 +174,9 @@ body {
   flex-direction: column;
 }
 
-#control > div.slider > div, #control > #N {
+#control > div.slider > div,
+#control > #legendContainer,
+#control > #N {
   display: flex;
   gap: 0.5rem;
 
@@ -139,23 +186,28 @@ body {
 }
 
 #control > div.slider > div > div:nth-child(1),
+#control > #legendContainer > div:nth-child(1),
 #control > #N > div:nth-child(1) {
   flex: auto;
 }
 
-@media (width < 56rem) {
+#control > #legendContainer {
+  gap: 2rem;
+}
+
+@media (width < 64rem) {
   #output {
     height: 100vh;
   }
 
-  #control {
+  #controlContainer {
     min-height: 100vh;
 
-    border-top: solid 1px silver;
+    border-top: solid 1px #C0C0C0;
   }
 }
 
-@media (width >= 56rem) {
+@media (width >= 64rem) {
   body {
     display: flex;
 
@@ -166,10 +218,10 @@ body {
     flex: auto;
   }
 
-  #control {
+  #controlContainer {
     flex: 0 0 24rem;
-    
-    border-left: solid 1px silver;
+
+    border-left: solid 1px #C0C0C0;
   }
 }
 

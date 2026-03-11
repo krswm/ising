@@ -233,9 +233,35 @@ class Model {
       }
     }
   }
+
+  reset() {
+    console.log("reset");
+    for (let y = 0; y < this.Ny; y++) {
+      for (let x = 0; x < this.Nx; x++) {
+        this.states[this.Nx * y + x] = 1;
+      }
+    }
+    this.drawStates();
+  }
+
+  randomize() {
+    for (let y = 0; y < this.Ny; y++) {
+      for (let x = 0; x < this.Nx; x++) {
+        this.states[this.Nx * y + x] = Math.random() >= 0.5 ? 1 : -1;
+      }
+    }
+    this.drawStates();
+  }
 }
 
 const model = new Model();
+
+document.getElementById("reset").addEventListener(
+  "click", model.reset.bind(model)
+);
+document.getElementById("randomize").addEventListener(
+  "click", model.randomize.bind(model)
+);
 
 // I began to write this file as a hobby project.
 // I did not use any AI tools to write this file.

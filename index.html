@@ -73,56 +73,70 @@
         </div>
       </div>
     </div>
-    <div id="control">
-      <header>
-        <h1>Ising Model</h1>
-        <div>Simulated with the Monte Carlo Method</div>
-      </header>
+    <div id="controlContainer">
+      <div id="control">
+        <header>
+          <h1>Ising Model</h1>
+          <div>Simulated with the Monte Carlo Method</div>
+        </header>
 
-      <div id="buttonContainer">
-        <button id="play"><img src="img/play.svg" alt="play" /></button>
-        <button id="pause"><img src="img/pause.svg" alt="pause" /></button>
-        <button id="reset">All <img src="img/up.svg" alt="spin up" /></button>
-        <button id="randomize">Randomize</button>
-      </div>
-
-      <div class="slider" id="T">
-        <div>
-          <div>Temperature</div>
-          <div>\(k_{\mathrm{B}} T =\)</div>
-          <input type="number" value="2" min="0" step="0.1" />
+        <div id="buttonContainer">
+          <button id="play"></button>
+          <button id="pause"></button>
+          <button id="reset">Reset spin</button>
+          <button id="randomize">Randomize spin</button>
         </div>
-        <input type="range" value="2" min="0" max="4" step="0.001" />
-      </div>
 
-      <div>
-        \[E = - J \sum_{\langle i \, j \rangle} s_i s_j - h \sum_i s_i\]
-      </div>
-
-      <div class="slider" id="J">
-        <div>
-          <div>Interaction</div>
-          <div>\(J =\)</div>
-          <input type="number" value="1" step="0.1" />
+        <div class="slider" id="T">
+          <div>
+            <div>Temperature</div>
+            <div>\(k_{\mathrm{B}} T =\)</div>
+            <input type="number" value="2" min="0" step="0.1" />
+          </div>
+          <input type="range" value="2" min="0" max="4" step="0.001" />
         </div>
-        <input type="range" value="1" min="-1" max="1" step="0.001" />
-      </div>
 
-      <div class="slider" id="h">
         <div>
-          <div>Field</div>
-          <div>\(h =\)</div>
-          <input type="number" value="0" step="0.1" />
+          \[E = - J \sum_{\langle i \, j \rangle} s_i s_j - h \sum_i s_i\]
         </div>
-        <input type="range" value="0" min="-2" max="2" step="0.001" />
-      </div>
 
-      <div id="N">
-        <div>Size</div>
-        <div>\(N =\)</div>
-        <input id="Nx" type="number" value="16" min="1" />
-        <div>\(\times\)</div>
-        <input id="Ny" type="number" value="16" min="1" />
+        <div id="legendContainer">
+          <div>Spin</div>
+          <div class="legend">
+            <img src="img/up.svg" alt="spin up" />
+            <div>\(\smash{s = 1}\)</div>
+          </div>
+          <div class="legend">
+            <img src="img/down.svg" alt="spin down" />
+            <div>\(\smash{s = -1}\)</div>
+          </div>
+        </div>
+
+        <div class="slider" id="J">
+          <div>
+            <div>Interaction</div>
+            <div>\(J =\)</div>
+            <input type="number" value="1" step="0.1" />
+          </div>
+          <input type="range" value="1" min="-1" max="1" step="0.001" />
+        </div>
+
+        <div class="slider" id="h">
+          <div>
+            <div>Field</div>
+            <div>\(h =\)</div>
+            <input type="number" value="0" step="0.1" />
+          </div>
+          <input type="range" value="0" min="-2" max="2" step="0.001" />
+        </div>
+
+        <div id="N">
+          <div>Size</div>
+          <div>\(N =\)</div>
+          <input id="Nx" type="number" value="16" min="1" />
+          <div>\(\times\)</div>
+          <input id="Ny" type="number" value="16" min="1" />
+        </div>
       </div>
     </div>
     <script src="slider.js"></script>
