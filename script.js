@@ -70,6 +70,11 @@ class Model {
 
     this.A = 100;
 
+    this.zoom = 64;
+    document.getElementById("zoom").addEventListener("input", (event) => {
+      this.zoom = event.target.valueAsNumber;
+    });
+
     this.start();
   }
 
@@ -79,10 +84,6 @@ class Model {
 
     this.Nx = document.getElementById("Nx").valueAsNumber;
     this.Ny = document.getElementById("Ny").valueAsNumber;
-    this.canvas.width = this.Nx * 64;
-    this.canvas.height = this.Ny * 64;
-    this.canvas.style.width = `${this.Nx * 32}px`;
-    this.canvas.style.height = `${this.Ny * 32}px`;
 
     // The state of the cell at (x, y) is this.states[this.Nx * y + x].
     this.states = []
@@ -205,6 +206,10 @@ class Model {
 
   drawStates() {
     /// Draw the cell states.
+    this.canvas.width = this.Nx * this.zoom;
+    this.canvas.height = this.Ny * this.zoom;
+    this.canvas.style.width = `${this.Nx * this.zoom / 2}px`;
+    this.canvas.style.height = `${this.Ny * this.zoom / 2}px`;
 
     for (let y = 0; y < this.Ny; y++) {
       for (let x = 0; x < this.Nx; x++) {
@@ -214,20 +219,36 @@ class Model {
           case 1:
             this.context.fillStyle = "#E0E0E0";
             this.context.setTransform(1, 0, 0, 1, 0, 0);
-            this.context.fillRect(x * 64, y * 64, 64, 64);
+            this.context.fillRect(
+              x * this.zoom, y * this.zoom, this.zoom, this.zoom
+            );
 
-            this.context.fillStyle = "#808080";
-            this.context.setTransform(4, 0, 0, 4, x * 64 + 32, y * 64 + 32);
-            this.context.fill(this.arrow);
+            if (this.zoom >= 16) {
+              this.context.fillStyle = "#808080";
+              this.context.setTransform(
+                this.zoom / 16, 0, 0, this.zoom / 16,
+                (x + 0.5) * this.zoom, (y + 0.5) * this.zoom
+              );
+              this.context.fill(this.arrow);
+            }
+
             break;
           case -1:
             this.context.fillStyle = "#202020";
             this.context.setTransform(1, 0, 0, 1, 0, 0);
-            this.context.fillRect(x * 64, y * 64, 64, 64);
+            this.context.fillRect(
+              x * this.zoom, y * this.zoom, this.zoom, this.zoom
+            );
 
-            this.context.fillStyle = "#808080";
-            this.context.setTransform(4, 0, 0, -4, x * 64 + 32, y * 64 + 32);
-            this.context.fill(this.arrow);
+            if (this.zoom >= 16) {
+              this.context.fillStyle = "#808080";
+              this.context.setTransform(
+                this.zoom / 16, 0, 0, -this.zoom / 16,
+                (x + 0.5) * this.zoom, (y + 0.5) * this.zoom
+              );
+              this.context.fill(this.arrow);
+            }
+
             break;
         }
       }
@@ -262,6 +283,10 @@ document.getElementById("reset").addEventListener(
 document.getElementById("randomize").addEventListener(
   "click", model.randomize.bind(model)
 );
+document.getElementById("restart").addEventListener(
+  "click", model.start.bind(model)
+);
+
 
 // I began to write this file as a hobby project.
 // I did not use any AI tools to write this file.
