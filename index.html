@@ -76,15 +76,15 @@
     <div id="controlContainer">
       <div id="control">
         <header>
-          <h1>Ising Model</h1>
-          <div>Simulated with the Monte Carlo Method</div>
+          <h1>Ising Model Simulation</h1>
+          <div>With the Monte Carlo Method</div>
         </header>
 
         <div id="buttonContainer">
-          <button id="play"></button>
-          <button id="pause"></button>
-          <button id="reset">Reset spin</button>
-          <button id="randomize">Randomize spin</button>
+          <button class="clickable" id="play"></button>
+          <button class="clickable" id="pause"></button>
+          <button class="clickable" id="reset">Reset spin</button>
+          <button class="clickable" id="randomize">Randomize spin</button>
         </div>
 
         <div class="slider" id="T">
@@ -136,22 +136,6 @@
           />
         </div>
 
-        <div id="N">
-          <div>Size</div>
-          <div>\(N =\)</div>
-          <input id="Nx" type="number" value="16" min="1" />
-          <div>\(\times\)</div>
-          <input id="Ny" type="number" value="16" min="1" />
-        </div>
-
-        <input
-          id="zoom"
-          type="range" value="64" min="1" max="64" step="1"
-          list="zoom-stop"
-        />
-
-        <button id="restart">Restart</button>
-
         <datalist id="zero-stop">
           <option value="0"></option>
         </datalist>
@@ -166,6 +150,26 @@
           <option value="56"></option>
           <option value="64"></option>
         </datalist>
+
+        <details>
+          <summary class="clickable">More controls</summary>
+
+          <div id="N">
+            <div>Size</div>
+            <div>\(N =\)</div>
+            <input id="Nx" type="number" value="16" min="1" />
+            <div>\(\times\)</div>
+            <input id="Ny" type="number" value="16" min="1" />
+          </div>
+
+          <input
+            id="zoom"
+            type="range" value="64" min="1" max="64" step="1"
+            list="zoom-stop"
+          />
+
+          <button id="restart">Restart</button>
+        </details>
       </div>
     </div>
     <script src="slider.js"></script>

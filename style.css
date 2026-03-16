@@ -70,8 +70,24 @@ body {
   padding: 1rem;
 
   overflow: hidden scroll;
+}
 
-  width: 24rem;
+#control .clickable {
+  border: 1px solid #C0C0C0;
+  border-radius: 4px;
+  background-color: #FFFFFF;
+
+  padding: 0.5rem;
+
+  font-size: 1rem;
+}
+
+#control .clickable:hover {
+  background-color: #F0F0F0;
+}
+
+#control .clickable:active {
+  background-color: #E0E0E0;
 }
 
 #control input[type="number"] {
@@ -79,16 +95,12 @@ body {
 
   width: 6rem;
 
-  border: 1px solid #E0E0E0;
+  border: 1px solid #C0C0C0;
   border-radius: 4px;
   padding: 4px;
 
   font-family: system-ui;
   font-variant-numeric: tabular-nums;
-}
-
-#control input[type="number"]:hover {
-  border: 1px solid #C0C0C0;
 }
 
 #control > header {
@@ -106,16 +118,6 @@ body {
 
 #control > #buttonContainer > button {
   flex: 1fr;
-
-  border: 1px solid #C0C0C0;
-  border-radius: 4px;
-  background: none;
-
-  padding: 0.5rem;
-
-  font-size: 1rem;
-
-  align-items: baseline;
 }
 
 #control > #buttonContainer > button > img {
@@ -134,23 +136,15 @@ body {
 #control > #buttonContainer > #play {
   display: none;
 
-  background: url("img/play.svg") no-repeat center center;
+  background-image: url("img/play.svg");
+  background-repeat: no-repeat;
+  background-position: center center;
 }
 
 #control > #buttonContainer > #pause {
-  background: url("img/pause.svg") no-repeat center center;
-}
-
-#control > #buttonContainer > button:hover,
-#control > #buttonContainer > button#pause:hover,
-#control > #buttonContainer > button#play:hover {
-  background-color: #F0F0F0;
-}
-
-#control > #buttonContainer > button:active,
-#control > #buttonContainer > button#pause:active,
-#control > #buttonContainer > button#play:active {
-  background-color: #E0E0E0;
+  background-image: url("img/pause.svg");
+  background-repeat: no-repeat;
+  background-position: center center;
 }
 
 #control > #legendContainer > .legend {
@@ -195,6 +189,14 @@ body {
   gap: 2rem;
 }
 
+#control > details > summary {
+  font-size: 1rem;
+
+  border: 1px solid #C0C0C0;
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
 @media (width < 64rem) {
   #output {
     height: 100vh;
@@ -204,6 +206,10 @@ body {
     min-height: 100vh;
 
     border-top: solid 1px #C0C0C0;
+  }
+
+  #control {
+    width: 32rem;
   }
 }
 
@@ -219,9 +225,11 @@ body {
   }
 
   #controlContainer {
-    flex: 0 0 24rem;
-
     border-left: solid 1px #C0C0C0;
+  }
+
+  #control {
+    width: 24rem;
   }
 }
 
