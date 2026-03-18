@@ -11,8 +11,7 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" type="image/svg+xml" href="img/up.svg" />
     <script
-      id="MathJax-script"
-      async
+      id="MathJax-script" async
       src="https://cdn.jsdelivr.net/npm/mathjax@4.0.0/tex-mml-chtml.js"
     ></script>
   </head>
@@ -88,7 +87,7 @@
         </div>
 
         <div class="slider" id="T">
-          <div>
+          <div class="parameter">
             <div>Temperature</div>
             <div>\(k_{\mathrm{B}} T =\)</div>
             <input type="number" value="2" min="0" step="0.1" />
@@ -97,10 +96,10 @@
         </div>
 
         <div>
-          \[E = - J \sum_{\langle i \, j \rangle} s_i s_j - h \sum_i s_i\]
+          \[E = - \sum_{\langle i \, j \rangle} J_{i j} s_i s_j - h \sum_i s_i\]
         </div>
 
-        <div id="legendContainer">
+        <div class="parameter" id="legendContainer">
           <div>Spin</div>
           <div class="legend">
             <img src="img/up.svg" alt="spin up" />
@@ -112,10 +111,22 @@
           </div>
         </div>
 
-        <div class="slider" id="J">
-          <div>
+        <div class="slider" id="h">
+          <div class="parameter">
+            <div>Field</div>
+            <div>\(h =\)</div>
+            <input type="number" value="0" step="0.1" />
+          </div>
+          <input
+            type="range" value="0" min="-2" max="2" step="0.001"
+            list="zero-stop"
+          />
+        </div>
+
+        <div class="slider" id="J1">
+          <div class="parameter">
             <div>Interaction</div>
-            <div>\(J =\)</div>
+            <div>\(J\)<img class="J" src="img/J1.svg"></img> \(=\)</div>
             <input type="number" value="1" step="0.1" />
           </div>
           <input
@@ -124,14 +135,50 @@
           />
         </div>
 
-        <div class="slider" id="h">
-          <div>
-            <div>Field</div>
-            <div>\(h =\)</div>
+        <div class="slider" id="J2">
+          <div class="parameter">
+            <div></div>
+            <div>\(J\)<img class="J" src="img/J2.svg"></img> \(=\)</div>
+            <input type="number" value="1" step="0.1" />
+          </div>
+          <input
+            type="range" value="1" min="-1" max="1" step="0.001"
+            list="zero-stop"
+          />
+        </div>
+
+        <div class="slider" id="J3">
+          <div class="parameter">
+            <div></div>
+            <div>\(J\)<img class="J" src="img/J3.svg"></img> \(=\)</div>
             <input type="number" value="0" step="0.1" />
           </div>
           <input
-            type="range" value="0" min="-2" max="2" step="0.001"
+            type="range" value="0" min="-1" max="1" step="0.001"
+            list="zero-stop"
+          />
+        </div>
+
+        <div class="slider" id="J4">
+          <div class="parameter">
+            <div></div>
+            <div>\(J\)<img class="J" src="img/J4.svg"></img> \(=\)</div>
+            <input type="number" value="0" step="0.1" />
+          </div>
+          <input
+            type="range" value="0" min="-1" max="1" step="0.001"
+            list="zero-stop"
+          />
+        </div>
+
+        <div class="slider" id="J0">
+          <div class="parameter">
+            <div></div>
+            <div>\(J\)<img class="J" src="img/J0.svg"></img> \(=\)</div>
+            <input type="number" value="0" step="0.1" />
+          </div>
+          <input
+            type="range" value="0" min="-1" max="1" step="0.001"
             list="zero-stop"
           />
         </div>
@@ -154,7 +201,7 @@
         <details>
           <summary class="clickable">More controls</summary>
 
-          <div id="N">
+          <div class="parameter" id="N">
             <div>Size</div>
             <div>\(N =\)</div>
             <input id="Nx" type="number" value="16" min="1" />

@@ -57,10 +57,14 @@ class Model {
     this.arrow = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
 
     this.T = 2;
-    this.J = 1;
+    this.J1 = 1;
+    this.J2 = 1;
+    this.J3 = 0;
+    this.J4 = 0;
+    this.J0 = 0;
     this.h = 0;
 
-    for (const id of ["T", "J", "h"]) {
+    for (const id of ["T", "J1", "J2", "J3", "J4", "J0", "h"]) {
       for (const elem of document.querySelectorAll(`#${id} input`)) {
         elem.addEventListener("input", (event) => {
           this[id] = event.target.valueAsNumber;
@@ -127,10 +131,11 @@ class Model {
     const y = Math.floor(Math.random() * this.Ny);
 
     const energyDifference = (
-      - this.J * this.getState(x + 1, y    )
-      - this.J * this.getState(x,     y + 1)
-      - this.J * this.getState(x - 1, y    )
-      - this.J * this.getState(x,     y - 1)
+      - this.J1 * (this.getState(x + 1, y    ) + this.getState(x - 1, y    ))
+      - this.J2 * (this.getState(x,     y + 1) + this.getState(x,     y - 1))
+      - this.J3 * (this.getState(x + 1, y + 1) + this.getState(x - 1, y - 1))
+      - this.J4 * (this.getState(x - 1, y + 1) + this.getState(x + 1, y - 1))
+      - this.J0 * this.states[this.Nx * y + x]
       - this.h
     ) * -2 * this.states[this.Nx * y + x];
 
@@ -157,8 +162,12 @@ class Model {
       for (let x = 0; x < this.Nx; x++) {
         M += this.states[this.Nx * y + x];
         E += (
-          - this.J * this.getState(x + 1, y    )
-          - this.J * this.getState(x,     y + 1)
+          /* No double counting! */
+          - this.J1 * this.getState(x + 1, y    )
+          - this.J2 * this.getState(x,     y + 1)
+          - this.J3 * this.getState(x + 1, y + 1)
+          - this.J4 * this.getState(x - 1, y + 1)
+          - this.J0 * this.states[this.Nx * y + x]
           - this.h
         ) * this.states[this.Nx * y + x];
       }
