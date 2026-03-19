@@ -63,8 +63,11 @@ class Model {
     this.J4 = 0;
     this.J0 = 0;
     this.h = 0;
+    this.speed = 0.1;
+    this.Nx = 10;
+    this.Ny = 10;
 
-    for (const id of ["T", "J1", "J2", "J3", "J4", "J0", "h"]) {
+    for (const id of ["T", "J1", "J2", "J3", "J4", "J0", "h", "speed"]) {
       for (const elem of document.querySelectorAll(`#${id} input`)) {
         elem.addEventListener("input", (event) => {
           this[id] = event.target.valueAsNumber;
@@ -72,22 +75,33 @@ class Model {
       }
     }
 
-    this.A = 100;
+    document.getElementById("Nx").addEventListener(
+      "input", this.changeNx.bind(this)
+    );
+    document.getElementById("Ny").addEventListener(
+      "input", this.changeNy.bind(this)
+    );
+
+    for (const elem of document.querySelectorAll("#zoom input")) {
+      elem.addEventListener("input", (event) => {
+        this.zoom = event.target.valueAsNumber;
+        this.drawStates()
+      });
+    }
+
+    this.historyLength = 256;
 
     this.zoom = 64;
     document.getElementById("zoom").addEventListener("input", (event) => {
       this.zoom = event.target.valueAsNumber;
     });
 
-    this.start();
-  }
-
-  start(event) {
-    cancelAnimationFrame(this.requestId);
-    this.requestId = undefined;
-
-    this.Nx = document.getElementById("Nx").valueAsNumber;
-    this.Ny = document.getElementById("Ny").valueAsNumber;
+    document.getElementById("reset").addEventListener(
+      "click", this.reset.bind(this)
+    );
+    document.getElementById("randomize").addEventListener(
+      "click", this.randomize.bind(this)
+    );
 
     // The state of the cell at (x, y) is this.states[this.Nx * y + x].
     this.states = []
@@ -97,13 +111,55 @@ class Model {
       }
     }
 
+    this.graphIsShown = true;
+    if (this.graphIsShown) {
+      document.getElementById("graphContainer").style.display = "flex";
+      this.graphCanvas = document.getElementById("graphCanvas");
+      this.graphContext = this.graphCanvas.getContext("2d");
+      this.graphCanvas.style.width = "200px";
+      this.graphCanvas.style.height = "200px";
+      this.graphCanvas.width = 400;
+      this.graphCanvas.height = 400;
+      this.THistory = [];
+      this.CHistory = [];
+      this.chiHistory = [];
+
+      this.historyLength = 1000;
+    }
+
     this.EHistory = [];
     this.MHistory = [];
-    for (let i = 0; i < this.A; i++) {
+    for (let i = 0; i < this.historyLength; i++) {
       this.EHistory.push(undefined);
       this.MHistory.push(undefined);
     }
 
+    this.drawStates();
+
+    if (this.graphIsShown) {
+      this.timesAutoran = 0;
+      this.TIndex = 1;
+      this.setT(this.TIndex * 0.1);
+      this.requestId = requestAnimationFrame(this.autorun.bind(this));
+    } else {
+      this.requestId = requestAnimationFrame(this.run.bind(this));
+    }
+  }
+
+  setT(T) {
+    this.T = T;
+    for (const elem of document.querySelectorAll("#T input")) {
+      elem.value = `${this.T.toFixed(1)}`;
+    }
+  }
+
+  run(timestamp) {
+    this.requestId = undefined;
+
+    for (let i = 0; i < this.speed * this.Nx * this.Ny; i++) {
+      this.calculateStatistics();
+      this.proposeNewConfigulation();
+    }
     this.drawStates();
 
     if (!this.requestId) {
@@ -111,17 +167,38 @@ class Model {
     }
   }
 
-  run(timestamp) {
+  autorun() {
     this.requestId = undefined;
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 20 * this.Nx * this.Ny; i++) {
       this.proposeNewConfigulation();
+      if (i % (this.Nx * this.Ny) === 0) {
+        this.calculateStatistics();
+      }
     }
-    this.calculateStatistics();
     this.drawStates();
 
-    if (!this.requestId) {
-      this.requestId = requestAnimationFrame(this.run.bind(this));
+    this.timesAutoran++;
+    if (this.timesAutoran >= 100) {
+      this.THistory.push(this.T);
+      this.CHistory.push(this.C);
+      this.chiHistory.push(this.chi);
+      this.drawGraph();
+
+      this.timesAutoran = 0;
+      this.TIndex++;
+      if (this.TIndex <= 40) {
+        this.setT(this.TIndex * 0.1);
+        this.reset()
+
+        if (!this.requestId) {
+          this.requestId = requestAnimationFrame(this.autorun.bind(this));
+        }
+      }
+    } else {
+      if (!this.requestId) {
+        this.requestId = requestAnimationFrame(this.autorun.bind(this));
+      }
     }
   }
 
@@ -181,16 +258,16 @@ class Model {
     let U2Expval = 0;
     let MExpval = 0;
     let M2Expval = 0;
-    for (let a = 0; a < this.A; a++) {
+    for (let a = 0; a < this.historyLength; a++) {
       UExpval += this.EHistory[a];
       U2Expval += this.EHistory[a] ** 2;
       MExpval += this.MHistory[a];
       M2Expval += this.MHistory[a] ** 2;
     }
-    UExpval /= this.A;
-    U2Expval /= this.A;
-    MExpval /= this.A;
-    M2Expval /= this.A;
+    UExpval /= this.historyLength;
+    U2Expval /= this.historyLength;
+    MExpval /= this.historyLength;
+    M2Expval /= this.historyLength;
     const C = (U2Expval - UExpval ** 2) / this.T ** 2;  // Actually C/k
     const chi = (M2Expval - MExpval ** 2) / this.T;
 
@@ -203,7 +280,10 @@ class Model {
     document.getElementById("C").innerText = formatNumber(CPerCell);
     document.getElementById("chi").innerText = formatNumber(chiPerCell);
 
-    return [EPerCell, MPerCell, CPerCell, chiPerCell];
+    this.E = EPerCell;
+    this.M = MPerCell;
+    this.C = CPerCell;
+    this.chi = chiPerCell;
   }
 
   getState(x, y) {
@@ -264,8 +344,29 @@ class Model {
     }
   }
 
+  drawGraph() {
+    for (let i = 0; i < this.THistory.length; i++) {
+      T = this.THistory[i];
+      C = this.CHistory[i];
+      chi = this.chiHistory[i];
+
+      this.graphContext.fillStyle = "black";
+      this.graphContext.beginPath();
+      this.graphContext.ellipse(
+        T * 100, 400 - C * 200, 5, 5, 0, 0, 2 * Math.PI
+      );
+      this.graphContext.fill();
+
+      this.graphContext.fillStyle = "yellow";
+      this.graphContext.beginPath();
+      this.graphContext.ellipse(
+        T * 100, 400 - chi * 100, 5, 5, 0, 0, 2 * Math.PI
+      );
+      this.graphContext.fill();
+    }
+  }
+
   reset() {
-    console.log("reset");
     for (let y = 0; y < this.Ny; y++) {
       for (let x = 0; x < this.Nx; x++) {
         this.states[this.Nx * y + x] = 1;
@@ -282,20 +383,57 @@ class Model {
     }
     this.drawStates();
   }
+
+  changeNx(event) {
+    const oldNx = this.Nx;
+    const newNx = event.target.valueAsNumber;
+
+    if (newNx < oldNx) {
+      // ABC    AB
+      // DEF -> DE
+      // GHI    GH
+      for (let y = this.Ny - 1; y >= 0; y--) {
+        this.states.splice(oldNx * y + newNx, oldNx - newNx);
+      }
+    } else if (newNx > oldNx) {
+      // ABC    ABC1
+      // DEF -> DEF1
+      // GHI    GHI1
+      for (let y = 0; y < this.Ny; y++) {
+        this.states.splice(
+          newNx * y + oldNx, 0, ...Array(newNx - oldNx).fill(1)
+        );
+      }
+    }
+
+    this.Nx = newNx;
+    this.drawStates();
+  }
+
+  changeNy(event) {
+    const oldNy = this.Ny;
+    const newNy = event.target.valueAsNumber;
+
+    if (newNy < oldNy) {
+      // ABC    ABC
+      // DEF -> DEF
+      // GHI
+      this.states.splice(this.Nx * newNy);
+    } else if (newNy > oldNy) {
+      // ABC    ABC1
+      // DEF -> DEF1
+      // GHI    GHI1
+      this.states.splice(
+        this.Nx * oldNy, 0, ...Array(this.Nx * (newNy - oldNy)).fill(1)
+      );
+    }
+
+    this.Ny = newNy;
+    this.drawStates();
+  }
 }
 
 const model = new Model();
-
-document.getElementById("reset").addEventListener(
-  "click", model.reset.bind(model)
-);
-document.getElementById("randomize").addEventListener(
-  "click", model.randomize.bind(model)
-);
-document.getElementById("restart").addEventListener(
-  "click", model.start.bind(model)
-);
-
 
 // I began to write this file as a hobby project.
 // I did not use any AI tools to write this file.

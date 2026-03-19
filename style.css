@@ -29,6 +29,24 @@ body {
   flex: 1fr;
 }
 
+#output > #canvasContainer > #graphContainer {
+  background-color: red;
+
+  border: 1px solid #C0C0C0;
+  border-radius: 4px;
+
+  position: absolute;
+
+  display: none;
+
+  justify-content: center;
+  align-items: center;
+}
+
+#output > #canvasContainer > #graphContainer > #CCanvas {
+  background-color: lime;
+}
+
 #output > #statsContainer {
   flex: 0 0 min-content;
 
@@ -117,7 +135,7 @@ body {
 }
 
 #control > #buttonContainer > button {
-  flex: 1fr;
+  flex: 100%;
 }
 
 #control > #buttonContainer > button > img {
@@ -127,6 +145,7 @@ body {
 }
 
 #control > #buttonContainer > #play, #control > #buttonContainer > #pause {
+  flex: 0 0 3rem;
   width: 3rem;
   height: 3rem;
 
@@ -159,19 +178,19 @@ body {
   align-content: center;
 }
 
-#control > div.slider, #control > #N {
+#control .slider, #control > #N {
   margin: 2rem 0rem;
 }
 
 #control > #J1, #control > #J2, #control > #J3, #control > #J4 {
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 #control > #J2, #control > #J3, #control > #J4, #control > #J0 {
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 
-#control > div.slider {
+#control div.slider {
   display: flex;
   flex-direction: column;
 }

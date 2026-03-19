@@ -19,6 +19,9 @@
     <div id="output">
       <div id="canvasContainer">
         <canvas id="canvas"></canvas>
+        <div id="graphContainer">
+          <canvas id="graphCanvas"></canvas>
+        </div>
       </div>
       <div id="statsContainer">
         <div id="stats">
@@ -29,7 +32,7 @@
           <div></div>
           <div></div>
           <div>\(\smash{=}\)</div>
-          <div id="E" class="value">&minus;1.111</div>
+          <div id="E" class="value"></div>
           <div>\(\times\)</div>
           <div>\(\smash{N}\)</div>
 
@@ -38,7 +41,7 @@
           <div>\(\smash{=}\)</div>
           <div>\(\smash{\displaystyle \sum_i s_i}\)</div>
           <div>\(\smash{=}\)</div>
-          <div id="M" class="value">2.345</div>
+          <div id="M" class="value"></div>
           <div>\(\times\)</div>
           <div>\(\smash{N}\)</div>
 
@@ -52,7 +55,7 @@
             }\)
           </div>
           <div>\(\smash{=}\)</div>
-          <div id="C" class="value">123.456</div>
+          <div id="C" class="value"></div>
           <div>\(\times\)</div>
           <div>\(\smash{N}\)</div>
 
@@ -66,7 +69,7 @@
             }\)
           </div>
           <div>\(\smash{=}\)</div>
-          <div id="chi" class="value">2.345</div>
+          <div id="chi" class="value"></div>
           <div>\(\times\)</div>
           <div>\(\smash{N}\)</div>
         </div>
@@ -76,7 +79,7 @@
       <div id="control">
         <header>
           <h1>Ising Model Simulation</h1>
-          <div>With the Monte Carlo Method</div>
+          <div>With the Metropolis Algorithm</div>
         </header>
 
         <div id="buttonContainer">
@@ -183,40 +186,37 @@
           />
         </div>
 
-        <datalist id="zero-stop">
-          <option value="0"></option>
-        </datalist>
-
-        <datalist id="zoom-stop">
-          <option value="8"></option>
-          <option value="16"></option>
-          <option value="24"></option>
-          <option value="32"></option>
-          <option value="40"></option>
-          <option value="48"></option>
-          <option value="56"></option>
-          <option value="64"></option>
-        </datalist>
-
         <details>
           <summary class="clickable">More controls</summary>
 
           <div class="parameter" id="N">
             <div>Size</div>
             <div>\(N =\)</div>
-            <input id="Nx" type="number" value="16" min="1" />
+            <input id="Nx" type="number" value="10" min="1" />
             <div>\(\times\)</div>
-            <input id="Ny" type="number" value="16" min="1" />
+            <input id="Ny" type="number" value="10" min="1" />
           </div>
 
-          <input
-            id="zoom"
-            type="range" value="64" min="1" max="64" step="1"
-            list="zoom-stop"
-          />
+          <div class="slider" id="zoom">
+            <div class="parameter">
+              <div>Zoom</div>
+              <input type="number" value="64" step="1" />
+            </div>
+            <input type="range" value="64" min="1" max="64" step="1" />
+          </div>
 
-          <button id="restart">Restart</button>
+          <div class="slider" id="speed">
+            <div class="parameter">
+              <div>Speed</div>
+              <input type="number" value="0.1" min="0" step="0.1" />
+            </div>
+            <input type="range" value="0.1" min="0" max="10" step="0.1" />
+          </div>
         </details>
+
+        <datalist id="zero-stop">
+          <option value="0"></option>
+        </datalist>
       </div>
     </div>
     <script src="slider.js"></script>
