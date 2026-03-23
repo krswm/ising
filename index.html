@@ -20,7 +20,10 @@
       <div id="canvasContainer">
         <canvas id="canvas"></canvas>
         <div id="graphContainer">
-          <canvas id="graphCanvas"></canvas>
+          <canvas id="ECanvas"></canvas>
+          <canvas id="MCanvas"></canvas>
+          <canvas id="CCanvas"></canvas>
+          <canvas id="chiCanvas"></canvas>
         </div>
       </div>
       <div id="statsContainer">
@@ -192,17 +195,17 @@
           <div class="parameter" id="N">
             <div>Size</div>
             <div>\(N =\)</div>
-            <input id="Nx" type="number" value="10" min="1" />
+            <input id="Nx" type="number" value="40" min="1" />
             <div>\(\times\)</div>
-            <input id="Ny" type="number" value="10" min="1" />
+            <input id="Ny" type="number" value="40" min="1" />
           </div>
 
           <div class="slider" id="zoom">
             <div class="parameter">
               <div>Zoom</div>
-              <input type="number" value="64" step="1" />
+              <input type="number" value="16" step="1" />
             </div>
-            <input type="range" value="64" min="1" max="64" step="1" />
+            <input type="range" value="32" min="1" max="16" step="1" />
           </div>
 
           <div class="slider" id="speed">

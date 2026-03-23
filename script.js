@@ -57,15 +57,16 @@ class Model {
     this.arrow = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
 
     this.T = 2;
-    this.J1 = 1;
-    this.J2 = 1;
-    this.J3 = 0;
-    this.J4 = 0;
+    this.J1 = 0.5;
+    this.J2 = 0.5;
+    this.J3 = 0.5;
+    this.J4 = 0.5;
     this.J0 = 0;
     this.h = 0;
     this.speed = 0.1;
-    this.Nx = 10;
-    this.Ny = 10;
+    this.Nx = 40;
+    this.Ny = 40;
+    this.zoom = 16;
 
     for (const id of ["T", "J1", "J2", "J3", "J4", "J0", "h", "speed"]) {
       for (const elem of document.querySelectorAll(`#${id} input`)) {
@@ -90,8 +91,6 @@ class Model {
     }
 
     this.historyLength = 256;
-
-    this.zoom = 64;
     document.getElementById("zoom").addEventListener("input", (event) => {
       this.zoom = event.target.valueAsNumber;
     });
@@ -104,35 +103,32 @@ class Model {
     );
 
     // The state of the cell at (x, y) is this.states[this.Nx * y + x].
-    this.states = []
-    for (let y = 0; y < this.Ny; y++) {
-      for (let x = 0; x < this.Nx; x++) {
-        this.states.push(1);
-      }
-    }
+    this.states = Array(this.Nx * this.Ny).fill(1);
 
-    this.graphIsShown = true;
+    this.graphIsShown = false;
     if (this.graphIsShown) {
-      document.getElementById("graphContainer").style.display = "flex";
-      this.graphCanvas = document.getElementById("graphCanvas");
-      this.graphContext = this.graphCanvas.getContext("2d");
-      this.graphCanvas.style.width = "200px";
-      this.graphCanvas.style.height = "200px";
-      this.graphCanvas.width = 400;
-      this.graphCanvas.height = 400;
-      this.THistory = [];
-      this.CHistory = [];
-      this.chiHistory = [];
+      document.getElementById("graphContainer").style.display = "grid";
 
-      this.historyLength = 1000;
+      for (const name of ["E", "M", "C", "chi"]) {
+        const canvas = document.getElementById(`${name}Canvas`);
+        this[`${name}Context`] = canvas.getContext("2d");
+        canvas.style.width = "200px";
+        canvas.style.height = "200px";
+        canvas.width = 400;
+        canvas.height = 400;
+      }
+
+      this.graphT = [];
+      this.graphE = [];
+      this.graphM = [];
+      this.graphC = [];
+      this.graphchi = [];
+
+      this.historyLength = 500;
     }
 
-    this.EHistory = [];
-    this.MHistory = [];
-    for (let i = 0; i < this.historyLength; i++) {
-      this.EHistory.push(undefined);
-      this.MHistory.push(undefined);
-    }
+    this.EHistory = Array(this.historyLength);
+    this.MHistory = Array(this.historyLength);
 
     this.drawStates();
 
@@ -170,7 +166,7 @@ class Model {
   autorun() {
     this.requestId = undefined;
 
-    for (let i = 0; i < 20 * this.Nx * this.Ny; i++) {
+    for (let i = 0; i < 5 * this.Nx * this.Ny; i++) {
       this.proposeNewConfigulation();
       if (i % (this.Nx * this.Ny) === 0) {
         this.calculateStatistics();
@@ -180,9 +176,11 @@ class Model {
 
     this.timesAutoran++;
     if (this.timesAutoran >= 100) {
-      this.THistory.push(this.T);
-      this.CHistory.push(this.C);
-      this.chiHistory.push(this.chi);
+      this.graphT.push(this.T);
+      this.graphE.push(this.E);
+      this.graphM.push(this.M);
+      this.graphC.push(this.C);
+      this.graphchi.push(this.chi);
       this.drawGraph();
 
       this.timesAutoran = 0;
@@ -345,24 +343,40 @@ class Model {
   }
 
   drawGraph() {
-    for (let i = 0; i < this.THistory.length; i++) {
-      T = this.THistory[i];
-      C = this.CHistory[i];
-      chi = this.chiHistory[i];
+    for (let i = 0; i < this.graphT.length; i++) {
+      T = this.graphT[i];
+      E = this.graphE[i];
+      M = this.graphM[i];
+      C = this.graphC[i];
+      chi = this.graphchi[i];
 
-      this.graphContext.fillStyle = "black";
-      this.graphContext.beginPath();
-      this.graphContext.ellipse(
-        T * 100, 400 - C * 200, 5, 5, 0, 0, 2 * Math.PI
+      this.EContext.fillStyle = "black";
+      this.EContext.beginPath();
+      this.EContext.ellipse(
+        T * 100, - E * 200, 5, 5, 0, 0, 2 * Math.PI
       );
-      this.graphContext.fill();
+      this.EContext.fill();
 
-      this.graphContext.fillStyle = "yellow";
-      this.graphContext.beginPath();
-      this.graphContext.ellipse(
-        T * 100, 400 - chi * 100, 5, 5, 0, 0, 2 * Math.PI
+      this.MContext.fillStyle = "black";
+      this.MContext.beginPath();
+      this.MContext.ellipse(
+        T * 100, 200 - M * 200, 5, 5, 0, 0, 2 * Math.PI
       );
-      this.graphContext.fill();
+      this.MContext.fill();
+
+      this.CContext.fillStyle = "black";
+      this.CContext.beginPath();
+      this.CContext.ellipse(
+        T * 100, 400 - C * 100, 5, 5, 0, 0, 2 * Math.PI
+      );
+      this.CContext.fill();
+
+      this.chiContext.fillStyle = "black";
+      this.chiContext.beginPath();
+      this.chiContext.ellipse(
+        T * 100, 400 - chi * 50, 5, 5, 0, 0, 2 * Math.PI
+      );
+      this.chiContext.fill();
     }
   }
 

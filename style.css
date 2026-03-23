@@ -30,21 +30,21 @@ body {
 }
 
 #output > #canvasContainer > #graphContainer {
-  background-color: red;
-
-  border: 1px solid #C0C0C0;
-  border-radius: 4px;
-
   position: absolute;
 
   display: none;
+  grid: 200px 200px / 200px 200px;
+  gap: 2rem;
 
   justify-content: center;
   align-items: center;
 }
 
-#output > #canvasContainer > #graphContainer > #CCanvas {
-  background-color: lime;
+#output > #canvasContainer > #graphContainer > canvas {
+  border: 1px solid #C0C0C0;
+  border-radius: 4px;
+
+  background-color: #FFFFFF;
 }
 
 #output > #statsContainer {
