@@ -1,31 +1,6 @@
-let isPlaying = true;
-
-document.getElementById("play").addEventListener("click", (event) => {
-  if (!model.requestId) {
-    model.requestId = requestAnimationFrame(model.run.bind(model));
-  }
-
-  document.getElementById("play").style.display = "none";
-  document.getElementById("pause").style.display = "inline-block";
-
-  isPlaying = true;
-});
-
-document.getElementById("pause").addEventListener("click", (event) => {
-  if (model.requestId) {
-    cancelAnimationFrame(model.requestId);
-    model.requestId = undefined;
-  }
-
-  document.getElementById("pause").style.display = "none";
-  document.getElementById("play").style.display = "inline-block";
-
-  isPlaying = false;
-});
-
 function mod(a, b) {
-  // Return modulo.
-  // Note that JavaScript's % has a quirk for negative numbers.
+  // Modulo.
+  // JavaScript's % has a quirk for negative numbers.
   // For instance, -11 % 10 is -1, not 9.
 
   return ((a % b) + b) % b;
@@ -36,16 +11,6 @@ function formatNumber(number) {
     return number.toFixed(3).replace("-", "\u2212");  // Minus
   } else {
     return "\u2014";  // Em dash
-  }
-}
-
-function spinDifference(sa, sb) {
-  let diff = sb - sa;
-  diff = mod(diff, 2 * Math.PI);
-  if (diff < Math.PI) {
-    return diff;
-  } else {
-    return diff - 2 * Math.PI;
   }
 }
 
@@ -76,12 +41,53 @@ class Model {
       }
     }
 
-    document.getElementById("Nx").addEventListener(
-      "input", this.changeNx.bind(this)
-    );
-    document.getElementById("Ny").addEventListener(
-      "input", this.changeNy.bind(this)
-    );
+    document.getElementById("Nx").addEventListener("input", (event) => {
+      const oldNx = this.Nx;
+      const newNx = event.target.valueAsNumber;
+
+      if (newNx < oldNx) {
+        // ABC    AB
+        // DEF -> DE
+        // GHI    GH
+        for (let y = this.Ny - 1; y >= 0; y--) {
+          this.states.splice(oldNx * y + newNx, oldNx - newNx);
+        }
+      } else if (newNx > oldNx) {
+        // ABC    ABC1
+        // DEF -> DEF1
+        // GHI    GHI1
+        for (let y = 0; y < this.Ny; y++) {
+          this.states.splice(
+            newNx * y + oldNx, 0, ...Array(newNx - oldNx).fill(1)
+          );
+        }
+      }
+
+      this.Nx = newNx;
+      this.drawStates();
+    });
+
+    document.getElementById("Ny").addEventListener("input", (event) => {
+      const oldNy = this.Ny;
+      const newNy = event.target.valueAsNumber;
+
+      if (newNy < oldNy) {
+        // ABC    ABC
+        // DEF -> DEF
+        // GHI
+        this.states.splice(this.Nx * newNy);
+      } else if (newNy > oldNy) {
+        // ABC    ABC1
+        // DEF -> DEF1
+        // GHI    GHI1
+        this.states.splice(
+          this.Nx * oldNy, 0, ...Array(this.Nx * (newNy - oldNy)).fill(1)
+        );
+      }
+
+      this.Ny = newNy;
+      this.drawStates();
+    });
 
     for (const elem of document.querySelectorAll("#zoom input")) {
       elem.addEventListener("input", (event) => {
@@ -90,33 +96,49 @@ class Model {
       });
     }
 
-    this.historyLength = 256;
+    this.historyLength = 500;
     document.getElementById("zoom").addEventListener("input", (event) => {
       this.zoom = event.target.valueAsNumber;
     });
 
-    document.getElementById("reset").addEventListener(
-      "click", this.reset.bind(this)
-    );
-    document.getElementById("randomize").addEventListener(
-      "click", this.randomize.bind(this)
-    );
-
-    // The state of the cell at (x, y) is this.states[this.Nx * y + x].
-    this.states = Array(this.Nx * this.Ny).fill(1);
-
-    this.graphIsShown = false;
-    if (this.graphIsShown) {
-      document.getElementById("graphContainer").style.display = "grid";
-
-      for (const name of ["E", "M", "C", "chi"]) {
-        const canvas = document.getElementById(`${name}Canvas`);
-        this[`${name}Context`] = canvas.getContext("2d");
-        canvas.style.width = "200px";
-        canvas.style.height = "200px";
-        canvas.width = 400;
-        canvas.height = 400;
+    document.getElementById("play").addEventListener("click", (event) => {
+      if (!this.requestId) {
+        this.requestId = requestAnimationFrame(this.run.bind(this));
       }
+
+      document.getElementById("play").style.display = "none";
+      document.getElementById("pause").style.display = "inline-block";
+    });
+
+    document.getElementById("pause").addEventListener("click", (event) => {
+      if (this.requestId) {
+        cancelAnimationFrame(this.requestId);
+        this.requestId = undefined;
+      }
+
+      document.getElementById("pause").style.display = "none";
+      document.getElementById("play").style.display = "inline-block";
+    });
+
+    document.getElementById("reset").addEventListener("click", (event) => {
+      this.states.fill(1);
+      this.drawStates();
+    });
+
+    document.getElementById("randomize").addEventListener("click", (event) => {
+      for (let i = 0; i < this.Nx * this.Ny; i++) {
+        this.states[i] = Math.random() >= 0.5 ? 1 : -1;
+      }
+      this.drawStates();
+    });
+
+    document.getElementById("autorun").addEventListener("click", (event) => {
+      document.getElementById("autorun").style.display = "none";
+      document.getElementById("manual").style.display = "inline-block";
+
+      cancelAnimationFrame(this.requestId);
+
+      document.getElementById("graphContainer").style.display = "grid";
 
       this.graphT = [];
       this.graphE = [];
@@ -124,7 +146,33 @@ class Model {
       this.graphC = [];
       this.graphchi = [];
 
-      this.historyLength = 500;
+      this.timesAutoran = 0;
+      this.TIndex = 1;
+      this.setT(this.TIndex * 0.1);
+      this.requestId = requestAnimationFrame(this.autorun.bind(this));
+    });
+
+    document.getElementById("manual").addEventListener("click", (event) => {
+      document.getElementById("autorun").style.display = "inline-block";
+      document.getElementById("manual").style.display = "none";
+
+      document.getElementById("graphContainer").style.display = "none";
+
+      cancelAnimationFrame(this.requestId);
+
+      this.requestId = requestAnimationFrame(this.run.bind(this));
+    });
+
+    // The state of the cell at (x, y) is this.states[this.Nx * y + x].
+    this.states = Array(this.Nx * this.Ny).fill(1);
+
+    for (const name of ["E", "M", "C", "chi"]) {
+      const canvas = document.getElementById(`${name}Canvas`);
+      this[`${name}Context`] = canvas.getContext("2d");
+      canvas.style.width = "200px";
+      canvas.style.height = "200px";
+      canvas.width = 400;
+      canvas.height = 400;
     }
 
     this.EHistory = Array(this.historyLength);
@@ -132,14 +180,7 @@ class Model {
 
     this.drawStates();
 
-    if (this.graphIsShown) {
-      this.timesAutoran = 0;
-      this.TIndex = 1;
-      this.setT(this.TIndex * 0.1);
-      this.requestId = requestAnimationFrame(this.autorun.bind(this));
-    } else {
-      this.requestId = requestAnimationFrame(this.run.bind(this));
-    }
+    this.requestId = requestAnimationFrame(this.run.bind(this));
   }
 
   setT(T) {
@@ -187,7 +228,7 @@ class Model {
       this.TIndex++;
       if (this.TIndex <= 40) {
         this.setT(this.TIndex * 0.1);
-        this.reset()
+        this.states.fill(1);
 
         if (!this.requestId) {
           this.requestId = requestAnimationFrame(this.autorun.bind(this));
@@ -378,72 +419,6 @@ class Model {
       );
       this.chiContext.fill();
     }
-  }
-
-  reset() {
-    for (let y = 0; y < this.Ny; y++) {
-      for (let x = 0; x < this.Nx; x++) {
-        this.states[this.Nx * y + x] = 1;
-      }
-    }
-    this.drawStates();
-  }
-
-  randomize() {
-    for (let y = 0; y < this.Ny; y++) {
-      for (let x = 0; x < this.Nx; x++) {
-        this.states[this.Nx * y + x] = Math.random() >= 0.5 ? 1 : -1;
-      }
-    }
-    this.drawStates();
-  }
-
-  changeNx(event) {
-    const oldNx = this.Nx;
-    const newNx = event.target.valueAsNumber;
-
-    if (newNx < oldNx) {
-      // ABC    AB
-      // DEF -> DE
-      // GHI    GH
-      for (let y = this.Ny - 1; y >= 0; y--) {
-        this.states.splice(oldNx * y + newNx, oldNx - newNx);
-      }
-    } else if (newNx > oldNx) {
-      // ABC    ABC1
-      // DEF -> DEF1
-      // GHI    GHI1
-      for (let y = 0; y < this.Ny; y++) {
-        this.states.splice(
-          newNx * y + oldNx, 0, ...Array(newNx - oldNx).fill(1)
-        );
-      }
-    }
-
-    this.Nx = newNx;
-    this.drawStates();
-  }
-
-  changeNy(event) {
-    const oldNy = this.Ny;
-    const newNy = event.target.valueAsNumber;
-
-    if (newNy < oldNy) {
-      // ABC    ABC
-      // DEF -> DEF
-      // GHI
-      this.states.splice(this.Nx * newNy);
-    } else if (newNy > oldNy) {
-      // ABC    ABC1
-      // DEF -> DEF1
-      // GHI    GHI1
-      this.states.splice(
-        this.Nx * oldNy, 0, ...Array(this.Nx * (newNy - oldNy)).fill(1)
-      );
-    }
-
-    this.Ny = newNy;
-    this.drawStates();
   }
 }
 

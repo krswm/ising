@@ -166,6 +166,10 @@ body {
   background-position: center center;
 }
 
+#control > #buttonContainer > #manual {
+  display: none;
+}
+
 #control > #legendContainer > .legend {
   flex: none;
 
