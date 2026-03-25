@@ -68,7 +68,7 @@ body {
 #output > #statsContainer > #stats > div.name {
   padding-right: 1.5rem;
 
-  text-align: end;
+  text-align: start;
 }
 
 #output > #statsContainer > #stats > div.value {

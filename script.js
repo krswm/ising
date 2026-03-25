@@ -29,8 +29,8 @@ class Model {
     this.J0 = 0;
     this.h = 0;
     this.speed = 0.1;
-    this.Nx = 40;
-    this.Ny = 40;
+    this.Nx = 16;
+    this.Ny = 16;
     this.zoom = 16;
 
     for (const id of ["T", "J1", "J2", "J3", "J4", "J0", "h", "speed"]) {
@@ -122,6 +122,8 @@ class Model {
 
     document.getElementById("reset").addEventListener("click", (event) => {
       this.states.fill(1);
+      this.EHistory = Array(this.historyLength);
+      this.MHistory = Array(this.historyLength);
       this.drawStates();
     });
 
@@ -148,7 +150,7 @@ class Model {
 
       this.timesAutoran = 0;
       this.TIndex = 1;
-      this.setT(this.TIndex * 0.1);
+      this.setT(this.TIndex * 0.05);
       this.requestId = requestAnimationFrame(this.autorun.bind(this));
     });
 
@@ -226,8 +228,8 @@ class Model {
 
       this.timesAutoran = 0;
       this.TIndex++;
-      if (this.TIndex <= 40) {
-        this.setT(this.TIndex * 0.1);
+      if (this.TIndex <= 80) {
+        this.setT(this.TIndex * 0.05);
         this.states.fill(1);
 
         if (!this.requestId) {
