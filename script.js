@@ -21,6 +21,8 @@ class Model {
 
     this.arrow = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
 
+    this.historyLength = 1000;
+
     this.T = 2;
     this.J1 = 0.5;
     this.J2 = 0.5;
@@ -31,7 +33,6 @@ class Model {
     this.speed = 0.1;
     this.Nx = 16;
     this.Ny = 16;
-    this.zoom = 16;
 
     for (const id of ["T", "J1", "J2", "J3", "J4", "J0", "h", "speed"]) {
       for (const elem of document.querySelectorAll(`#${id} input`)) {
@@ -87,18 +88,6 @@ class Model {
 
       this.Ny = newNy;
       this.drawStates();
-    });
-
-    for (const elem of document.querySelectorAll("#zoom input")) {
-      elem.addEventListener("input", (event) => {
-        this.zoom = event.target.valueAsNumber;
-        this.drawStates()
-      });
-    }
-
-    this.historyLength = 500;
-    document.getElementById("zoom").addEventListener("input", (event) => {
-      this.zoom = event.target.valueAsNumber;
     });
 
     document.getElementById("play").addEventListener("click", (event) => {
@@ -164,6 +153,19 @@ class Model {
 
       this.requestId = requestAnimationFrame(this.run.bind(this));
     });
+
+    this.canvasContainerWidth = (
+      document.getElementById("canvasContainer").offsetWidth
+    );
+    this.canvasContainerHeight = (
+      document.getElementById("canvasContainer").offsetHeight
+    );
+    new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        this.canvasContainerWidth = entry.target.offsetWidth;
+        this.canvasContainerHeight = entry.target.offsetHeight;
+      }
+    }).observe(document.getElementById("canvasContainer"));
 
     // The state of the cell at (x, y) is this.states[this.Nx * y + x].
     this.states = Array(this.Nx * this.Ny).fill(1);
@@ -335,11 +337,16 @@ class Model {
   }
 
   drawStates() {
+    const zoom = Math.floor(Math.min(
+      this.canvasContainerWidth / this.Nx * 2,
+      this.canvasContainerHeight / this.Ny * 2,
+    ));
+
     /// Draw the cell states.
-    this.canvas.width = this.Nx * this.zoom;
-    this.canvas.height = this.Ny * this.zoom;
-    this.canvas.style.width = `${this.Nx * this.zoom / 2}px`;
-    this.canvas.style.height = `${this.Ny * this.zoom / 2}px`;
+    this.canvas.width = this.Nx * zoom;
+    this.canvas.height = this.Ny * zoom;
+    this.canvas.style.width = `${this.Nx * zoom / 2}px`;
+    this.canvas.style.height = `${this.Ny * zoom / 2}px`;
 
     for (let y = 0; y < this.Ny; y++) {
       for (let x = 0; x < this.Nx; x++) {
@@ -350,14 +357,14 @@ class Model {
             this.context.fillStyle = "#E0E0E0";
             this.context.setTransform(1, 0, 0, 1, 0, 0);
             this.context.fillRect(
-              x * this.zoom, y * this.zoom, this.zoom, this.zoom
+              x * zoom, y * zoom, zoom, zoom
             );
 
-            if (this.zoom >= 16) {
+            if (zoom >= 16) {
               this.context.fillStyle = "#808080";
               this.context.setTransform(
-                this.zoom / 16, 0, 0, this.zoom / 16,
-                (x + 0.5) * this.zoom, (y + 0.5) * this.zoom
+                zoom / 16, 0, 0, zoom / 16,
+                (x + 0.5) * zoom, (y + 0.5) * zoom
               );
               this.context.fill(this.arrow);
             }
@@ -367,14 +374,14 @@ class Model {
             this.context.fillStyle = "#202020";
             this.context.setTransform(1, 0, 0, 1, 0, 0);
             this.context.fillRect(
-              x * this.zoom, y * this.zoom, this.zoom, this.zoom
+              x * zoom, y * zoom, zoom, zoom
             );
 
-            if (this.zoom >= 16) {
+            if (zoom >= 16) {
               this.context.fillStyle = "#808080";
               this.context.setTransform(
-                this.zoom / 16, 0, 0, -this.zoom / 16,
-                (x + 0.5) * this.zoom, (y + 0.5) * this.zoom
+                zoom / 16, 0, 0, -zoom / 16,
+                (x + 0.5) * zoom, (y + 0.5) * zoom
               );
               this.context.fill(this.arrow);
             }
