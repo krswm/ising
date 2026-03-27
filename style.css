@@ -133,6 +133,7 @@ body {
 }
 
 #control > #buttonContainer > button {
+  font-family: system-ui;
   flex: 100%;
 }
 

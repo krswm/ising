@@ -34,6 +34,9 @@ class Model {
     this.Nx = 16;
     this.Ny = 16;
 
+    this.possibleStates = [1, -1];
+    this.stateColors = ["#E0E0E0", "#202020"];
+
     for (const id of ["T", "J1", "J2", "J3", "J4", "J0", "h", "speed"]) {
       for (const elem of document.querySelectorAll(`#${id} input`)) {
         elem.addEventListener("input", (event) => {
@@ -59,7 +62,9 @@ class Model {
         // GHI    GHI1
         for (let y = 0; y < this.Ny; y++) {
           this.states.splice(
-            newNx * y + oldNx, 0, ...Array(newNx - oldNx).fill(1)
+            newNx * y + oldNx, 0, ...Array(newNx - oldNx).fill(
+              this.possibleStates[0]
+            )
           );
         }
       }
@@ -82,7 +87,9 @@ class Model {
         // DEF -> DEF1
         // GHI    GHI1
         this.states.splice(
-          this.Nx * oldNy, 0, ...Array(this.Nx * (newNy - oldNy)).fill(1)
+          this.Nx * oldNy, 0, ...Array(this.Nx * (newNy - oldNy)).fill(
+            this.possibleStates[0]
+          )
         );
       }
 
@@ -110,7 +117,7 @@ class Model {
     });
 
     document.getElementById("reset").addEventListener("click", (event) => {
-      this.states.fill(1);
+      this.states.fill(this.possibleStates[0]);
       this.EHistory = Array(this.historyLength);
       this.MHistory = Array(this.historyLength);
       this.drawStates();
@@ -118,7 +125,9 @@ class Model {
 
     document.getElementById("randomize").addEventListener("click", (event) => {
       for (let i = 0; i < this.Nx * this.Ny; i++) {
-        this.states[i] = Math.random() >= 0.5 ? 1 : -1;
+        this.states[i] = this.possibleStates[
+          Math.floor(Math.random() * this.possibleStates.length)
+        ];
       }
       this.drawStates();
     });
@@ -263,7 +272,7 @@ class Model {
       // If the new configuration has less energy,
       // always change the state.
       this.states[this.Nx * y + x] *= -1;
-          } else {
+    } else {
       // If the new configuration has more energy,
       // change the state by the acceptance ratio.
       const acceptanceRatio = (
