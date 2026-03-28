@@ -24,18 +24,17 @@ class Model {
     this.historyLength = 1000;
 
     this.T = 2;
-    this.J1 = 0.5;
-    this.J2 = 0.5;
-    this.J3 = 0.5;
-    this.J4 = 0.5;
+    this.J1 = 1;
+    this.J2 = 1;
+    this.J3 = 0;
+    this.J4 = 0;
     this.J0 = 0;
     this.h = 0;
     this.speed = 0.1;
     this.Nx = 16;
     this.Ny = 16;
 
-    this.possibleStates = [1, -1];
-    this.stateColors = ["#E0E0E0", "#202020"];
+    this.possibleSpins = [0.5, 0, -0.5]
 
     for (const id of ["T", "J1", "J2", "J3", "J4", "J0", "h", "speed"]) {
       for (const elem of document.querySelectorAll(`#${id} input`)) {
@@ -62,9 +61,7 @@ class Model {
         // GHI    GHI1
         for (let y = 0; y < this.Ny; y++) {
           this.states.splice(
-            newNx * y + oldNx, 0, ...Array(newNx - oldNx).fill(
-              this.possibleStates[0]
-            )
+            newNx * y + oldNx, 0, ...Array(newNx - oldNx).fill(0)
           );
         }
       }
@@ -87,9 +84,7 @@ class Model {
         // DEF -> DEF1
         // GHI    GHI1
         this.states.splice(
-          this.Nx * oldNy, 0, ...Array(this.Nx * (newNy - oldNy)).fill(
-            this.possibleStates[0]
-          )
+          this.Nx * oldNy, 0, ...Array(this.Nx * (newNy - oldNy)).fill(0)
         );
       }
 
@@ -117,7 +112,7 @@ class Model {
     });
 
     document.getElementById("reset").addEventListener("click", (event) => {
-      this.states.fill(this.possibleStates[0]);
+      this.states.fill(0);
       this.EHistory = Array(this.historyLength);
       this.MHistory = Array(this.historyLength);
       this.drawStates();
@@ -125,9 +120,7 @@ class Model {
 
     document.getElementById("randomize").addEventListener("click", (event) => {
       for (let i = 0; i < this.Nx * this.Ny; i++) {
-        this.states[i] = this.possibleStates[
-          Math.floor(Math.random() * this.possibleStates.length)
-        ];
+        this.states[i] = Math.floor(Math.random() * this.possibleSpins.length);
       }
       this.drawStates();
     });
@@ -148,7 +141,7 @@ class Model {
 
       this.timesAutoran = 0;
       this.TIndex = 1;
-      this.setT(this.TIndex * 0.05);
+      this.setT(this.TIndex * 0.1);
       this.requestId = requestAnimationFrame(this.autorun.bind(this));
     });
 
@@ -177,7 +170,7 @@ class Model {
     }).observe(document.getElementById("canvasContainer"));
 
     // The state of the cell at (x, y) is this.states[this.Nx * y + x].
-    this.states = Array(this.Nx * this.Ny).fill(1);
+    this.states = Array(this.Nx * this.Ny).fill(0);
 
     for (const name of ["E", "M", "C", "chi"]) {
       const canvas = document.getElementById(`${name}Canvas`);
@@ -239,9 +232,9 @@ class Model {
 
       this.timesAutoran = 0;
       this.TIndex++;
-      if (this.TIndex <= 80) {
-        this.setT(this.TIndex * 0.05);
-        this.states.fill(1);
+      if (this.TIndex <= 40) {
+        this.setT(this.TIndex * 0.1);
+        this.states.fill(0);
 
         if (!this.requestId) {
           this.requestId = requestAnimationFrame(this.autorun.bind(this));
@@ -259,19 +252,31 @@ class Model {
     const x = Math.floor(Math.random() * this.Nx);
     const y = Math.floor(Math.random() * this.Ny);
 
+    // Current state
+    const curr = this.states[this.Nx * y + x];
+
+    // Proposed state
+    const prop = (
+      (Math.floor(Math.random() * (this.possibleSpins.length - 1)) + curr + 1)
+      % this.possibleSpins.length
+    );
+
+    const currSpin = this.possibleSpins[curr];
+    const propSpin = this.possibleSpins[prop];
+
     const energyDifference = (
-      - this.J1 * (this.getState(x + 1, y    ) + this.getState(x - 1, y    ))
-      - this.J2 * (this.getState(x,     y + 1) + this.getState(x,     y - 1))
-      - this.J3 * (this.getState(x + 1, y + 1) + this.getState(x - 1, y - 1))
-      - this.J4 * (this.getState(x - 1, y + 1) + this.getState(x + 1, y - 1))
-      - this.J0 * this.states[this.Nx * y + x]
-      - this.h
-    ) * -2 * this.states[this.Nx * y + x];
+        this.J1 * (this.getSpin(x + 1, y    ) + this.getSpin(x - 1, y    ))
+      + this.J2 * (this.getSpin(x,     y + 1) + this.getSpin(x,     y - 1))
+      + this.J3 * (this.getSpin(x + 1, y + 1) + this.getSpin(x - 1, y - 1))
+      + this.J4 * (this.getSpin(x - 1, y + 1) + this.getSpin(x + 1, y - 1))
+      + this.J0 * (currSpin + propSpin)
+      + this.h
+    ) * (currSpin - propSpin);
 
     if (energyDifference < 0) {
       // If the new configuration has less energy,
       // always change the state.
-      this.states[this.Nx * y + x] *= -1;
+      this.states[this.Nx * y + x] = prop;
     } else {
       // If the new configuration has more energy,
       // change the state by the acceptance ratio.
@@ -279,7 +284,7 @@ class Model {
         this.T <= 0 ? 0 : Math.exp(-energyDifference / this.T)
       );
       if (Math.random() < acceptanceRatio) {
-        this.states[this.Nx * y + x] *= -1;
+        this.states[this.Nx * y + x] = prop;
       }
     }
   }
@@ -289,16 +294,16 @@ class Model {
     let E = 0;
     for (let y = 0; y < this.Ny; y++) {
       for (let x = 0; x < this.Nx; x++) {
-        M += this.states[this.Nx * y + x];
+        M += this.possibleSpins[this.states[this.Nx * y + x]];
         E += (
           /* No double counting! */
-          - this.J1 * this.getState(x + 1, y    )
-          - this.J2 * this.getState(x,     y + 1)
-          - this.J3 * this.getState(x + 1, y + 1)
-          - this.J4 * this.getState(x - 1, y + 1)
-          - this.J0 * this.states[this.Nx * y + x]
+          - this.J1 * this.getSpin(x + 1, y    )
+          - this.J2 * this.getSpin(x,     y + 1)
+          - this.J3 * this.getSpin(x + 1, y + 1)
+          - this.J4 * this.getSpin(x - 1, y + 1)
+          - this.J0 * this.possibleSpins[this.states[this.Nx * y + x]]
           - this.h
-        ) * this.states[this.Nx * y + x];
+        ) * this.possibleSpins[this.states[this.Nx * y + x]];
       }
     }
 
@@ -338,14 +343,21 @@ class Model {
     this.chi = chiPerCell;
   }
 
-  getState(x, y) {
+  getSpin(x, y) {
     /// Get the state of the cell at (x, y),
     /// considering the boundary condition if necessary.
 
-    return this.states[this.Nx * mod(y, this.Ny) + mod(x, this.Nx)];
+    return this.possibleSpins[
+      this.states[this.Nx * mod(y, this.Ny) + mod(x, this.Nx)]
+    ];
   }
 
   drawStates() {
+    const min_l = 5;
+    const max_l = 95;
+    const min_spin = Math.min(...this.possibleSpins);
+    const max_spin = Math.max(...this.possibleSpins);
+
     const zoom = Math.floor(Math.min(
       this.canvasContainerWidth / this.Nx * 2,
       this.canvasContainerHeight / this.Ny * 2,
@@ -359,43 +371,23 @@ class Model {
 
     for (let y = 0; y < this.Ny; y++) {
       for (let x = 0; x < this.Nx; x++) {
+        const spin = this.possibleSpins[this.states[this.Nx * y + x]];
+        const l = (
+          (max_l - min_l) * (spin - min_spin) / (max_spin - min_spin) + min_l
+        );
+        this.context.fillStyle = `oklch(${l}% 0% 0deg)`;
 
-        // Determine a color.
-        switch (this.states[this.Nx * y + x]) {
-          case 1:
-            this.context.fillStyle = "#E0E0E0";
-            this.context.setTransform(1, 0, 0, 1, 0, 0);
-            this.context.fillRect(
-              x * zoom, y * zoom, zoom, zoom
-            );
+        this.context.setTransform(1, 0, 0, 1, 0, 0);
+        this.context.fillRect(x * zoom, y * zoom, zoom, zoom);
 
-            if (zoom >= 16) {
-              this.context.fillStyle = "#808080";
-              this.context.setTransform(
-                zoom / 16, 0, 0, zoom / 16,
-                (x + 0.5) * zoom, (y + 0.5) * zoom
-              );
-              this.context.fill(this.arrow);
-            }
-
-            break;
-          case -1:
-            this.context.fillStyle = "#202020";
-            this.context.setTransform(1, 0, 0, 1, 0, 0);
-            this.context.fillRect(
-              x * zoom, y * zoom, zoom, zoom
-            );
-
-            if (zoom >= 16) {
-              this.context.fillStyle = "#808080";
-              this.context.setTransform(
-                zoom / 16, 0, 0, -zoom / 16,
-                (x + 0.5) * zoom, (y + 0.5) * zoom
-              );
-              this.context.fill(this.arrow);
-            }
-
-            break;
+        if (zoom >= 16) {
+          this.context.fillStyle = "oklch(50% 0% 0deg)";
+          this.context.setTransform(
+            zoom / 16, 0, 0,
+            spin / Math.max(Math.abs(max_spin), Math.abs(min_spin)) * zoom / 16,
+            (x + 0.5) * zoom, (y + 0.5) * zoom
+          );
+          this.context.fill(this.arrow);
         }
       }
     }
@@ -411,30 +403,22 @@ class Model {
 
       this.EContext.fillStyle = "black";
       this.EContext.beginPath();
-      this.EContext.ellipse(
-        T * 100, - E * 200, 5, 5, 0, 0, 2 * Math.PI
-      );
+      this.EContext.ellipse(T * 100, - E * 200, 5, 5, 0, 0, 2 * Math.PI);
       this.EContext.fill();
 
       this.MContext.fillStyle = "black";
       this.MContext.beginPath();
-      this.MContext.ellipse(
-        T * 100, 200 - M * 200, 5, 5, 0, 0, 2 * Math.PI
-      );
+      this.MContext.ellipse(T * 100, 200 - M * 200, 5, 5, 0, 0, 2 * Math.PI);
       this.MContext.fill();
 
       this.CContext.fillStyle = "black";
       this.CContext.beginPath();
-      this.CContext.ellipse(
-        T * 100, 400 - C * 100, 5, 5, 0, 0, 2 * Math.PI
-      );
+      this.CContext.ellipse(T * 100, 400 - C * 100, 5, 5, 0, 0, 2 * Math.PI);
       this.CContext.fill();
 
       this.chiContext.fillStyle = "black";
       this.chiContext.beginPath();
-      this.chiContext.ellipse(
-        T * 100, 400 - chi * 50, 5, 5, 0, 0, 2 * Math.PI
-      );
+      this.chiContext.ellipse(T * 100, 400 - chi * 50, 5, 5, 0, 0, 2 * Math.PI);
       this.chiContext.fill();
     }
   }
