@@ -39,10 +39,10 @@ body {
 }
 
 #output > #canvasContainer > #graphContainer > canvas {
-  border: 1px solid #C0C0C0;
-  border-radius: 4px;
+  border: 1px solid oklch(80% 0% 0deg);
+  border-radius: 0.5rem;
 
-  background-color: #FFFFFF;
+  background-color: oklch(100% 0% 0deg);
 }
 
 #output > #statsContainer {
@@ -80,18 +80,31 @@ body {
   display: flex;
 
   justify-content: center;
+
+  background-color: oklch(95% 0% 0deg);
 }
 
 #control {
   padding: 1rem;
 
   overflow: hidden scroll;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#control > .box {
+  background-color: oklch(100% 0% 0deg);
+  border-radius: 0.5rem;
+
+  padding: 1rem;
 }
 
 #control .clickable {
-  border: 1px solid #C0C0C0;
-  border-radius: 4px;
-  background-color: #FFFFFF;
+  border: 1px solid oklch(80% 0% 0deg);
+  border-radius: 0.5rem;
+  background-color: oklch(100% 0% 0deg);
 
   padding: 0.5rem;
 
@@ -99,11 +112,11 @@ body {
 }
 
 #control .clickable:hover {
-  background-color: #F0F0F0;
+  background-color: oklch(95% 0% 0deg);
 }
 
 #control .clickable:active {
-  background-color: #E0E0E0;
+  background-color: oklch(90% 0% 0deg);
 }
 
 #control input[type="number"] {
@@ -111,16 +124,16 @@ body {
 
   width: 6rem;
 
-  border: 1px solid #C0C0C0;
-  border-radius: 4px;
-  padding: 4px;
+  border: 1px solid oklch(90% 0% 0deg);
+  border-radius: 0.5rem;
+  padding: 0.25rem;
 
   font-family: system-ui;
   font-variant-numeric: tabular-nums;
 }
 
-#control > header {
-  margin: 0rem 0rem 2rem 0rem;
+#control input[type="number"]:hover {
+  border-color: oklch(80% 0% 0deg);
 }
 
 #control > header > h1 {
@@ -181,18 +194,6 @@ body {
   align-content: center;
 }
 
-#control .slider, #control > #N {
-  margin: 2rem 0rem;
-}
-
-#control > #J1, #control > #J2, #control > #J3, #control > #J4 {
-  margin-bottom: 0.5rem;
-}
-
-#control > #J2, #control > #J3, #control > #J4, #control > #J0 {
-  margin-top: 0.5rem;
-}
-
 #control div.slider {
   display: flex;
   flex-direction: column;
@@ -205,6 +206,8 @@ body {
   align-items: center;
 
   width: 100%;
+
+  box-sizing: border-box;
 }
 
 #control .parameter > div:nth-child(1) {
@@ -215,18 +218,30 @@ body {
   gap: 2rem;
 }
 
+#control #JContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  padding-top: 1rem;
+}
+
 #control .J {
   vertical-align: -0.75rem;
 }
 
+#control > details {
+  display: flex;
+  flex-direction: column;
+  gap: 0rem;
+}
+
 #control > details > summary {
   font-size: 1rem;
+}
 
-  border: 1px solid #C0C0C0;
-  border-radius: 4px;
-  padding: 0.5rem;
-
-  margin: 2rem 0rem;
+#control .katex-display {
+  margin: 0rem;
 }
 
 @media (width < 64rem) {
@@ -236,8 +251,6 @@ body {
 
   #controlContainer {
     min-height: 100vh;
-
-    border-top: solid 1px #C0C0C0;
   }
 
   #control {
@@ -254,10 +267,6 @@ body {
 
   #output {
     flex: auto;
-  }
-
-  #controlContainer {
-    border-left: solid 1px #C0C0C0;
   }
 
   #control {

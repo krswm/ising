@@ -81,7 +81,7 @@
       <div id="control">
         <header>
           <h1>Ising Model Simulation</h1>
-          <div>With the Metropolis Algorithm</div>
+          <div>with the Metropolis Algorithm</div>
         </header>
 
         <div id="buttonContainer">
@@ -93,104 +93,7 @@
           <button class="clickable" id="manual">Manual</button>
         </div>
 
-        <div class="slider" id="T">
-          <div class="parameter">
-            <div>Temperature</div>
-            <div>\(k_{\mathrm{B}} T =\)</div>
-            <input type="number" value="2" min="0" step="0.1" />
-          </div>
-          <input type="range" value="2" min="0" max="4" step="0.001" />
-        </div>
-
-        <div>
-          \[E = - \sum_{\langle i \, j \rangle} J_{i j} s_i s_j - h \sum_i s_i\]
-        </div>
-
-        <div class="parameter" id="legendContainer">
-          <div>Spin</div>
-          <div class="legend">
-            <img src="img/up.svg" alt="spin up" />
-            <div>\(\smash{s = 1}\)</div>
-          </div>
-          <div class="legend">
-            <img src="img/down.svg" alt="spin down" />
-            <div>\(\smash{s = -1}\)</div>
-          </div>
-        </div>
-
-        <div class="slider" id="h">
-          <div class="parameter">
-            <div>Field</div>
-            <div>\(h =\)</div>
-            <input type="number" value="0" step="0.1" />
-          </div>
-          <input
-            type="range" value="0" min="-2" max="2" step="0.001"
-            list="zero-stop"
-          />
-        </div>
-
-        <div class="slider" id="J1">
-          <div class="parameter">
-            <div>Coupling</div>
-            <div>\(J\)<img class="J" src="img/J1.svg"></img> \(=\)</div>
-            <input type="number" value="1" step="0.1" />
-          </div>
-          <input
-            type="range" value="1" min="-1" max="1" step="0.001"
-            list="zero-stop"
-          />
-        </div>
-
-        <div class="slider" id="J2">
-          <div class="parameter">
-            <div></div>
-            <div>\(J\)<img class="J" src="img/J2.svg"></img> \(=\)</div>
-            <input type="number" value="1" step="0.1" />
-          </div>
-          <input
-            type="range" value="1" min="-1" max="1" step="0.001"
-            list="zero-stop"
-          />
-        </div>
-
-        <div class="slider" id="J3">
-          <div class="parameter">
-            <div></div>
-            <div>\(J\)<img class="J" src="img/J3.svg"></img> \(=\)</div>
-            <input type="number" value="0" step="0.1" />
-          </div>
-          <input
-            type="range" value="0" min="-1" max="1" step="0.001"
-            list="zero-stop"
-          />
-        </div>
-
-        <div class="slider" id="J4">
-          <div class="parameter">
-            <div></div>
-            <div>\(J\)<img class="J" src="img/J4.svg"></img> \(=\)</div>
-            <input type="number" value="0" step="0.1" />
-          </div>
-          <input
-            type="range" value="0" min="-1" max="1" step="0.001"
-            list="zero-stop"
-          />
-        </div>
-
-        <div class="slider" id="J0">
-          <div class="parameter">
-            <div></div>
-            <div>\(J\)<img class="J" src="img/J0.svg"></img> \(=\)</div>
-            <input type="number" value="0" step="0.1" />
-          </div>
-          <input
-            type="range" value="0" min="-1" max="1" step="0.001"
-            list="zero-stop"
-          />
-        </div>
-
-        <div class="parameter" id="N">
+        <div class="box parameter" id="N">
           <div>Size</div>
           <div>\(N =\)</div>
           <input id="Nx" type="number" value="16" min="1" />
@@ -198,16 +101,124 @@
           <input id="Ny" type="number" value="16" min="1" />
         </div>
 
-        <details>
-          <summary class="clickable">More controls</summary>
-
-          <div class="slider" id="speed">
-            <div class="parameter">
-              <div>Speed</div>
-              <input type="number" value="0.1" min="0" step="0.1" />
-            </div>
-            <input type="range" value="0.1" min="0" max="10" step="0.1" />
+        <div class="box slider" id="speed">
+          <div class="parameter">
+            <div>Simulation speed</div>
+            <input type="number" value="0.125" min="0" step="0.001" />
           </div>
+          <input type="range" value="0.125" min="0" max="1" step="0.001" />
+        </div>
+
+        <div class="box slider" id="T">
+          <div class="parameter">
+            <div>Temperature</div>
+            <div>\(k_{\mathrm{B}} T =\)</div>
+            <input type="number" value="2" min="0" step="0.001" />
+          </div>
+          <input type="range" value="2" min="0" max="4" step="0.001" />
+        </div>
+
+        <div class="box">
+          \[
+            \vphantom{\Bigg|}
+            E = - \sum_{\langle i \, j \rangle} J_{i j} s_i s_j - h \sum_i s_i\]
+        </div>
+
+        <details class="box">
+          <summary>Spin \(s\)</summary>
+
+          <!--
+          <div class="parameter" id="legendContainer">
+            <div>Spin</div>
+            <div class="legend">
+              <img src="img/up.svg" alt="spin up" />
+              <div>\(\smash{s = 1}\)</div>
+            </div>
+            <div class="legend">
+              <img src="img/down.svg" alt="spin down" />
+              <div>\(\smash{s = -1}\)</div>
+            </div>
+          </div>
+          -->
+        </details>
+
+        <details class="box">
+          <summary>Coupling \(J\)</summary>
+
+          <div id="JContainer">
+            <div class="slider" id="J1">
+              <div class="parameter">
+                <div>Holizontal</div>
+                <div>\(J\)<img class="J" src="img/J1.svg"></img> \(=\)</div>
+                <input type="number" value="1" step="0.001" />
+              </div>
+              <input
+                type="range" value="1" min="-1" max="1" step="0.001"
+                list="zero-stop"
+              />
+            </div>
+
+            <div class="slider" id="J2">
+              <div class="parameter">
+                <div>Vertical</div>
+                <div>\(J\)<img class="J" src="img/J2.svg"></img> \(=\)</div>
+                <input type="number" value="1" step="0.001" />
+              </div>
+              <input
+                type="range" value="1" min="-1" max="1" step="0.001"
+                list="zero-stop"
+              />
+            </div>
+
+            <div class="slider" id="J3">
+              <div class="parameter">
+                <div>Diagonal</div>
+                <div>\(J\)<img class="J" src="img/J3.svg"></img> \(=\)</div>
+                <input type="number" value="0" step="0.001" />
+              </div>
+              <input
+                type="range" value="0" min="-1" max="1" step="0.001"
+                list="zero-stop"
+              />
+            </div>
+
+            <div class="slider" id="J4">
+              <div class="parameter">
+                <div>Diagonal</div>
+                <div>\(J\)<img class="J" src="img/J4.svg"></img> \(=\)</div>
+                <input type="number" value="0" step="0.001" />
+              </div>
+              <input
+                type="range" value="0" min="-1" max="1" step="0.001"
+                list="zero-stop"
+              />
+            </div>
+
+            <div class="slider" id="J0">
+              <div class="parameter">
+                <div>Self</div>
+                <div>\(J\)<img class="J" src="img/J0.svg"></img> \(=\)</div>
+                <input type="number" value="0" step="0.001" />
+              </div>
+              <input
+                type="range" value="0" min="-1" max="1" step="0.001"
+                list="zero-stop"
+              />
+            </div>
+          </div>
+        </details>
+
+        <div class="box slider" id="h">
+          <div class="parameter">
+            <div>Field</div>
+            <div>\(h =\)</div>
+            <input type="number" value="0" step="0.001" />
+          </div>
+          <input
+            type="range" value="0" min="-2" max="2" step="0.001"
+            list="zero-stop"
+          />
+        </div>
 
         <datalist id="zero-stop">
           <option value="0"></option>

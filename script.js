@@ -30,11 +30,11 @@ class Model {
     this.J4 = 0;
     this.J0 = 0;
     this.h = 0;
-    this.speed = 0.1;
+    this.speed = 0.125;
     this.Nx = 16;
     this.Ny = 16;
 
-    this.possibleSpins = [0.5, 0, -0.5]
+    this.possibleSpins = [1, -1];
 
     for (const id of ["T", "J1", "J2", "J3", "J4", "J0", "h", "speed"]) {
       for (const elem of document.querySelectorAll(`#${id} input`)) {
