@@ -84,13 +84,11 @@
           <div>with the Metropolis Algorithm</div>
         </header>
 
-        <div id="buttonContainer">
+        <div class="box" id="buttonContainer">
           <button class="clickable" id="play"></button>
           <button class="clickable" id="pause"></button>
-          <button class="clickable" id="reset">Reset</button>
-          <button class="clickable" id="randomize">Randomize</button>
-          <button class="clickable" id="autorun">Autorun</button>
-          <button class="clickable" id="manual">Manual</button>
+          <button class="clickable" id="autorun">Enter graph mode</button>
+          <button class="clickable" id="manual">Leave graph mode</button>
         </div>
 
         <div class="box parameter" id="N">
@@ -124,23 +122,29 @@
             E = - \sum_{\langle i \, j \rangle} J_{i j} s_i s_j - h \sum_i s_i\]
         </div>
 
-        <details class="box">
-          <summary>Spin \(s\)</summary>
-
-          <!--
-          <div class="parameter" id="legendContainer">
-            <div>Spin</div>
-            <div class="legend">
-              <img src="img/up.svg" alt="spin up" />
-              <div>\(\smash{s = 1}\)</div>
-            </div>
-            <div class="legend">
-              <img src="img/down.svg" alt="spin down" />
-              <div>\(\smash{s = -1}\)</div>
-            </div>
+        <div class="box">
+          <div id="spinButtonContainer">
+            <button class="clickable" id="reset">Reset spins</button>
+            <button class="clickable" id="randomize">Randomize spins</button>
           </div>
-          -->
-        </details>
+          <details>
+            <summary>Spin \(s\)</summary>
+
+            <!--
+            <div class="parameter" id="legendContainer">
+              <div>Spin</div>
+              <div class="legend">
+                <img src="img/up.svg" alt="spin up" />
+                <div>\(\smash{s = 1}\)</div>
+              </div>
+              <div class="legend">
+                <img src="img/down.svg" alt="spin down" />
+                <div>\(\smash{s = -1}\)</div>
+              </div>
+            </div>
+            -->
+          </details>
+        </div>
 
         <details class="box">
           <summary>Coupling \(J\)</summary>

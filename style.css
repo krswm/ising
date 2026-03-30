@@ -194,6 +194,17 @@ body {
   align-content: center;
 }
 
+#control #spinButtonContainer {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#control #spinButtonContainer > button {
+  font-family: system-ui;
+  flex: 100%;
+  margin-bottom: 1rem;
+}
+
 #control div.slider {
   display: flex;
   flex-direction: column;
