@@ -82,44 +82,60 @@
         <header>
           <h1>Ising Model Simulation</h1>
           <div>with the Metropolis Algorithm</div>
+          <div id="link"><a href="https://github.com/krswm/ising">Repository on GitHub</a></div>
         </header>
 
-        <div class="box" id="buttonContainer">
-          <button class="clickable" id="play"></button>
-          <button class="clickable" id="pause"></button>
-          <button class="clickable" id="autorun">Enter graph mode</button>
-          <button class="clickable" id="manual">Leave graph mode</button>
-        </div>
-
-        <div class="box parameter" id="N">
-          <div>Size</div>
-          <div>\(N =\)</div>
-          <input id="Nx" type="number" value="16" min="1" />
-          <div>\(\times\)</div>
-          <input id="Ny" type="number" value="16" min="1" />
-        </div>
-
-        <div class="box slider" id="speed">
-          <div class="parameter">
-            <div>Simulation speed</div>
-            <input type="number" value="0.125" min="0" step="0.001" />
+        <div class="box" id="system">
+          <div id="buttonContainer">
+            <button class="clickable" id="play"></button>
+            <button class="clickable" id="pause"></button>
+            <button class="clickable" id="autorun">Enter graph mode</button>
+            <button class="clickable" id="manual">Leave graph mode</button>
           </div>
-          <input type="range" value="0.125" min="0" max="1" step="0.001" />
+          <div class="slider" id="speed">
+            <div class="parameter">
+              <div>Simulation speed</div>
+              <input type="number" value="0.2" min="0" step="0.01" />
+            </div>
+            <input type="range" value="0.2" min="0" max="1" step="0.01" />
+          </div>
         </div>
 
         <div class="box slider" id="T">
           <div class="parameter">
             <div>Temperature</div>
             <div>\(k_{\mathrm{B}} T =\)</div>
-            <input type="number" value="2" min="0" step="0.001" />
+            <input type="number" value="2" min="0" step="0.01" />
           </div>
-          <input type="range" value="2" min="0" max="4" step="0.001" />
+          <input type="range" value="2" min="0" max="4" step="0.01" />
+        </div>
+
+        <div class="box parameter" id="N">
+          <div>Size</div>
+          <div>\(N =\)</div>
+          <input id="Nx" type="number" value="20" min="1" />
+          <div>\(\times\)</div>
+          <input id="Ny" type="number" value="20" min="1" />
         </div>
 
         <div class="box">
-          \[
-            \vphantom{\Bigg|}
-            E = - \sum_{\langle i \, j \rangle} J_{i j} s_i s_j - h \sum_i s_i\]
+          <form>
+            <label>
+              <input id="ising" type="radio" name="model" value="ising" checked>
+              Ising model
+            </label>
+            <label>
+              <input id="xy" type="radio" name="model" value="xy">
+              XY model
+            </label>
+          </form>
+
+          <div id="isingFormula">
+            \[E = - \sum_{\langle i \, j \rangle} J_{i j} s_i s_j - h \sum_i s_i\]
+          </div>
+          <div id="xyFormula" style="display: none;">
+            \[E = - \sum_{\langle i \, j \rangle} J_{i j} \cos(\theta_j - \theta_i)\]
+          </div>
         </div>
 
         <div class="box">
@@ -128,21 +144,9 @@
             <button class="clickable" id="randomize">Randomize spins</button>
           </div>
           <details>
-            <summary>Spin \(s\)</summary>
-
-            <!--
-            <div class="parameter" id="legendContainer">
-              <div>Spin</div>
-              <div class="legend">
-                <img src="img/up.svg" alt="spin up" />
-                <div>\(\smash{s = 1}\)</div>
-              </div>
-              <div class="legend">
-                <img src="img/down.svg" alt="spin down" />
-                <div>\(\smash{s = -1}\)</div>
-              </div>
-            </div>
-            -->
+            <summary>Possible Spins \(s\)</summary>
+            <div id="sContainer"></div>
+            <div style="margin-top: 1.5rem;"><img id="add" src="img/add.svg"></img></div>
           </details>
         </div>
 
@@ -154,10 +158,10 @@
               <div class="parameter">
                 <div>Holizontal</div>
                 <div>\(J\)<img class="J" src="img/J1.svg"></img> \(=\)</div>
-                <input type="number" value="1" step="0.001" />
+                <input type="number" value="1" step="0.01" />
               </div>
               <input
-                type="range" value="1" min="-1" max="1" step="0.001"
+                type="range" value="1" min="-1" max="1" step="0.01"
                 list="zero-stop"
               />
             </div>
@@ -166,10 +170,10 @@
               <div class="parameter">
                 <div>Vertical</div>
                 <div>\(J\)<img class="J" src="img/J2.svg"></img> \(=\)</div>
-                <input type="number" value="1" step="0.001" />
+                <input type="number" value="1" step="0.01" />
               </div>
               <input
-                type="range" value="1" min="-1" max="1" step="0.001"
+                type="range" value="1" min="-1" max="1" step="0.01"
                 list="zero-stop"
               />
             </div>
@@ -178,10 +182,10 @@
               <div class="parameter">
                 <div>Diagonal</div>
                 <div>\(J\)<img class="J" src="img/J3.svg"></img> \(=\)</div>
-                <input type="number" value="0" step="0.001" />
+                <input type="number" value="0" step="0.01" />
               </div>
               <input
-                type="range" value="0" min="-1" max="1" step="0.001"
+                type="range" value="0" min="-1" max="1" step="0.01"
                 list="zero-stop"
               />
             </div>
@@ -190,10 +194,10 @@
               <div class="parameter">
                 <div>Diagonal</div>
                 <div>\(J\)<img class="J" src="img/J4.svg"></img> \(=\)</div>
-                <input type="number" value="0" step="0.001" />
+                <input type="number" value="0" step="0.01" />
               </div>
               <input
-                type="range" value="0" min="-1" max="1" step="0.001"
+                type="range" value="0" min="-1" max="1" step="0.01"
                 list="zero-stop"
               />
             </div>
@@ -202,10 +206,10 @@
               <div class="parameter">
                 <div>Self</div>
                 <div>\(J\)<img class="J" src="img/J0.svg"></img> \(=\)</div>
-                <input type="number" value="0" step="0.001" />
+                <input type="number" value="0" step="0.01" />
               </div>
               <input
-                type="range" value="0" min="-1" max="1" step="0.001"
+                type="range" value="0" min="-1" max="1" step="0.01"
                 list="zero-stop"
               />
             </div>
@@ -216,10 +220,10 @@
           <div class="parameter">
             <div>Field</div>
             <div>\(h =\)</div>
-            <input type="number" value="0" step="0.001" />
+            <input type="number" value="0" step="0.01" />
           </div>
           <input
-            type="range" value="0" min="-2" max="2" step="0.001"
+            type="range" value="0" min="-2" max="2" step="0.01"
             list="zero-stop"
           />
         </div>

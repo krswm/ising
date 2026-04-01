@@ -30,9 +30,9 @@ class Model {
     this.J4 = 0;
     this.J0 = 0;
     this.h = 0;
-    this.speed = 0.125;
-    this.Nx = 16;
-    this.Ny = 16;
+    this.speed = 0.25;
+    this.Nx = 20;
+    this.Ny = 20;
 
     this.possibleSpins = [1, -1];
 
@@ -145,6 +145,15 @@ class Model {
       this.requestId = requestAnimationFrame(this.autorun.bind(this));
     });
 
+    document.getElementById("ising").addEventListener("input", (event) => {
+      document.getElementById("isingFormula").style.display = "block";
+      document.getElementById("xyFormula").style.display = "none";
+    });
+    document.getElementById("xy").addEventListener("input", (event) => {
+      document.getElementById("isingFormula").style.display = "none";
+      document.getElementById("xyFormula").style.display = "block";
+    });
+
     document.getElementById("manual").addEventListener("click", (event) => {
       document.getElementById("autorun").style.display = "inline-block";
       document.getElementById("manual").style.display = "none";
@@ -172,6 +181,17 @@ class Model {
     // The state of the cell at (x, y) is this.states[this.Nx * y + x].
     this.states = Array(this.Nx * this.Ny).fill(0);
 
+    this.sContainer = document.getElementById("sContainer");
+    for (let i = 0; i < this.possibleSpins.length; i++) {
+      const spin = this.possibleSpins[i];
+      this.createSpin(spin, i);
+    }
+    this.redrawLegend();
+
+    document.getElementById("add").addEventListener("click", (event) => {
+      this.createSpin(1, this.possibleSpins.length);
+    });
+
     for (const name of ["E", "M", "C", "chi"]) {
       const canvas = document.getElementById(`${name}Canvas`);
       this[`${name}Context`] = canvas.getContext("2d");
@@ -187,6 +207,68 @@ class Model {
     this.drawStates();
 
     this.requestId = requestAnimationFrame(this.run.bind(this));
+  }
+
+  createSpin(spin, i) {
+    const sDiv = document.createElement("div");
+    sDiv.classList.add("slider")
+    sDiv.innerHTML = `
+      <div class="parameter">
+        <div><img src="img/remove.svg" alt="remove" /></div>
+        <canvas id="spin${i}" style="border-radius: 0.25rem"></canvas>
+        <input type="number" value="${spin}" step="0.01" />
+      </div>
+      <input type="range" value="${spin}" min="-2" max="2" step="0.01" list="zero-stop"/>
+    `;
+    this.sContainer.appendChild(sDiv);
+
+    const number = sDiv.querySelector('input[type="number"]');
+    const range = sDiv.querySelector('input[type="range"]');
+    number.addEventListener("input", (event) => {
+      range.value = event.target.valueAsNumber;
+      this.possibleSpins[i] = event.target.valueAsNumber;
+      this.redrawLegend();
+    });
+    range.addEventListener("input", (event) => {
+      number.value = event.target.valueAsNumber;
+      this.possibleSpins[i] = event.target.valueAsNumber;
+      this.redrawLegend();
+    });
+  }
+
+  redrawLegend() {
+    const min_l = 5;
+    const max_l = 95;
+    const min_spin = Math.min(...this.possibleSpins);
+    const max_spin = Math.max(...this.possibleSpins);
+    const zoom = 64;
+
+    for (let i = 0; i < this.possibleSpins.length; i++) {
+      const spin = this.possibleSpins[i];
+      console.log(spin);
+      const spinCanvas = document.getElementById(`spin${i}`);
+      console.log(spinCanvas);
+      const spinContext = spinCanvas.getContext("2d");
+
+      spinCanvas.width = 64;
+      spinCanvas.height = 64;
+      spinCanvas.style.width = "32px";
+      spinCanvas.style.height = "32px";
+
+      const l = (max_l - min_l) * (spin - min_spin) / (max_spin - min_spin) + min_l;
+      spinContext.fillStyle = `oklch(${l}% 0% 0deg)`;
+
+      spinContext.setTransform(1, 0, 0, 1, 0, 0);
+      spinContext.fillRect(0, 0, zoom, zoom);
+
+      spinContext.fillStyle = "oklch(50% 0% 0deg)";
+      spinContext.setTransform(
+        zoom / 16, 0, 0,
+        spin / Math.max(Math.abs(max_spin), Math.abs(min_spin)) * zoom / 16,
+        0.5 * zoom, 0.5 * zoom
+      );
+      spinContext.fill(this.arrow);
+    }
   }
 
   setT(T) {

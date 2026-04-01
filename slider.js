@@ -1,6 +1,6 @@
 // Synchronize sliders.
 
-for (const div of document.querySelectorAll(".slider")) {
+function pairSlider(div) {
   const number = div.querySelector('input[type="number"]');
   const range = div.querySelector('input[type="range"]');
 
@@ -11,6 +11,10 @@ for (const div of document.querySelectorAll(".slider")) {
   range.addEventListener("input", (event) => {
     number.value = event.target.valueAsNumber;
   });
+}
+
+for (const div of document.querySelectorAll(".slider")) {
+  pairSlider(div);
 }
 
 // Not gen AI generated.
