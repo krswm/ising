@@ -1,21 +1,17 @@
 body {
-  margin: 0px;
-
-  width: 100vw;
-
   font-family: system-ui;
+  margin: 0rem;
 }
 
 #output {
-  padding: 1rem;
-
-  overflow: hidden;
-
   display: flex;
   flex-direction: column;
+
+  box-sizing: border-box;
+  padding: 1rem;
 }
 
-#output > #canvasContainer {
+#canvas-container {
   flex: auto;
 
   display: flex;
@@ -23,83 +19,87 @@ body {
   align-items: center;
 }
 
-#output > #canvasContainer > #canvas {
-  flex: 1fr;
+#spin-canvas {
+  position: absolute;  /* Needed for ResizeObserver to work as intended. */
 }
 
-#output > #canvasContainer > #graphContainer {
+#graph-container {
   position: absolute;
 
   display: none;
   grid: 200px 200px / 200px 200px;
   gap: 2rem;
-
-  justify-content: center;
-  align-items: center;
 }
 
-#output > #canvasContainer > #graphContainer > canvas {
+#graph-container canvas {
+  background-color: white;
   border: 1px solid oklch(80% 0% 0deg);
   border-radius: 0.5rem;
-
-  background-color: oklch(100% 0% 0deg);
 }
 
-#output > #statsContainer {
-  flex: 0 0 min-content;
-
+#stat-container {
   display: flex;
   justify-content: center;
 }
 
-#output > #statsContainer > #stats {
+#stat {
   display: grid;
-  grid: repeat(4, 3.5rem) / auto auto auto auto auto 6rem auto auto;
-  gap: 0rem 0.5rem;
+  grid: repeat(4, 3.5rem) / 1fr auto auto auto auto auto 8rem;
+
+  width: 32rem;
 }
 
-#output > #statsContainer > #stats > div {
+#stat div {
   text-align: center;
   align-content: center;
 }
 
-#output > #statsContainer > #stats > div.name {
-  padding-right: 1.5rem;
-
+#stat div.stat-name {
+  padding-right: 2rem;
   text-align: start;
 }
 
-#output > #statsContainer > #stats > div.value {
-  text-align: end;
-
-  font-size: 1.5rem;
-  font-variant-numeric: tabular-nums;
+#stat div.stat-equal {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
 
-#controlContainer {
-  display: flex;
+#stat div.stat-value {
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
 
+#control-container {
+  display: flex;
   justify-content: center;
 
   background-color: oklch(95% 0% 0deg);
 }
 
 #control {
-  padding: 1rem;
-
-  overflow: hidden scroll;
-
   display: flex;
   flex-direction: column;
   gap: 1rem;
+
+  overflow: hidden scroll;
+  padding: 1rem;
 }
 
-#control #link {
+#control header {
+  padding-bottom: 1rem;
+}
+
+#header-link {
   padding-top: 0.5rem;
 }
 
-#control a {
+#control header a {
   color: oklch(50% 0% 0deg);
+}
+
+#control header a:hover {
+  color: black;
 }
 
 #control > .box {
@@ -186,7 +186,7 @@ body {
   background-position: center center;
 }
 
-#control #buttonContainer > #manual {
+#control #buttonContainer > #leave-graph-mode {
   display: none;
 }
 
@@ -289,7 +289,7 @@ body {
     height: 100vh;
   }
 
-  #controlContainer {
+  #control-container {
     min-height: 100vh;
   }
 
@@ -313,5 +313,3 @@ body {
     width: 24rem;
   }
 }
-
-/* Not gen AI generated. */

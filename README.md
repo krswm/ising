@@ -32,4 +32,4 @@ You can adjust parameters.
 I started developing this project on November 2025, after I learned and was interested on the model at the statistical mechanics class.
 
 This is one of my hobby project I wrote from scratch.
-I did not use any generative AI tools for this project.
+I did not use any generative AI for this project.

@@ -1,22 +1,17 @@
-function mod(a, b) {
-  // Modulo.
-  // JavaScript's % has a quirk for negative numbers.
-  // For instance, -11 % 10 is -1, not 9.
+const $id = id => document.getElementById(id);
+const $query = query => document.querySelectorAll(query);
 
-  return ((a % b) + b) % b;
-}
+// In JavaScript, for example, -11 % 10 is -1, not 9.
+const mod = (a, b) => ((a % b) + b) % b;
 
-function formatNumber(number) {
-  if (isFinite(number)) {
-    return number.toFixed(3).replace("-", "\u2212");  // Minus
-  } else {
-    return "\u2014";  // Em dash
-  }
-}
+// "\u2212" is MINUS SIGN. "\u2014" is EM DASH.
+const formatNumber = number => (
+  isFinite(number) ? number.toFixed(3).replace("-", "\u2212") : "\u2014"
+);
 
 class Model {
   constructor() {
-    this.canvas = document.getElementById("canvas");
+    this.canvas = $id("spin-canvas");
     this.context = this.canvas.getContext("2d");
 
     this.arrow = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
@@ -36,15 +31,33 @@ class Model {
 
     this.possibleSpins = [1, -1];
 
-    for (const id of ["T", "J1", "J2", "J3", "J4", "J0", "h", "speed"]) {
-      for (const elem of document.querySelectorAll(`#${id} input`)) {
+    for (const [id, numberMin, rangeMin, rangeMax, initialValue] of [
+      ["speed", 0,     0, 1, 0.2],
+      ["T",     0,     0, 4, 2  ],
+      ["J1",    null, -1, 1, 1  ],
+      ["J2",    null, -1, 1, 1  ],
+      ["J3",    null, -1, 1, 0  ],
+      ["J4",    null, -1, 1, 0  ],
+      ["J0",    null, -1, 1, 0  ],
+      ["h",     null, -2, 2, 0  ],
+    ]) {
+      for (const elem of $query(`#${id} input`)) {
+        if (elem.type === "number" && numberMin !== null) {
+          elem.min = numberMin;
+        } else if (elem.type === "range") {
+          elem.min = rangeMin;
+          elem.max = rangeMax;
+        }
+        elem.step = 0.01;
+        elem.value = initialValue;
+
         elem.addEventListener("input", (event) => {
-          this[id] = event.target.valueAsNumber;
+          this[id] = elem.valueAsNumber;
         });
       }
     }
 
-    document.getElementById("Nx").addEventListener("input", (event) => {
+    $id("Nx").addEventListener("input", (event) => {
       const oldNx = this.Nx;
       const newNx = event.target.valueAsNumber;
 
@@ -70,7 +83,7 @@ class Model {
       this.drawStates();
     });
 
-    document.getElementById("Ny").addEventListener("input", (event) => {
+    $id("Ny").addEventListener("input", (event) => {
       const oldNy = this.Ny;
       const newNy = event.target.valueAsNumber;
 
@@ -92,108 +105,120 @@ class Model {
       this.drawStates();
     });
 
-    document.getElementById("play").addEventListener("click", (event) => {
+    $query("speed input")
+
+    $id("play").addEventListener("click", (event) => {
       if (!this.requestId) {
         this.requestId = requestAnimationFrame(this.run.bind(this));
       }
 
-      document.getElementById("play").style.display = "none";
-      document.getElementById("pause").style.display = "inline-block";
+      $id("play").style.display = "none";
+      $id("pause").style.display = "inline-block";
     });
 
-    document.getElementById("pause").addEventListener("click", (event) => {
+    $id("pause").addEventListener("click", (event) => {
       if (this.requestId) {
         cancelAnimationFrame(this.requestId);
         this.requestId = undefined;
       }
 
-      document.getElementById("pause").style.display = "none";
-      document.getElementById("play").style.display = "inline-block";
+      $id("pause").style.display = "none";
+      $id("play").style.display = "inline-block";
     });
 
-    document.getElementById("reset").addEventListener("click", (event) => {
+    $id("reset").addEventListener("click", (event) => {
       this.states.fill(0);
       this.EHistory = Array(this.historyLength);
       this.MHistory = Array(this.historyLength);
       this.drawStates();
     });
 
-    document.getElementById("randomize").addEventListener("click", (event) => {
+    $id("randomize").addEventListener("click", (event) => {
       for (let i = 0; i < this.Nx * this.Ny; i++) {
         this.states[i] = Math.floor(Math.random() * this.possibleSpins.length);
       }
       this.drawStates();
     });
 
-    document.getElementById("autorun").addEventListener("click", (event) => {
-      document.getElementById("autorun").style.display = "none";
-      document.getElementById("manual").style.display = "inline-block";
+    $id("enter-graph-mode").addEventListener(
+      "click", (event) => {
+        $id("enter-graph-mode").style.display = "none";
+        $id("leave-graph-mode").style.display = "unset";
 
-      cancelAnimationFrame(this.requestId);
+        cancelAnimationFrame(this.requestId);
 
-      document.getElementById("graphContainer").style.display = "grid";
+        $id("graph-container").style.display = "grid";
 
-      this.graphT = [];
-      this.graphE = [];
-      this.graphM = [];
-      this.graphC = [];
-      this.graphchi = [];
+        $id("spin-canvas").style.filter = "blur(0.5rem)";
+        $id("spin-canvas").style.opacity = "50%";
 
-      this.timesAutoran = 0;
-      this.TIndex = 1;
-      this.setT(this.TIndex * 0.1);
-      this.requestId = requestAnimationFrame(this.autorun.bind(this));
+        this.graphT = [];
+        this.graphE = [];
+        this.graphM = [];
+        this.graphC = [];
+        this.graphchi = [];
+
+        this.timesAutoran = 0;
+        this.TIndex = 1;
+        this.setT(this.TIndex * 0.1);
+        this.requestId = requestAnimationFrame(this.autorun.bind(this));
+      }
+    );
+
+    $id("leave-graph-mode").addEventListener(
+      "click", (event) => {
+        $id("enter-graph-mode").style.display = "unset";
+        $id("leave-graph-mode").style.display = "none";
+
+        $id("graph-container").style.display = "none";
+
+        $id("spin-canvas").style.filter = "none";
+        $id("spin-canvas").style.opacity = "unset";
+
+        cancelAnimationFrame(this.requestId);
+
+        this.requestId = requestAnimationFrame(this.run.bind(this));
+      }
+    );
+
+    $id("ising").addEventListener("input", (event) => {
+      $id("isingFormula").style.display = "block";
+      $id("xyFormula").style.display = "none";
     });
-
-    document.getElementById("ising").addEventListener("input", (event) => {
-      document.getElementById("isingFormula").style.display = "block";
-      document.getElementById("xyFormula").style.display = "none";
-    });
-    document.getElementById("xy").addEventListener("input", (event) => {
-      document.getElementById("isingFormula").style.display = "none";
-      document.getElementById("xyFormula").style.display = "block";
-    });
-
-    document.getElementById("manual").addEventListener("click", (event) => {
-      document.getElementById("autorun").style.display = "inline-block";
-      document.getElementById("manual").style.display = "none";
-
-      document.getElementById("graphContainer").style.display = "none";
-
-      cancelAnimationFrame(this.requestId);
-
-      this.requestId = requestAnimationFrame(this.run.bind(this));
+    $id("xy").addEventListener("input", (event) => {
+      $id("isingFormula").style.display = "none";
+      $id("xyFormula").style.display = "block";
     });
 
     this.canvasContainerWidth = (
-      document.getElementById("canvasContainer").offsetWidth
+      $id("canvas-container").offsetWidth
     );
     this.canvasContainerHeight = (
-      document.getElementById("canvasContainer").offsetHeight
+      $id("canvas-container").offsetHeight
     );
     new ResizeObserver((entries) => {
       for (const entry of entries) {
         this.canvasContainerWidth = entry.target.offsetWidth;
         this.canvasContainerHeight = entry.target.offsetHeight;
       }
-    }).observe(document.getElementById("canvasContainer"));
+    }).observe($id("canvas-container"));
 
     // The state of the cell at (x, y) is this.states[this.Nx * y + x].
     this.states = Array(this.Nx * this.Ny).fill(0);
 
-    this.sContainer = document.getElementById("sContainer");
+    this.sContainer = $id("sContainer");
     for (let i = 0; i < this.possibleSpins.length; i++) {
       const spin = this.possibleSpins[i];
       this.createSpin(spin, i);
     }
     this.redrawLegend();
 
-    document.getElementById("add").addEventListener("click", (event) => {
+    $id("add").addEventListener("click", (event) => {
       this.createSpin(1, this.possibleSpins.length);
     });
 
     for (const name of ["E", "M", "C", "chi"]) {
-      const canvas = document.getElementById(`${name}Canvas`);
+      const canvas = $id(`${name}-canvas`);
       this[`${name}Context`] = canvas.getContext("2d");
       canvas.style.width = "200px";
       canvas.style.height = "200px";
@@ -245,9 +270,7 @@ class Model {
 
     for (let i = 0; i < this.possibleSpins.length; i++) {
       const spin = this.possibleSpins[i];
-      console.log(spin);
-      const spinCanvas = document.getElementById(`spin${i}`);
-      console.log(spinCanvas);
+      const spinCanvas = $id(`spin${i}`);
       const spinContext = spinCanvas.getContext("2d");
 
       spinCanvas.width = 64;
@@ -273,7 +296,7 @@ class Model {
 
   setT(T) {
     this.T = T;
-    for (const elem of document.querySelectorAll("#T input")) {
+    for (const elem of $query("#T input")) {
       elem.value = `${this.T.toFixed(1)}`;
     }
   }
@@ -414,10 +437,10 @@ class Model {
     const EPerCell = E / (this.Nx * this.Ny);
     const CPerCell = C / (this.Nx * this.Ny);
     const chiPerCell = chi / (this.Nx * this.Ny);
-    document.getElementById("M").innerText = formatNumber(MPerCell);
-    document.getElementById("E").innerText = formatNumber(EPerCell);
-    document.getElementById("C").innerText = formatNumber(CPerCell);
-    document.getElementById("chi").innerText = formatNumber(chiPerCell);
+    $id("M").innerText = formatNumber(MPerCell);
+    $id("E").innerText = formatNumber(EPerCell);
+    $id("C").innerText = formatNumber(CPerCell);
+    $id("chi").innerText = formatNumber(chiPerCell);
 
     this.E = EPerCell;
     this.M = MPerCell;
@@ -507,6 +530,3 @@ class Model {
 }
 
 const model = new Model();
-
-// I began to write this file as a hobby project.
-// I did not use any AI tools to write this file.

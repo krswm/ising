@@ -3,11 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta
-      name="description"
-      content="Ising Model Simulated with the Monte Carlo Method"
-    />
+    <meta name="description" content="Ising Model Simulated with the Monte Carlo Method" />
+
     <title>Ising Model</title>
+
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" type="image/svg+xml" href="img/up.svg" />
 
@@ -18,86 +17,75 @@
   </head>
   <body>
     <div id="output">
-      <div id="canvasContainer">
-        <canvas id="canvas"></canvas>
-        <div id="graphContainer">
-          <canvas id="ECanvas"></canvas>
-          <canvas id="MCanvas"></canvas>
-          <canvas id="CCanvas"></canvas>
-          <canvas id="chiCanvas"></canvas>
+      <div id="canvas-container">
+        <canvas id="spin-canvas">real-time visualization of the spin configulation</canvas>
+        <div id="graph-container">
+          <canvas id="E-canvas">graph for energy</canvas>
+          <canvas id="M-canvas">graph for magnetization</canvas>
+          <canvas id="C-canvas">graph for heat capacity</canvas>
+          <canvas id="chi-canvas">graph for susceptibility</canvas>
         </div>
       </div>
-      <div id="statsContainer">
-        <div id="stats">
-          <!-- I used \vphantom{\Bigg|} to align vertically. -->
+      <div id="stat-container">
+        <div id="stat">
+          <!-- Use \vphantom{\Bigg|} to align LaTeX vertically. -->
 
-          <div class="name">Energy</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} E\)</div>
+          <div class="stat-name">Energy</div>
+          <div>\(\displaystyle \vphantom{\Bigg|} \frac{E}{N}\)</div>
           <div></div>
           <div></div>
-          <div>\(\displaystyle \vphantom{\Bigg|} =\)</div>
-          <div id="E" class="value"></div>
-          <div>\(\displaystyle \vphantom{\Bigg|} \times\)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} N\)</div>
+          <div></div>
+          <div class="stat-equal">\(=\)</div>
+          <div class="stat-value" id="E"></div>
 
-          <div class="name">Magnetization</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} M\)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} =\)</div>
+          <div class="stat-name">Magnetization</div>
+          <div>\(\displaystyle \vphantom{\Bigg|} \frac{M}{N}\)</div>
+          <div class="stat-equal">\(=\)</div>
+          <div>\(\displaystyle \vphantom{\Bigg|} \frac{1}{N}\)</div>
           <div>\(\displaystyle \vphantom{\Bigg|} \sum_i s_i\)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} =\)</div>
-          <div id="M" class="value"></div>
-          <div>\(\displaystyle \vphantom{\Bigg|} \times\)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} N\)</div>
+          <div class="stat-equal">\(=\)</div>
+          <div class="stat-value" id="M"></div>
 
-          <div class="name">Heat capacity</div>
-          <div>\(
-            \displaystyle \vphantom{\Bigg|} \frac{C}{k_{\mathrm{B}}}
-          \)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} =\)</div>
-          <div>\(
-            \displaystyle \vphantom{\Bigg|} \frac
-            {\langle E^2 \rangle - \langle E \rangle^2}{(k_{\mathrm{B}} T)^2}
-          \)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} =\)</div>
-          <div id="C" class="value"></div>
-          <div>\(\displaystyle \vphantom{\Bigg|} \times\)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} N\)</div>
+          <div class="stat-name">Heat capacity</div>
+          <div>\(\displaystyle \vphantom{\Bigg|} \frac{C}{N k_{\mathrm{B}}}\)</div>
+          <div class="stat-equal">\(=\)</div>
+          <div>\(\displaystyle \vphantom{\Bigg|} \frac{1}{N}\)</div>
+          <div>\(\displaystyle \vphantom{\Bigg|} \frac{\langle E^2 \rangle - \langle E \rangle^2}{(k_{\mathrm{B}} T)^2}\)</div>
+          <div class="stat-equal">\(=\)</div>
+          <div class="stat-value" id="C"></div>
 
-          <div class="name">Susceptibility</div>
-          <div>\(\chi\)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} =\)</div>
-          <div>\(
-            \displaystyle \vphantom{\Bigg|}
-            \frac{\langle M^2 \rangle - \langle M \rangle^2}{k_{\mathrm{B}} T}
-          \)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} =\)</div>
-          <div id="chi" class="value"></div>
-          <div>\(\displaystyle \vphantom{\Bigg|} \times\)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} N\)</div>
+          <div class="stat-name">Susceptibility</div>
+          <div>\(\displaystyle \vphantom{\Bigg|} \frac{\chi}{N}\)</div>
+          <div class="stat-equal">\(=\)</div>
+          <div>\(\displaystyle \vphantom{\Bigg|} \frac{1}{N}\)</div>
+          <div>\(\displaystyle \vphantom{\Bigg|} \frac{\langle M^2 \rangle - \langle M \rangle^2}{k_{\mathrm{B}} T}\)</div>
+          <div class="stat-equal">\(=\)</div>
+          <div class="stat-value" id="chi"></div>
         </div>
       </div>
     </div>
-    <div id="controlContainer">
+    <div id="control-container">
       <div id="control">
         <header>
           <h1>Ising Model Simulation</h1>
           <div>with the Metropolis Algorithm</div>
-          <div id="link"><a href="https://github.com/krswm/ising">Repository on GitHub</a></div>
+          <div id="header-link"><a href="https://github.com/krswm/ising">Repository on GitHub</a></div>
         </header>
 
         <div class="box" id="system">
           <div id="buttonContainer">
-            <button class="clickable" id="play"></button>
             <button class="clickable" id="pause"></button>
-            <button class="clickable" id="autorun">Enter graph mode</button>
-            <button class="clickable" id="manual">Leave graph mode</button>
+            <button class="clickable" id="play"></button>
+            <button class="clickable" id="enter-graph-mode">Enter graph mode</button>
+            <button class="clickable" id="leave-graph-mode">Leave graph mode</button>
           </div>
+
           <div class="slider" id="speed">
             <div class="parameter">
               <div>Simulation speed</div>
-              <input type="number" value="0.2" min="0" step="0.01" />
+              <input type="number" />
             </div>
-            <input type="range" value="0.2" min="0" max="1" step="0.01" />
+            <input type="range" />
           </div>
         </div>
 
@@ -105,9 +93,9 @@
           <div class="parameter">
             <div>Temperature</div>
             <div>\(k_{\mathrm{B}} T =\)</div>
-            <input type="number" value="2" min="0" step="0.01" />
+            <input type="number" />
           </div>
-          <input type="range" value="2" min="0" max="4" step="0.01" />
+          <input type="range" />
         </div>
 
         <div class="box parameter" id="N">
@@ -158,60 +146,45 @@
               <div class="parameter">
                 <div>Holizontal</div>
                 <div>\(J\)<img class="J" src="img/J1.svg"></img> \(=\)</div>
-                <input type="number" value="1" step="0.01" />
+                <input type="number" />
               </div>
-              <input
-                type="range" value="1" min="-1" max="1" step="0.01"
-                list="zero-stop"
-              />
+              <input type="range" list="zero-stop" />
             </div>
 
             <div class="slider" id="J2">
               <div class="parameter">
                 <div>Vertical</div>
                 <div>\(J\)<img class="J" src="img/J2.svg"></img> \(=\)</div>
-                <input type="number" value="1" step="0.01" />
+                <input type="number" />
               </div>
-              <input
-                type="range" value="1" min="-1" max="1" step="0.01"
-                list="zero-stop"
-              />
+              <input type="range" list="zero-stop" />
             </div>
 
             <div class="slider" id="J3">
               <div class="parameter">
                 <div>Diagonal</div>
                 <div>\(J\)<img class="J" src="img/J3.svg"></img> \(=\)</div>
-                <input type="number" value="0" step="0.01" />
+                <input type="number" />
               </div>
-              <input
-                type="range" value="0" min="-1" max="1" step="0.01"
-                list="zero-stop"
-              />
+              <input type="range" list="zero-stop" />
             </div>
 
             <div class="slider" id="J4">
               <div class="parameter">
                 <div>Diagonal</div>
                 <div>\(J\)<img class="J" src="img/J4.svg"></img> \(=\)</div>
-                <input type="number" value="0" step="0.01" />
+                <input type="number" />
               </div>
-              <input
-                type="range" value="0" min="-1" max="1" step="0.01"
-                list="zero-stop"
-              />
+              <input type="range" list="zero-stop" />
             </div>
 
             <div class="slider" id="J0">
               <div class="parameter">
                 <div>Self</div>
                 <div>\(J\)<img class="J" src="img/J0.svg"></img> \(=\)</div>
-                <input type="number" value="0" step="0.01" />
+                <input type="number" />
               </div>
-              <input
-                type="range" value="0" min="-1" max="1" step="0.01"
-                list="zero-stop"
-              />
+              <input type="range" list="zero-stop" />
             </div>
           </div>
         </details>
@@ -220,12 +193,9 @@
           <div class="parameter">
             <div>Field</div>
             <div>\(h =\)</div>
-            <input type="number" value="0" step="0.01" />
+            <input type="number" />
           </div>
-          <input
-            type="range" value="0" min="-2" max="2" step="0.01"
-            list="zero-stop"
-          />
+          <input type="range" list="zero-stop" />
         </div>
 
         <datalist id="zero-stop">
@@ -237,5 +207,3 @@
     <script src="script.js"></script>
   </body>
 </html>
-
-<!-- Not gen AI generated. -->
