@@ -16,7 +16,9 @@ class Model {
 
     this.arrow = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
 
-    this.historyLength = 1000;
+    // Currently historyLength >= additionalHistoryLength is assumed in the algorithm.
+    this.historyLength = 50;
+    this.additionalHistoryLength = 50;
 
     this.T = 2;
     this.J1 = 1;
@@ -130,56 +132,74 @@ class Model {
       this.states.fill(0);
       this.EHistory = Array(this.historyLength);
       this.MHistory = Array(this.historyLength);
+      this.CHistory = Array(this.historyLength);
+      this.chiHistory = Array(this.historyLength);
       this.drawStates();
     });
 
     $id("randomize").addEventListener("click", (event) => {
+      this.EHistory = Array(this.historyLength);
+      this.MHistory = Array(this.historyLength);
+      this.CHistory = Array(this.historyLength);
+      this.chiHistory = Array(this.historyLength);
+
+      if (this.requestId) {
+        this.requestId = undefined;
+      }
+
+      $id("pause").style.display = "none";
+      this.chiHistory = Array(this.historyLength);
+
       for (let i = 0; i < this.Nx * this.Ny; i++) {
         this.states[i] = Math.floor(Math.random() * this.possibleSpins.length);
       }
-      this.drawStates();
+      drawStates();
     });
 
-    $id("enter-graph-mode").addEventListener(
-      "click", (event) => {
-        $id("enter-graph-mode").style.display = "none";
-        $id("leave-graph-mode").style.display = "unset";
+    $id("enter-graph-mode").addEventListener("click", (event) => {
+      $id("enter-graph-mode").style.display = "none";
+      $id("leave-graph-mode").style.display = "unset";
 
-        cancelAnimationFrame(this.requestId);
+      cancelAnimationFrame(this.requestId);
 
-        $id("graph-container").style.display = "grid";
+      $id("graph-container").style.display = "flex";
 
-        $id("spin-canvas").style.filter = "blur(0.5rem)";
-        $id("spin-canvas").style.opacity = "50%";
+      $id("spin-canvas").style.filter = "blur(0.5rem)";
+      $id("spin-canvas").style.opacity = "50%";
 
-        this.graphT = [];
-        this.graphE = [];
-        this.graphM = [];
-        this.graphC = [];
-        this.graphchi = [];
+      this.graphT = [];
+      this.graphE = [];
+      this.graphM = [];
+      this.graphC = [];
+      this.graphchi = [];
 
-        this.timesAutoran = 0;
-        this.TIndex = 1;
-        this.setT(this.TIndex * 0.1);
-        this.requestId = requestAnimationFrame(this.autorun.bind(this));
-      }
-    );
+      this.timesAutoran = 0;
+      this.TIndex = 1;
+      this.setT(this.TIndex * 0.1);
 
-    $id("leave-graph-mode").addEventListener(
-      "click", (event) => {
-        $id("enter-graph-mode").style.display = "unset";
-        $id("leave-graph-mode").style.display = "none";
+      this.EHistory = Array(this.historyLength);
+      this.MHistory = Array(this.historyLength);
+      this.CHistory = Array(this.historyLength);
+      this.chiHistory = Array(this.historyLength);
 
-        $id("graph-container").style.display = "none";
+      this.states.fill(0);
 
-        $id("spin-canvas").style.filter = "none";
-        $id("spin-canvas").style.opacity = "unset";
+      this.requestId = requestAnimationFrame(this.autorun.bind(this));
+    });
 
-        cancelAnimationFrame(this.requestId);
+    $id("leave-graph-mode").addEventListener("click", (event) => {
+      $id("enter-graph-mode").style.display = "unset";
+      $id("leave-graph-mode").style.display = "none";
 
-        this.requestId = requestAnimationFrame(this.run.bind(this));
-      }
-    );
+      $id("graph-container").style.display = "none";
+
+      $id("spin-canvas").style.filter = "none";
+      $id("spin-canvas").style.opacity = "unset";
+
+      cancelAnimationFrame(this.requestId);
+
+      this.requestId = requestAnimationFrame(this.run.bind(this));
+    });
 
     $id("ising").addEventListener("input", (event) => {
       $id("isingFormula").style.display = "block";
@@ -201,6 +221,7 @@ class Model {
         this.canvasContainerWidth = entry.target.offsetWidth;
         this.canvasContainerHeight = entry.target.offsetHeight;
       }
+      this.drawStates();
     }).observe($id("canvas-container"));
 
     // The state of the cell at (x, y) is this.states[this.Nx * y + x].
@@ -220,14 +241,16 @@ class Model {
     for (const name of ["E", "M", "C", "chi"]) {
       const canvas = $id(`${name}-canvas`);
       this[`${name}Context`] = canvas.getContext("2d");
-      canvas.style.width = "200px";
-      canvas.style.height = "200px";
-      canvas.width = 400;
-      canvas.height = 400;
+      canvas.style.width = "240px";
+      canvas.style.height = "240px";
+      canvas.width = 480;
+      canvas.height = 480;
     }
 
     this.EHistory = Array(this.historyLength);
     this.MHistory = Array(this.historyLength);
+    this.CHistory = Array(this.historyLength);
+    this.chiHistory = Array(this.historyLength);
 
     this.drawStates();
 
@@ -244,6 +267,10 @@ class Model {
         <input type="number" value="${spin}" step="0.01" />
       </div>
       <input type="range" value="${spin}" min="-2" max="2" step="0.01" list="zero-stop"/>
+    this.CHistory = Array(this.historyLength);
+    this.chiHistory = Array(this.historyLength);
+
+    this.drawStates();
     `;
     this.sContainer.appendChild(sDiv);
 
@@ -318,7 +345,18 @@ class Model {
   autorun() {
     this.requestId = undefined;
 
-    for (let i = 0; i < 5 * this.Nx * this.Ny; i++) {
+
+    this.E = undefined;
+    this.M = undefined;
+    this.C = undefined;
+    this.chi = undefined;
+
+    this.EHistory = Array(this.historyLength);
+    this.MHistory = Array(this.historyLength);
+    this.CHistory = Array(this.historyLength);
+    this.chiHistory = Array(this.historyLength);
+
+    for (let i = 0; i < (this.historyLength + this.additionalHistoryLength) * this.Nx * this.Ny; i++) {
       this.proposeNewConfigulation();
       if (i % (this.Nx * this.Ny) === 0) {
         this.calculateStatistics();
@@ -327,25 +365,40 @@ class Model {
     this.drawStates();
 
     this.timesAutoran++;
-    if (this.timesAutoran >= 100) {
-      this.graphT.push(this.T);
-      this.graphE.push(this.E);
-      this.graphM.push(this.M);
-      this.graphC.push(this.C);
-      this.graphchi.push(this.chi);
-      this.drawGraph();
 
-      this.timesAutoran = 0;
-      this.TIndex++;
-      if (this.TIndex <= 40) {
-        this.setT(this.TIndex * 0.1);
-        this.states.fill(0);
+    let E_ = 0;
+    let M_ = 0;
+    let C_ = 0;
+    let chi_ = 0;
+    for (let i = 0; i < this.additionalHistoryLength; i++) {
+      E_ += this.EHistory[i];
+      M_ += this.MHistory[i];
+      C_ += this.CHistory[i];
+      chi_ += this.chiHistory[i];
+    }
+    E_ /= this.additionalHistoryLength * (this.Nx * this.Ny);
+    M_ /= this.additionalHistoryLength * (this.Nx * this.Ny);
+    C_ /= this.additionalHistoryLength * (this.Nx * this.Ny);
+    chi_ /= this.additionalHistoryLength * (this.Nx * this.Ny);
 
-        if (!this.requestId) {
-          this.requestId = requestAnimationFrame(this.autorun.bind(this));
-        }
-      }
-    } else {
+    this.graphT.push(this.T);
+    this.graphE.push(E_);
+    this.graphM.push(M_);
+    this.graphC.push(C_);
+    this.graphchi.push(chi_);
+    this.drawGraph();
+
+    this.timesAutoran = 0;
+    this.TIndex++;
+    if (this.TIndex <= 80) {
+      this.setT(this.TIndex * 0.1);
+      this.states.fill(0);
+
+      this.EHistory = Array(this.historyLength);
+      this.MHistory = Array(this.historyLength);
+      this.CHistory = Array(this.historyLength);
+      this.chiHistory = Array(this.historyLength);
+
       if (!this.requestId) {
         this.requestId = requestAnimationFrame(this.autorun.bind(this));
       }
@@ -415,23 +468,27 @@ class Model {
     this.EHistory.pop();
     this.EHistory.unshift(E);
     this.MHistory.pop();
-    this.MHistory.unshift(E);
-    let UExpval = 0;
-    let U2Expval = 0;
+    this.MHistory.unshift(M);
+    let EExpval = 0;
+    let E2Expval = 0;
     let MExpval = 0;
     let M2Expval = 0;
     for (let a = 0; a < this.historyLength; a++) {
-      UExpval += this.EHistory[a];
-      U2Expval += this.EHistory[a] ** 2;
+      EExpval += this.EHistory[a];
+      E2Expval += this.EHistory[a] ** 2;
       MExpval += this.MHistory[a];
       M2Expval += this.MHistory[a] ** 2;
     }
-    UExpval /= this.historyLength;
-    U2Expval /= this.historyLength;
+    EExpval /= this.historyLength;
+    E2Expval /= this.historyLength;
     MExpval /= this.historyLength;
     M2Expval /= this.historyLength;
-    const C = (U2Expval - UExpval ** 2) / this.T ** 2;  // Actually C/k
+    const C = (E2Expval - EExpval ** 2) / this.T ** 2;  // Actually C/k
     const chi = (M2Expval - MExpval ** 2) / this.T;
+    this.CHistory.pop();
+    this.CHistory.unshift(C);
+    this.chiHistory.pop();
+    this.chiHistory.unshift(chi);
 
     const MPerCell = M / (this.Nx * this.Ny);
     const EPerCell = E / (this.Nx * this.Ny);
@@ -499,32 +556,60 @@ class Model {
   }
 
   drawGraph() {
-    for (let i = 0; i < this.graphT.length; i++) {
-      T = this.graphT[i];
-      E = this.graphE[i];
-      M = this.graphM[i];
-      C = this.graphC[i];
-      chi = this.graphchi[i];
+    const CMax = Math.floor(Math.max(...this.graphC)) + 1;
+    const chiMax = Math.floor(Math.max(...this.graphchi)) + 1;
 
-      this.EContext.fillStyle = "black";
-      this.EContext.beginPath();
-      this.EContext.ellipse(T * 100, - E * 200, 5, 5, 0, 0, 2 * Math.PI);
-      this.EContext.fill();
+    // Vertical lines
+    for (const context of [
+      this.EContext, this.MContext, this.CContext, this.chiContext
+    ]) {
+      context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
-      this.MContext.fillStyle = "black";
-      this.MContext.beginPath();
-      this.MContext.ellipse(T * 100, 200 - M * 200, 5, 5, 0, 0, 2 * Math.PI);
-      this.MContext.fill();
+      for (let graphx = 40; graphx <= 440; graphx += 100) {
+        context.strokeStyle = "oklch(80% 0% 0deg)";
+        context.beginPath();
+        context.moveTo(graphx, 40);
+        context.lineTo(graphx, 440);
+        context.stroke();
+      }
+    }
 
-      this.CContext.fillStyle = "black";
+    for (let C = 0; C <= CMax; C++) {
+      this.CContext.strokeStyle = "oklch(80% 0% 0deg)";
       this.CContext.beginPath();
-      this.CContext.ellipse(T * 100, 400 - C * 100, 5, 5, 0, 0, 2 * Math.PI);
-      this.CContext.fill();
+      this.CContext.moveTo(40, 40 + 400 * C / CMax);
+      this.CContext.lineTo(440, 40 + 400 * C / CMax);
+      this.CContext.stroke();
+    }
 
-      this.chiContext.fillStyle = "black";
+    for (let chi = 0; chi <= chiMax; chi++) {
+      this.chiContext.strokeStyle = "oklch(80% 0% 0deg)";
       this.chiContext.beginPath();
-      this.chiContext.ellipse(T * 100, 400 - chi * 50, 5, 5, 0, 0, 2 * Math.PI);
-      this.chiContext.fill();
+      this.chiContext.moveTo(40, 40 + 400 * chi / chiMax);
+      this.chiContext.lineTo(440, 40 + 400 * chi / chiMax);
+      this.chiContext.stroke();
+    }
+
+    for (let i = 0; i < this.graphT.length; i++) {
+      const T = this.graphT[i];
+      const E = this.graphE[i];
+      const M = this.graphM[i];
+      const C = this.graphC[i];
+      const chi = this.graphchi[i];
+
+      let graphx = 40 + T * 50;
+
+      for (const [id, graphy] of [
+      	["E", 40 - E * 200],
+      	["M", 240 - M * 200],
+      	["C", 440 - 400 * C / CMax],
+      	["chi", 440 - 400 * chi / chiMax],
+      ]) {
+        this[`${id}Context`].fillStyle = "black";
+        this[`${id}Context`].beginPath();
+        this[`${id}Context`].ellipse(graphx, graphy, 5, 5, 0, 0, 2 * Math.PI);
+        this[`${id}Context`].fill();
+      }
     }
   }
 }

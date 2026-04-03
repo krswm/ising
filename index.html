@@ -18,12 +18,16 @@
   <body>
     <div id="output">
       <div id="canvas-container">
-        <canvas id="spin-canvas">real-time visualization of the spin configulation</canvas>
-        <div id="graph-container">
-          <canvas id="E-canvas">graph for energy</canvas>
-          <canvas id="M-canvas">graph for magnetization</canvas>
-          <canvas id="C-canvas">graph for heat capacity</canvas>
-          <canvas id="chi-canvas">graph for susceptibility</canvas>
+        <div id="spin-canvas-container">
+          <canvas id="spin-canvas">real-time visualization of the spin configulation</canvas>
+        </div>
+        <div id="graph-container" style="display: none;">
+          <div id="graph">
+            <canvas id="E-canvas">graph for energy</canvas>
+            <canvas id="M-canvas">graph for magnetization</canvas>
+            <canvas id="C-canvas">graph for heat capacity</canvas>
+            <canvas id="chi-canvas">graph for susceptibility</canvas>
+          </div>
         </div>
       </div>
       <div id="stat-container">
