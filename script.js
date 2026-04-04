@@ -35,7 +35,7 @@ class Model {
 
     for (const [id, numberMin, rangeMin, rangeMax, initialValue] of [
       ["speed", 0,     0, 1, 0.2],
-      ["T",     0,     0, 4, 2  ],
+      ["T",     0,     0, 8, 2  ],
       ["J1",    null, -1, 1, 1  ],
       ["J2",    null, -1, 1, 1  ],
       ["J3",    null, -1, 1, 0  ],
@@ -324,7 +324,7 @@ class Model {
   setT(T) {
     this.T = T;
     for (const elem of $query("#T input")) {
-      elem.value = `${this.T.toFixed(1)}`;
+      elem.value = `${this.T.toFixed(2)}`;
     }
   }
 
@@ -390,8 +390,8 @@ class Model {
 
     this.timesAutoran = 0;
     this.TIndex++;
-    if (this.TIndex <= 80) {
-      this.setT(this.TIndex * 0.1);
+    if (this.TIndex <= 800) {
+      this.setT(this.TIndex * 0.01);
       this.states.fill(0);
 
       this.EHistory = Array(this.historyLength);
@@ -556,59 +556,65 @@ class Model {
   }
 
   drawGraph() {
-    const CMax = Math.floor(Math.max(...this.graphC)) + 1;
-    const chiMax = Math.floor(Math.max(...this.graphchi)) + 1;
-
-    // Vertical lines
-    for (const context of [
-      this.EContext, this.MContext, this.CContext, this.chiContext
+    for (const [graphQ, QHistory, QContext] of [
+      [this.graphE, this.EHistory, this.EContext],
+      [this.graphM, this.MHistory, this.MContext],
+      [this.graphC, this.CHistory, this.CContext],
+      [this.graphchi, this.chiHistory, this.chiContext],
     ]) {
-      context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
-      for (let graphx = 40; graphx <= 440; graphx += 100) {
-        context.strokeStyle = "oklch(80% 0% 0deg)";
-        context.beginPath();
-        context.moveTo(graphx, 40);
-        context.lineTo(graphx, 440);
-        context.stroke();
+      let max = Math.ceil(Math.max(...graphQ));
+      let min = Math.floor(Math.min(...graphQ));
+      if (min === max) {
+        max = min + 1;
       }
-    }
 
-    for (let C = 0; C <= CMax; C++) {
-      this.CContext.strokeStyle = "oklch(80% 0% 0deg)";
-      this.CContext.beginPath();
-      this.CContext.moveTo(40, 40 + 400 * C / CMax);
-      this.CContext.lineTo(440, 40 + 400 * C / CMax);
-      this.CContext.stroke();
-    }
+      QContext.clearRect(0, 0, QContext.canvas.width, QContext.canvas.height);
 
-    for (let chi = 0; chi <= chiMax; chi++) {
-      this.chiContext.strokeStyle = "oklch(80% 0% 0deg)";
-      this.chiContext.beginPath();
-      this.chiContext.moveTo(40, 40 + 400 * chi / chiMax);
-      this.chiContext.lineTo(440, 40 + 400 * chi / chiMax);
-      this.chiContext.stroke();
-    }
+      // Vertical lines
+      for (let T = 0; T <= 8; T += 2) {
+        const graphx = 40 + T * 50;
 
-    for (let i = 0; i < this.graphT.length; i++) {
-      const T = this.graphT[i];
-      const E = this.graphE[i];
-      const M = this.graphM[i];
-      const C = this.graphC[i];
-      const chi = this.graphchi[i];
+        QContext.strokeStyle = "oklch(80% 0% 0deg)";
+        QContext.beginPath();
+        QContext.moveTo(graphx, 40);
+        QContext.lineTo(graphx, 440);
+        QContext.stroke();
 
-      let graphx = 40 + T * 50;
+        QContext.font = "20px system-ui";
+        QContext.fillStyle = "oklch(80% 0% 0deg)";
+        QContext.textAlign = "center";
+        QContext.textBaseline = "top";
+        QContext.fillText(`${T}`, graphx, 445);
+      }
 
-      for (const [id, graphy] of [
-      	["E", 40 - E * 200],
-      	["M", 240 - M * 200],
-      	["C", 440 - 400 * C / CMax],
-      	["chi", 440 - 400 * chi / chiMax],
-      ]) {
-        this[`${id}Context`].fillStyle = "black";
-        this[`${id}Context`].beginPath();
-        this[`${id}Context`].ellipse(graphx, graphy, 5, 5, 0, 0, 2 * Math.PI);
-        this[`${id}Context`].fill();
+      // Horizontal lines
+      for (let i = min; i <= max; i++) {
+        const graphy = 440 - 400 * (i - min) / (max - min);
+
+        QContext.strokeStyle = "oklch(80% 0% 0deg)";
+        QContext.beginPath();
+        QContext.moveTo(40, graphy);
+        QContext.lineTo(440, graphy);
+        QContext.stroke();
+
+        QContext.font = "20px system-ui";
+        QContext.fillStyle = "oklch(80% 0% 0deg)";
+        QContext.textAlign = "end";
+        QContext.textBaseline = "middle";
+        QContext.fillText(`${i}`, 35, graphy);
+      }
+
+      for (let i = 0; i < this.graphT.length; i++) {
+        const T = this.graphT[i];
+        const Q = graphQ[i];
+
+        const graphx = 40 + T * 50;
+        const graphy = 440 - 400 * (Q - min) / (max - min);
+
+        QContext.fillStyle = "black";
+        QContext.beginPath();
+        QContext.ellipse(graphx, graphy, 2, 2, 0, 0, 2 * Math.PI);
+        QContext.fill();
       }
     }
   }
