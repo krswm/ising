@@ -46,10 +46,16 @@ body {
   overflow: scroll hidden;
 }
 
-#graph-container canvas {
+#graph canvas {
   background-color: white;
   border: 1px solid oklch(80% 0% 0deg);
   border-radius: 1rem;
+}
+
+#graph-box {
+  background-color: red;
+
+  display: grid;
 }
 
 #stat-container {

@@ -17,8 +17,8 @@ class Model {
     this.arrow = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
 
     // Currently historyLength >= additionalHistoryLength is assumed in the algorithm.
-    this.historyLength = 50;
-    this.additionalHistoryLength = 50;
+    this.historyLength = 200;
+    this.additionalHistoryLength = 200;
 
     this.T = 2;
     this.J1 = 1;
@@ -324,7 +324,7 @@ class Model {
   setT(T) {
     this.T = T;
     for (const elem of $query("#T input")) {
-      elem.value = `${this.T.toFixed(2)}`;
+      elem.value = `${this.T.toFixed(2).replace(/\.?0*$/, "")}`;
     }
   }
 
@@ -564,14 +564,11 @@ class Model {
     ]) {
       let max = Math.ceil(Math.max(...graphQ));
       let min = Math.floor(Math.min(...graphQ));
-      if (min === max) {
-        max = min + 1;
-      }
 
       QContext.clearRect(0, 0, QContext.canvas.width, QContext.canvas.height);
 
       // Vertical lines
-      for (let T = 0; T <= 8; T += 2) {
+      for (let T = 0; T <= 8; T++) {
         const graphx = 40 + T * 50;
 
         QContext.strokeStyle = "oklch(80% 0% 0deg)";
@@ -588,8 +585,13 @@ class Model {
       }
 
       // Horizontal lines
-      for (let i = min; i <= max; i++) {
-        const graphy = 440 - 400 * (i - min) / (max - min);
+      for (let Q = min; Q <= max; Q++) {
+        let graphy;
+        if (min === max) {
+          graphy = 240;
+        } else {
+          graphy = 440 - 400 * (Q - min) / (max - min);
+        }
 
         QContext.strokeStyle = "oklch(80% 0% 0deg)";
         QContext.beginPath();
@@ -601,7 +603,7 @@ class Model {
         QContext.fillStyle = "oklch(80% 0% 0deg)";
         QContext.textAlign = "end";
         QContext.textBaseline = "middle";
-        QContext.fillText(`${i}`, 35, graphy);
+        QContext.fillText(`${Q}`, 35, graphy);
       }
 
       for (let i = 0; i < this.graphT.length; i++) {
@@ -609,7 +611,13 @@ class Model {
         const Q = graphQ[i];
 
         const graphx = 40 + T * 50;
-        const graphy = 440 - 400 * (Q - min) / (max - min);
+
+        let graphy;
+        if (min === max) {
+          graphy = 240;
+        } else {
+          graphy = 440 - 400 * (Q - min) / (max - min);
+        }
 
         QContext.fillStyle = "black";
         QContext.beginPath();
