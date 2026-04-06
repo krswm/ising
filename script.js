@@ -241,10 +241,10 @@ class Model {
     for (const name of ["E", "M", "C", "chi"]) {
       const canvas = $id(`${name}-canvas`);
       this[`${name}Context`] = canvas.getContext("2d");
-      canvas.style.width = "240px";
-      canvas.style.height = "240px";
-      canvas.width = 480;
-      canvas.height = 480;
+      canvas.style.width = "190px";
+      canvas.style.height = "190px";
+      canvas.width = 380;
+      canvas.height = 380;
     }
 
     this.EHistory = Array(this.historyLength);
@@ -569,54 +569,54 @@ class Model {
 
       // Vertical lines
       for (let T = 0; T <= 8; T++) {
-        const graphx = 40 + T * 50;
+        const graphx = 40 + T * 40;
 
         QContext.strokeStyle = "oklch(80% 0% 0deg)";
         QContext.beginPath();
-        QContext.moveTo(graphx, 40);
-        QContext.lineTo(graphx, 440);
+        QContext.moveTo(graphx, 20);
+        QContext.lineTo(graphx, 340);
         QContext.stroke();
 
         QContext.font = "20px system-ui";
         QContext.fillStyle = "oklch(80% 0% 0deg)";
         QContext.textAlign = "center";
         QContext.textBaseline = "top";
-        QContext.fillText(`${T}`, graphx, 445);
+        QContext.fillText(`${T.toString().replace("-", "\u2212")}`, graphx, 345);
       }
 
       // Horizontal lines
       for (let Q = min; Q <= max; Q++) {
         let graphy;
         if (min === max) {
-          graphy = 240;
+          graphy = 180;
         } else {
-          graphy = 440 - 400 * (Q - min) / (max - min);
+          graphy = 340 - 320 * (Q - min) / (max - min);
         }
 
         QContext.strokeStyle = "oklch(80% 0% 0deg)";
         QContext.beginPath();
         QContext.moveTo(40, graphy);
-        QContext.lineTo(440, graphy);
+        QContext.lineTo(360, graphy);
         QContext.stroke();
 
         QContext.font = "20px system-ui";
         QContext.fillStyle = "oklch(80% 0% 0deg)";
         QContext.textAlign = "end";
         QContext.textBaseline = "middle";
-        QContext.fillText(`${Q}`, 35, graphy);
+        QContext.fillText(`${Q.toString().replace("-", "\u2212")}`, 35, graphy);
       }
 
       for (let i = 0; i < this.graphT.length; i++) {
         const T = this.graphT[i];
         const Q = graphQ[i];
 
-        const graphx = 40 + T * 50;
+        const graphx = 40 + T * 40;
 
         let graphy;
         if (min === max) {
-          graphy = 240;
+          graphy = 180;
         } else {
-          graphy = 440 - 400 * (Q - min) / (max - min);
+          graphy = 340 - 320 * (Q - min) / (max - min);
         }
 
         QContext.fillStyle = "black";
