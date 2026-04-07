@@ -5,8 +5,11 @@ const $query = query => document.querySelectorAll(query);
 const mod = (a, b) => ((a % b) + b) % b;
 
 // "\u2212" is MINUS SIGN. "\u2014" is EM DASH.
-const formatNumber = number => (
+const toFixedFormat = number => (
   isFinite(number) ? number.toFixed(3).replace("-", "\u2212") : "\u2014"
+);
+const toStringFormat = number => (
+  isFinite(number) ? number.toString().replace("-", "\u2212") : "\u2014"
 );
 
 class Model {
@@ -34,14 +37,14 @@ class Model {
     this.possibleSpins = [1, -1];
 
     for (const [id, numberMin, rangeMin, rangeMax, initialValue] of [
-      ["speed", 0,     0, 1, 0.2],
-      ["T",     0,     0, 8, 2  ],
-      ["J1",    null, -1, 1, 1  ],
-      ["J2",    null, -1, 1, 1  ],
-      ["J3",    null, -1, 1, 0  ],
-      ["J4",    null, -1, 1, 0  ],
-      ["J0",    null, -1, 1, 0  ],
-      ["h",     null, -2, 2, 0  ],
+      ["speed", 0,     0,  1, 0.2],
+      ["T",     0,     0, 10, 2  ],
+      ["J1",    null, -1,  1, 1  ],
+      ["J2",    null, -1,  1, 1  ],
+      ["J3",    null, -1,  1, 0  ],
+      ["J4",    null, -1,  1, 0  ],
+      ["J0",    null, -1,  1, 0  ],
+      ["h",     null, -2,  2, 0  ],
     ]) {
       for (const elem of $query(`#${id} input`)) {
         if (elem.type === "number" && numberMin !== null) {
@@ -168,10 +171,10 @@ class Model {
       $id("spin-canvas").style.opacity = "50%";
 
       this.graphT = [];
-      this.graphE = [];
-      this.graphM = [];
-      this.graphC = [];
-      this.graphchi = [];
+      this.EGraph = [];
+      this.MGraph = [];
+      this.CGraph = [];
+      this.chiGraph= [];
 
       this.timesAutoran = 0;
       this.TIndex = 1;
@@ -267,10 +270,6 @@ class Model {
         <input type="number" value="${spin}" step="0.01" />
       </div>
       <input type="range" value="${spin}" min="-2" max="2" step="0.01" list="zero-stop"/>
-    this.CHistory = Array(this.historyLength);
-    this.chiHistory = Array(this.historyLength);
-
-    this.drawStates();
     `;
     this.sContainer.appendChild(sDiv);
 
@@ -311,13 +310,21 @@ class Model {
       spinContext.setTransform(1, 0, 0, 1, 0, 0);
       spinContext.fillRect(0, 0, zoom, zoom);
 
+      const arrow = new Path2D();
+      arrow.addPath(this.arrow, {
+        a: zoom / 16,
+        d: spin / Math.max(Math.abs(max_spin), Math.abs(min_spin)) * zoom / 16,
+        e: 0.5 * zoom,
+        f: 0.5 * zoom,
+      });
+
       spinContext.fillStyle = "oklch(50% 0% 0deg)";
-      spinContext.setTransform(
-        zoom / 16, 0, 0,
-        spin / Math.max(Math.abs(max_spin), Math.abs(min_spin)) * zoom / 16,
-        0.5 * zoom, 0.5 * zoom
-      );
-      spinContext.fill(this.arrow);
+      spinContext.fill(arrow);
+
+      spinContext.lineWidth = 4;
+      spinContext.lineJoin = "round";
+      spinContext.strokeStyle = "oklch(50% 0% 0deg)";
+      spinContext.stroke(arrow);
     }
   }
 
@@ -382,15 +389,15 @@ class Model {
     chi_ /= this.additionalHistoryLength * (this.Nx * this.Ny);
 
     this.graphT.push(this.T);
-    this.graphE.push(E_);
-    this.graphM.push(M_);
-    this.graphC.push(C_);
-    this.graphchi.push(chi_);
+    this.EGraph.push(E_);
+    this.MGraph.push(M_);
+    this.CGraph.push(C_);
+    this.chiGraph.push(chi_);
     this.drawGraph();
 
     this.timesAutoran = 0;
     this.TIndex++;
-    if (this.TIndex <= 800) {
+    if (this.TIndex <= 1000) {
       this.setT(this.TIndex * 0.01);
       this.states.fill(0);
 
@@ -494,10 +501,10 @@ class Model {
     const EPerCell = E / (this.Nx * this.Ny);
     const CPerCell = C / (this.Nx * this.Ny);
     const chiPerCell = chi / (this.Nx * this.Ny);
-    $id("M").innerText = formatNumber(MPerCell);
-    $id("E").innerText = formatNumber(EPerCell);
-    $id("C").innerText = formatNumber(CPerCell);
-    $id("chi").innerText = formatNumber(chiPerCell);
+    $id("M").innerText = toFixedFormat(MPerCell);
+    $id("E").innerText = toFixedFormat(EPerCell);
+    $id("C").innerText = toFixedFormat(CPerCell);
+    $id("chi").innerText = toFixedFormat(chiPerCell);
 
     this.E = EPerCell;
     this.M = MPerCell;
@@ -544,84 +551,104 @@ class Model {
 
         if (zoom >= 16) {
           this.context.fillStyle = "oklch(50% 0% 0deg)";
-          this.context.setTransform(
-            zoom / 16, 0, 0,
-            spin / Math.max(Math.abs(max_spin), Math.abs(min_spin)) * zoom / 16,
-            (x + 0.5) * zoom, (y + 0.5) * zoom
-          );
-          this.context.fill(this.arrow);
+
+          const arrow = new Path2D();
+          arrow.addPath(this.arrow, {
+            a: zoom / 16,
+            d: spin / Math.max(Math.abs(max_spin), Math.abs(min_spin)) * zoom / 16,
+            e: (x + 0.5) * zoom,
+            f: (y + 0.5) * zoom,
+          });
+
+          this.context.fill(arrow);
+
+          this.context.lineWidth = 4;
+          this.context.lineJoin = "round";
+          this.context.strokeStyle = "oklch(50% 0% 0deg)";
+          this.context.stroke(arrow);
         }
       }
     }
   }
 
   drawGraph() {
-    for (const [graphQ, QHistory, QContext] of [
-      [this.graphE, this.EHistory, this.EContext],
-      [this.graphM, this.MHistory, this.MContext],
-      [this.graphC, this.CHistory, this.CContext],
-      [this.graphchi, this.chiHistory, this.chiContext],
-    ]) {
-      let max = Math.ceil(Math.max(...graphQ));
-      let min = Math.floor(Math.min(...graphQ));
+    // Canvas coordinates
+    // Do not confuse them with x and y (position of spin).
+    const XLeft = 40;
+    const XRight = 360;
+    const YTop = 20;
+    const Ybottom = 340;
 
+    const TMax = 10;
+
+    // Q stands for quantity.
+    for (const [QGraph, QHistory, QContext, isQAlwaysPositive] of [
+      [this.EGraph, this.EHistory, this.EContext, false],
+      [this.MGraph, this.MHistory, this.MContext, false],
+      [this.CGraph, this.CHistory, this.CContext, true],
+      [this.chiGraph, this.chiHistory, this.chiContext, true],
+    ]) {
+      // Erase.
       QContext.clearRect(0, 0, QContext.canvas.width, QContext.canvas.height);
 
-      // Vertical lines
-      for (let T = 0; T <= 8; T++) {
-        const graphx = 40 + T * 40;
+      const QMax = Math.ceil(Math.max(...QGraph));
+      const QMin = isQAlwaysPositive ? 0 : Math.floor(Math.min(...QGraph));
 
-        QContext.strokeStyle = "oklch(80% 0% 0deg)";
+      // Draw vertical lines.
+      for (let T = 0; T <= TMax; T++) {
+        const X = XLeft + T / TMax * (XRight - XLeft);
+
         QContext.beginPath();
-        QContext.moveTo(graphx, 20);
-        QContext.lineTo(graphx, 340);
+        QContext.moveTo(X, YTop);
+        QContext.lineTo(X, Ybottom);
+        QContext.strokeStyle = "oklch(80% 0% 0deg)";
         QContext.stroke();
 
         QContext.font = "20px system-ui";
-        QContext.fillStyle = "oklch(80% 0% 0deg)";
         QContext.textAlign = "center";
         QContext.textBaseline = "top";
-        QContext.fillText(`${T.toString().replace("-", "\u2212")}`, graphx, 345);
+        QContext.fillStyle = "oklch(80% 0% 0deg)";
+        QContext.fillText(toStringFormat(T), X, Ybottom + 5);
       }
 
-      // Horizontal lines
-      for (let Q = min; Q <= max; Q++) {
-        let graphy;
-        if (min === max) {
-          graphy = 180;
+      // Draw horizontal lines.
+      for (let Q = QMin; Q <= QMax; Q++) {
+        let Y;
+        if (QMin === QMax) {
+          Y = isQAlwaysPositive ? Ybottom : Ybottom - (Ybottom - YTop) / 2;
         } else {
-          graphy = 340 - 320 * (Q - min) / (max - min);
+          Y = Ybottom - (Q - QMin) / (QMax - QMin) * (Ybottom - YTop);
         }
 
-        QContext.strokeStyle = "oklch(80% 0% 0deg)";
         QContext.beginPath();
-        QContext.moveTo(40, graphy);
-        QContext.lineTo(360, graphy);
+        QContext.moveTo(XLeft, Y);
+        QContext.lineTo(XRight, Y);
+        QContext.strokeStyle = "oklch(80% 0% 0deg)";
         QContext.stroke();
 
         QContext.font = "20px system-ui";
-        QContext.fillStyle = "oklch(80% 0% 0deg)";
         QContext.textAlign = "end";
         QContext.textBaseline = "middle";
-        QContext.fillText(`${Q.toString().replace("-", "\u2212")}`, 35, graphy);
+        QContext.fillStyle = "oklch(80% 0% 0deg)";
+        QContext.fillText(toStringFormat(Q), XLeft - 5, Y);
       }
 
-      for (let i = 0; i < this.graphT.length; i++) {
-        const T = this.graphT[i];
-        const Q = graphQ[i];
+      // Draw dots.
+      for (const [i, T] of this.graphT.entries()) {
+        const Q = QGraph[i];
 
-        const graphx = 40 + T * 40;
+        const X = XLeft + T / TMax * (XRight - XLeft);
 
-        let graphy;
-        if (min === max) {
-          graphy = 180;
+        let Y;
+        if (QMin === QMax) {
+          Y = isQAlwaysPositive ? Ybottom : Ybottom - (Ybottom - YTop) / 2;
         } else {
-          graphy = 340 - 320 * (Q - min) / (max - min);
+          Y = Ybottom - (Q - QMin) / (QMax - QMin) * (Ybottom - YTop);
         }
 
-        QContext.fillStyle = "black";
         QContext.beginPath();
-        QContext.ellipse(graphx, graphy, 2, 2, 0, 0, 2 * Math.PI);
+        QContext.ellipse(X, Y, 2, 2, 0, 0, 2 * Math.PI);
+        QContext.fillStyle = "black";
         QContext.fill();
       }
     }

@@ -37,16 +37,19 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+
+  overflow: hidden;
 }
 
-#graph {
+#graph-grid {
   display: grid;
   gap: 1rem;
+  grid-auto-flow: column;
 
   overflow: scroll hidden;
 }
 
-#graph-box {
+#graph {
   border: 1px solid oklch(80% 0% 0deg);
   border-radius: 1rem;
 
@@ -58,23 +61,25 @@ body {
   background-color: white;
 }
 
-#graph-box > :nth-child(1), #graph-box > :nth-child(4) {
+#graph > :nth-child(1), #graph > :nth-child(4) {
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-#graph-box > :nth-child(1) > div, #graph-box > :nth-child(4) > div {
+#graph > :nth-child(1) > div, #graph > :nth-child(4) > div {
   font-size: 0.75rem;
 }
 
-#graph-box > :nth-child(1) > div {
+#graph > :nth-child(1) > div {
   transform: rotate(-90deg);
 }
 
 #stat-container {
   display: flex;
   justify-content: center;
+
+  overflow: hidden;
 }
 
 #stat {
@@ -350,13 +355,13 @@ body {
 }
 
 @media (height < 48rem) {
-  #graph {
-    grid: auto / auto auto auto auto;
+  #graph-grid {
+    grid-template: auto / auto auto auto auto;
   }
 }
 
 @media (height >= 48rem) {
-  #graph {
-    grid: auto auto / auto auto;
+  #graph-grid {
+    grid-template: auto auto / auto auto;
   }
 }
