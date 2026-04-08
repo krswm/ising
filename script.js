@@ -167,8 +167,8 @@ class Model {
 
       $id("graph-container").style.display = "flex";
 
-      $id("spin-canvas").style.filter = "blur(0.5rem)";
-      $id("spin-canvas").style.opacity = "50%";
+      $id("spin-canvas").style.filter = "blur(1rem)";
+      $id("spin-canvas").style.opacity = "10%";
 
       this.graphT = [];
       this.EGraph = [];
@@ -244,10 +244,10 @@ class Model {
     for (const name of ["E", "M", "C", "chi"]) {
       const canvas = $id(`${name}-canvas`);
       this[`${name}Context`] = canvas.getContext("2d");
-      canvas.style.width = "190px";
-      canvas.style.height = "190px";
-      canvas.width = 380;
-      canvas.height = 380;
+      canvas.style.width = `${16 * 13.5}px`;
+      canvas.style.height = `${16 * 13.5}px`;
+      canvas.width = 32 * 13.5;
+      canvas.height = 32 * 13.5;
     }
 
     this.EHistory = Array(this.historyLength);
@@ -522,10 +522,10 @@ class Model {
   }
 
   drawStates() {
-    const min_l = 5;
-    const max_l = 95;
-    const min_spin = Math.min(...this.possibleSpins);
-    const max_spin = Math.max(...this.possibleSpins);
+    const lightnessMin = 5;
+    const lightnessMax = 95;
+    const sMin = Math.min(...this.possibleSpins);
+    const sMax = Math.max(...this.possibleSpins);
 
     const zoom = Math.floor(Math.min(
       this.canvasContainerWidth / this.Nx * 2,
@@ -542,7 +542,7 @@ class Model {
       for (let x = 0; x < this.Nx; x++) {
         const spin = this.possibleSpins[this.states[this.Nx * y + x]];
         const l = (
-          (max_l - min_l) * (spin - min_spin) / (max_spin - min_spin) + min_l
+          (lightnessMax - lightnessMin) * (spin - sMin ) / (sMax - sMin ) + lightnessMin
         );
         this.context.fillStyle = `oklch(${l}% 0% 0deg)`;
 
@@ -555,14 +555,14 @@ class Model {
           const arrow = new Path2D();
           arrow.addPath(this.arrow, {
             a: zoom / 16,
-            d: spin / Math.max(Math.abs(max_spin), Math.abs(min_spin)) * zoom / 16,
+            d: spin / Math.max(Math.abs(sMax), Math.abs(sMin )) * zoom / 16,
             e: (x + 0.5) * zoom,
             f: (y + 0.5) * zoom,
           });
 
           this.context.fill(arrow);
 
-          this.context.lineWidth = 4;
+          this.context.lineWidth = zoom / 16;
           this.context.lineJoin = "round";
           this.context.strokeStyle = "oklch(50% 0% 0deg)";
           this.context.stroke(arrow);
@@ -574,10 +574,10 @@ class Model {
   drawGraph() {
     // Canvas coordinates
     // Do not confuse them with x and y (position of spin).
-    const XLeft = 40;
-    const XRight = 360;
-    const YTop = 20;
-    const Ybottom = 340;
+    const XLeft = 32 * 2.5;
+    const XRight = 32 * 12.5;
+    const YTop = 32 * 1;
+    const Ybottom = 32 * 11;
 
     const TMax = 10;
 
@@ -604,11 +604,11 @@ class Model {
         QContext.strokeStyle = "oklch(80% 0% 0deg)";
         QContext.stroke();
 
-        QContext.font = "20px system-ui";
+        QContext.font = "16px system-ui";
         QContext.textAlign = "center";
-        QContext.textBaseline = "top";
+        QContext.textBaseline = "middle";
         QContext.fillStyle = "oklch(80% 0% 0deg)";
-        QContext.fillText(toStringFormat(T), X, Ybottom + 5);
+        QContext.fillText(toStringFormat(T), X, Ybottom + 16);
       }
 
       // Draw horizontal lines.
@@ -626,11 +626,15 @@ class Model {
         QContext.strokeStyle = "oklch(80% 0% 0deg)";
         QContext.stroke();
 
-        QContext.font = "20px system-ui";
-        QContext.textAlign = "end";
+        QContext.save();
+        QContext.font = "16px system-ui";
+        QContext.textAlign = "center";
         QContext.textBaseline = "middle";
         QContext.fillStyle = "oklch(80% 0% 0deg)";
-        QContext.fillText(toStringFormat(Q), XLeft - 5, Y);
+        QContext.translate(XLeft - 16, Y);
+        QContext.rotate(-Math.PI / 2);
+        QContext.fillText(toStringFormat(Q), 0, 0);
+        QContext.restore();
       }
 
       // Draw dots.

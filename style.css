@@ -6,6 +6,7 @@ body {
 #output {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
 
   box-sizing: border-box;
   padding: 1rem;
@@ -46,30 +47,58 @@ body {
   gap: 1rem;
   grid-auto-flow: column;
 
-  overflow: scroll hidden;
+  overflow: hidden;
 }
 
-#graph {
+.graph {
+  position: relative;
+  padding: 0rem;
+
   border: 1px solid oklch(80% 0% 0deg);
   border-radius: 1rem;
 
-  padding: 0.5rem;
-
-  display: grid;
-  grid: auto 1rem / 1rem auto;
-
   background-color: white;
+  box-sizing: border-box;
+
+  box-sizing: border-box;
+
+  display: flex;
 }
 
-#graph > :nth-child(1), #graph > :nth-child(4) {
+.graph > :nth-child(2) {
+  position: absolute;
+
+  width: 10rem;
+  height: 1rem;
+
+  left: -4rem;
+  top: 5.5rem;
+
+  transform: rotate(-90deg);
+
+  font-size: 0.75rem;
+
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-#graph > :nth-child(1) > div, #graph > :nth-child(4) > div {
+.graph > :nth-child(3) {
+  position: absolute;
+
+  width: 10rem;
+  height: 1rem;
+
+  bottom: 0.5rem;
+  right: 1rem;
+
   font-size: 0.75rem;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
+
 
 #graph > :nth-child(1) > div {
   transform: rotate(-90deg);
@@ -357,6 +386,7 @@ body {
 @media (height < 48rem) {
   #graph-grid {
     grid-template: auto / auto auto auto auto;
+    overflow-x: scroll;
   }
 }
 
