@@ -12,6 +12,23 @@ const toStringFormat = number => (
   isFinite(number) ? number.toString().replace("-", "\u2212") : "\u2014"
 );
 
+function pairSlider(div) {
+  const number = div.querySelector('input[type="number"]');
+  const range = div.querySelector('input[type="range"]');
+
+  number.addEventListener("input", (event) => {
+    range.value = event.target.valueAsNumber;
+  });
+
+  range.addEventListener("input", (event) => {
+    number.value = event.target.valueAsNumber;
+  });
+}
+
+for (const div of document.querySelectorAll(".slider")) {
+  pairSlider(div);
+}
+
 class Model {
   constructor() {
     this.canvas = $id("spin-canvas");
@@ -238,7 +255,8 @@ class Model {
     this.redrawLegend();
 
     $id("add").addEventListener("click", (event) => {
-      this.createSpin(1, this.possibleSpins.length);
+      this.createSpin(0, this.possibleSpins.length);
+      this.redrawLegend();
     });
 
     for (const name of ["E", "M", "C", "chi"]) {
@@ -265,13 +283,13 @@ class Model {
     sDiv.classList.add("slider")
     sDiv.innerHTML = `
       <div class="parameter">
-        <div><img src="img/remove.svg" alt="remove" /></div>
-        <canvas id="spin${i}" style="border-radius: 0.25rem"></canvas>
+        <div><img id="remove${i}" src="img/remove.svg" alt="remove" /></div>
+        <canvas id="spin${i}" style="border-radius: 0.25rem; width: 32px; height: 32px;"></canvas>
         <input type="number" value="${spin}" step="0.01" />
       </div>
       <input type="range" value="${spin}" min="-2" max="2" step="0.01" list="zero-stop"/>
     `;
-    this.sContainer.appendChild(sDiv);
+    this.sContainer.append(sDiv);
 
     const number = sDiv.querySelector('input[type="number"]');
     const range = sDiv.querySelector('input[type="range"]');
@@ -285,6 +303,8 @@ class Model {
       this.possibleSpins[i] = event.target.valueAsNumber;
       this.redrawLegend();
     });
+
+    this.possibleSpins[i] = spin;
   }
 
   redrawLegend() {
@@ -294,15 +314,14 @@ class Model {
     const max_spin = Math.max(...this.possibleSpins);
     const zoom = 64;
 
-    for (let i = 0; i < this.possibleSpins.length; i++) {
+    for (const [i, slider] of this.sContainer.childNodes.entries()) {
       const spin = this.possibleSpins[i];
-      const spinCanvas = $id(`spin${i}`);
-      const spinContext = spinCanvas.getContext("2d");
+      const spinCanvas = slider.querySelector("canvas");
 
       spinCanvas.width = 64;
       spinCanvas.height = 64;
-      spinCanvas.style.width = "32px";
-      spinCanvas.style.height = "32px";
+
+      const spinContext = spinCanvas.getContext("2d");
 
       const l = (max_l - min_l) * (spin - min_spin) / (max_spin - min_spin) + min_l;
       spinContext.fillStyle = `oklch(${l}% 0% 0deg)`;
@@ -326,6 +345,10 @@ class Model {
       spinContext.strokeStyle = "oklch(50% 0% 0deg)";
       spinContext.stroke(arrow);
     }
+  }
+
+  redrawLegendFromId(id) {
+    
   }
 
   setT(T) {
