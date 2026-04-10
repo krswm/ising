@@ -127,7 +127,11 @@ class Model {
       this.drawStates();
     });
 
-    $query("speed input")
+    document.querySelector("#sNum input").addEventListener("input", (event) => {
+      const prev = this.possibleSpins.length;
+      const curr = event.target.valueAsNumber;
+      console.log([prev, curr]);
+    });
 
     $id("play").addEventListener("click", (event) => {
       if (!this.requestId) {
@@ -167,7 +171,6 @@ class Model {
         this.requestId = undefined;
       }
 
-      $id("pause").style.display = "none";
       this.chiHistory = Array(this.historyLength);
 
       for (let i = 0; i < this.Nx * this.Ny; i++) {
@@ -281,18 +284,43 @@ class Model {
   createSpin(spin, i) {
     const sDiv = document.createElement("div");
     sDiv.classList.add("slider")
-    sDiv.innerHTML = `
-      <div class="parameter">
-        <div><img id="remove${i}" src="img/remove.svg" alt="remove" /></div>
-        <canvas id="spin${i}" style="border-radius: 0.25rem; width: 32px; height: 32px;"></canvas>
-        <input type="number" value="${spin}" step="0.01" />
-      </div>
-      <input type="range" value="${spin}" min="-2" max="2" step="0.01" list="zero-stop"/>
+
+    const removeDiv = document.createElement("div");
+    removeDiv.innerHTML = `
+      <img id="remove${i}" src="img/remove.svg" alt="remove" />
     `;
+    removeDiv.addEventListener("click", (event) => {
+      console.log(event);
+      this.possibleSpins.splice(i, 1);
+      sDiv.remove();
+    });
+
+    const canvas = document.createElement("canvas");
+    canvas.id = `spin${i}`;
+    canvas.style = "border-radius: 0.25rem; width: 32px; height: 32px;";
+
+    const number = document.createElement("input");
+    number.type = "number";
+    number.value = `${spin}`;
+    number.step = "0.01";
+
+    const parameterDiv = document.createElement("div");
+    parameterDiv.classList.add("parameter");
+    parameterDiv.append(removeDiv);
+    parameterDiv.append(canvas);
+    parameterDiv.append(number);
+
+    const range = document.createElement("input");
+    range.type = "range";
+    range.value = `${spin}`;
+    range.min = "-2";
+    range.max = "2";
+    range.step = "0.01";
+      
+    sDiv.append(parameterDiv);
+    sDiv.append(range);
     this.sContainer.append(sDiv);
 
-    const number = sDiv.querySelector('input[type="number"]');
-    const range = sDiv.querySelector('input[type="range"]');
     number.addEventListener("input", (event) => {
       range.value = event.target.valueAsNumber;
       this.possibleSpins[i] = event.target.valueAsNumber;
@@ -397,12 +425,17 @@ class Model {
     this.timesAutoran++;
 
     let E_ = 0;
+      this.chiHistory = Array(this.historyLength);
+
+
     let M_ = 0;
     let C_ = 0;
     let chi_ = 0;
     for (let i = 0; i < this.additionalHistoryLength; i++) {
       E_ += this.EHistory[i];
       M_ += this.MHistory[i];
+      this.possibleSpins.splice(i, 1);
+      sDiv.remove();
       C_ += this.CHistory[i];
       chi_ += this.chiHistory[i];
     }
@@ -427,8 +460,6 @@ class Model {
       this.EHistory = Array(this.historyLength);
       this.MHistory = Array(this.historyLength);
       this.CHistory = Array(this.historyLength);
-      this.chiHistory = Array(this.historyLength);
-
       if (!this.requestId) {
         this.requestId = requestAnimationFrame(this.autorun.bind(this));
       }
@@ -482,7 +513,6 @@ class Model {
     let E = 0;
     for (let y = 0; y < this.Ny; y++) {
       for (let x = 0; x < this.Nx; x++) {
-        M += this.possibleSpins[this.states[this.Nx * y + x]];
         E += (
           /* No double counting! */
           - this.J1 * this.getSpin(x + 1, y    )

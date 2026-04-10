@@ -62,7 +62,7 @@
           <div>\(\displaystyle \vphantom{\Bigg|} \frac{M}{N}\)</div>
           <div class="stat-equal">\(=\)</div>
           <div>\(\displaystyle \vphantom{\Bigg|} \frac{1}{N}\)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} \sum_i s_i\)</div>
+          <div>\(\displaystyle \vphantom{\Bigg|} \sum_i \sigma_i\)</div>
           <div class="stat-equal">\(=\)</div>
           <div class="stat-value" id="M"></div>
 
@@ -139,7 +139,7 @@
           </form>
 
           <div id="isingFormula">
-            \[E = - \sum_{\langle i \, j \rangle} J_{i j} s_i s_j - h \sum_i s_i\]
+            \[E = - \sum_{\langle i \, j \rangle} J_{i j} \sigma_i \sigma_j - h \sum_i \sigma_i\]
           </div>
           <div id="xyFormula" style="display: none;">
             \[E = - \sum_{\langle i \, j \rangle} J_{i j} \cos(\theta_j - \theta_i)\]
@@ -148,11 +148,16 @@
 
         <div class="box">
           <div id="spinButtonContainer">
-            <button class="clickable" id="reset">Reset spins</button>
-            <button class="clickable" id="randomize">Randomize spins</button>
+            <button class="clickable" id="reset">Reset states</button>
+            <button class="clickable" id="randomize">Randomize states</button>
+          </div>
+          <div class="box parameter" id="sNum">
+            <div>Number of states</div>
+            <div></div>
+            <input type="number" value="2" min="2" />
           </div>
           <details>
-            <summary>Possible Spins \(s\)</summary>
+            <summary>Possible states \(\sigma\)</summary>
             <div id="sContainer"></div>
             <div style="margin-top: 1.5rem;"><img id="add" src="img/add.svg"></img></div>
           </details>
