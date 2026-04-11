@@ -37,8 +37,8 @@ class Model {
     this.arrow = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
 
     // Currently historyLength >= additionalHistoryLength is assumed in the algorithm.
-    this.historyLength = 200;
-    this.additionalHistoryLength = 200;
+    this.historyLength = 100;
+    this.additionalHistoryLength = 100;
 
     this.T = 2;
     this.J1 = 1;
@@ -127,12 +127,6 @@ class Model {
       this.drawStates();
     });
 
-    document.querySelector("#sNum input").addEventListener("input", (event) => {
-      const prev = this.possibleSpins.length;
-      const curr = event.target.valueAsNumber;
-      console.log([prev, curr]);
-    });
-
     $id("play").addEventListener("click", (event) => {
       if (!this.requestId) {
         this.requestId = requestAnimationFrame(this.run.bind(this));
@@ -179,6 +173,26 @@ class Model {
       drawStates();
     });
 
+    $id("add-state").addEventListener("click", (event) => {
+      this.createSpin(0, this.possibleSpins.length);
+      this.redrawLegend();
+
+      this.states.fill(0);
+      this.drawStates();
+    });
+
+    $id("remove-state").addEventListener("click", (event) => {
+      if (this.possibleSpins.length < 3) {
+        return
+      }
+
+      this.removeSpin();
+      this.redrawLegend();
+
+      this.states.fill(0);
+      this.drawStates();
+    });
+
     $id("enter-graph-mode").addEventListener("click", (event) => {
       $id("enter-graph-mode").style.display = "none";
       $id("leave-graph-mode").style.display = "unset";
@@ -207,7 +221,8 @@ class Model {
 
       this.states.fill(0);
 
-      this.requestId = requestAnimationFrame(this.autorun.bind(this));
+      cancelAnimationFrame(this.requestId);
+      this.autorun();
     });
 
     $id("leave-graph-mode").addEventListener("click", (event) => {
@@ -221,16 +236,8 @@ class Model {
 
       cancelAnimationFrame(this.requestId);
 
-      this.requestId = requestAnimationFrame(this.run.bind(this));
-    });
-
-    $id("ising").addEventListener("input", (event) => {
-      $id("isingFormula").style.display = "block";
-      $id("xyFormula").style.display = "none";
-    });
-    $id("xy").addEventListener("input", (event) => {
-      $id("isingFormula").style.display = "none";
-      $id("xyFormula").style.display = "block";
+      clearTimeout(this.timeoutId);
+      this.run();
     });
 
     this.canvasContainerWidth = (
@@ -257,11 +264,6 @@ class Model {
     }
     this.redrawLegend();
 
-    $id("add").addEventListener("click", (event) => {
-      this.createSpin(0, this.possibleSpins.length);
-      this.redrawLegend();
-    });
-
     for (const name of ["E", "M", "C", "chi"]) {
       const canvas = $id(`${name}-canvas`);
       this[`${name}Context`] = canvas.getContext("2d");
@@ -285,15 +287,8 @@ class Model {
     const sDiv = document.createElement("div");
     sDiv.classList.add("slider")
 
-    const removeDiv = document.createElement("div");
-    removeDiv.innerHTML = `
-      <img id="remove${i}" src="img/remove.svg" alt="remove" />
-    `;
-    removeDiv.addEventListener("click", (event) => {
-      console.log(event);
-      this.possibleSpins.splice(i, 1);
-      sDiv.remove();
-    });
+    const div = document.createElement("div");
+    div.style.width = "100%";
 
     const canvas = document.createElement("canvas");
     canvas.id = `spin${i}`;
@@ -301,21 +296,22 @@ class Model {
 
     const number = document.createElement("input");
     number.type = "number";
-    number.value = `${spin}`;
     number.step = "0.01";
+    number.value = `${spin}`;
 
     const parameterDiv = document.createElement("div");
     parameterDiv.classList.add("parameter");
-    parameterDiv.append(removeDiv);
     parameterDiv.append(canvas);
+    parameterDiv.append(div);
     parameterDiv.append(number);
 
     const range = document.createElement("input");
+    // Order is important! Set min and max then value.
     range.type = "range";
-    range.value = `${spin}`;
     range.min = "-2";
     range.max = "2";
     range.step = "0.01";
+    range.value = `${spin}`;
       
     sDiv.append(parameterDiv);
     sDiv.append(range);
@@ -333,6 +329,13 @@ class Model {
     });
 
     this.possibleSpins[i] = spin;
+  }
+
+  removeSpin() {
+    const l = this.possibleSpins.length - 1;
+    this.possibleSpins.pop();
+    document.querySelector("#sContainer > :last-child").remove();
+
   }
 
   redrawLegend() {
@@ -375,10 +378,6 @@ class Model {
     }
   }
 
-  redrawLegendFromId(id) {
-    
-  }
-
   setT(T) {
     this.T = T;
     for (const elem of $query("#T input")) {
@@ -402,7 +401,7 @@ class Model {
 
   autorun() {
     this.requestId = undefined;
-
+    this.timeoutId = undefined;
 
     this.E = undefined;
     this.M = undefined;
@@ -425,17 +424,12 @@ class Model {
     this.timesAutoran++;
 
     let E_ = 0;
-      this.chiHistory = Array(this.historyLength);
-
-
     let M_ = 0;
     let C_ = 0;
     let chi_ = 0;
     for (let i = 0; i < this.additionalHistoryLength; i++) {
       E_ += this.EHistory[i];
       M_ += this.MHistory[i];
-      this.possibleSpins.splice(i, 1);
-      sDiv.remove();
       C_ += this.CHistory[i];
       chi_ += this.chiHistory[i];
     }
@@ -460,9 +454,12 @@ class Model {
       this.EHistory = Array(this.historyLength);
       this.MHistory = Array(this.historyLength);
       this.CHistory = Array(this.historyLength);
+      /*
       if (!this.requestId) {
-        this.requestId = requestAnimationFrame(this.autorun.bind(this));
+          this.requestId = requestAnimationFrame(this.autorun.bind(this));
       }
+      */
+      this.timeoutId = setTimeout(this.autorun.bind(this));
     }
   }
 
@@ -522,6 +519,7 @@ class Model {
           - this.J0 * this.possibleSpins[this.states[this.Nx * y + x]]
           - this.h
         ) * this.possibleSpins[this.states[this.Nx * y + x]];
+        M += this.possibleSpins[this.states[this.Nx * y + x]];
       }
     }
 

@@ -6,7 +6,7 @@ body {
 #output {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1rem;
 
   box-sizing: border-box;
   padding: 1rem;
@@ -155,10 +155,6 @@ body {
   padding: 1rem;
 }
 
-#control header {
-  padding-bottom: 1rem;
-}
-
 #header-link {
   padding-top: 0.5rem;
 }
@@ -176,6 +172,10 @@ body {
   border-radius: 0.5rem;
 
   padding: 1rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 #control .clickable {
@@ -217,23 +217,30 @@ body {
   margin: 0rem;
 }
 
-#control #buttonContainer {
+.button-container {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
-#control #buttonContainer > button {
+.button-container button {
   font-family: system-ui;
   flex: 100%;
+  height: 3rem;
 }
 
-#control #buttonContainer > button > img {
+.button-container img {
   vertical-align: -0.25rem;
 
   height: 1.5rem;
 }
 
-#control #buttonContainer > #play, #control #buttonContainer > #pause {
+.details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#play, #pause {
   flex: 0 0 3rem;
   width: 3rem;
   height: 3rem;
@@ -241,46 +248,28 @@ body {
   display: float;
 }
 
-#control #buttonContainer > #play {
-  display: none;
-
+#play {
   background-image: url("img/play.svg");
   background-repeat: no-repeat;
   background-position: center center;
 }
 
-#control #buttonContainer > #pause {
+#pause {
   background-image: url("img/pause.svg");
   background-repeat: no-repeat;
   background-position: center center;
-}
-
-#control #buttonContainer > #leave-graph-mode {
-  display: none;
 }
 
 #control > #legendContainer > .legend {
   flex: none;
 
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
   align-content: center;
 }
 
 #control > #legendContainer > .legend > div {
   align-content: center;
-}
-
-#control #spinButtonContainer {
-  display: flex;
-  gap: 0.5rem;
-}
-
-#control #spinButtonContainer > button {
-  font-family: system-ui;
-  flex: 100%;
-  margin-bottom: 1rem;
-  height: 3rem;
 }
 
 #control div.slider {
@@ -307,24 +296,8 @@ body {
   gap: 2rem;
 }
 
-#control #JContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-
-  padding-top: 1rem;
-}
-
 #control .J {
   vertical-align: -0.75rem;
-}
-
-#control #sContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-
-  padding-top: 1rem;
 }
 
 #control > details {
@@ -351,6 +324,12 @@ body {
   display: flex;
   gap: 1rem;
   margin-bottom: 1rem;
+}
+
+#s-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 @media (width < 64rem) {
