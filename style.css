@@ -32,75 +32,52 @@ body {
 #graph-container {
   position: absolute;
 
-  width: 100%;
-  height: 100%;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  overflow: hidden;
-}
-
-#graph-grid {
   display: grid;
   gap: 1rem;
   grid-auto-flow: column;
 
+  width: 100%;
+  height: 100%;
+
+  justify-content: center;
+  align-content: center;
+
+  grid: auto auto / auto auto;
+
   overflow: hidden;
 }
-
 .graph {
-  position: relative;
-  padding: 0rem;
-
-  border: 1px solid oklch(80% 0% 0deg);
-  border-radius: 1rem;
+  display: grid;
+  grid-template:
+    ". c c c" 0.5rem
+    "y c c c" 10rem
+    ". c c c" 1rem
+    ". . x ." 1rem /
+    1rem 1rem 10rem 0.5rem;
 
   background-color: white;
-  box-sizing: border-box;
+  border: 1px solid oklch(80% 0% 0deg);
+  border-radius: 1rem;
+  padding: 0.5rem;
 
-  box-sizing: border-box;
-
-  display: flex;
+  width: min-content;
+  height: min-content;
 }
-
-.graph > :nth-child(2) {
-  position: absolute;
-
-  width: 10rem;
-  height: 1rem;
-
-  left: -4rem;
-  top: 5.5rem;
-
-  transform: rotate(-90deg);
+.graph > canvas {
+  grid-area: c;
+}
+.graph > div {
+  justify-self: center;
+  align-self: center;
 
   font-size: 0.75rem;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
-
-.graph > :nth-child(3) {
-  position: absolute;
-
-  width: 10rem;
-  height: 1rem;
-
-  bottom: 0.5rem;
-  right: 1rem;
-
-  font-size: 0.75rem;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.graph > div:nth-of-type(1) {
+  grid-area: x;
 }
+.graph > div:nth-of-type(2) {
+  grid-area: y;
 
-
-#graph > :nth-child(1) > div {
   transform: rotate(-90deg);
 }
 
@@ -359,18 +336,5 @@ body {
 
   #control {
     width: 24rem;
-  }
-}
-
-@media (height < 48rem) {
-  #graph-grid {
-    grid-template: auto / auto auto auto auto;
-    overflow-x: scroll;
-  }
-}
-
-@media (height >= 48rem) {
-  #graph-grid {
-    grid-template: auto auto / auto auto;
   }
 }

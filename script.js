@@ -199,7 +199,7 @@ class Model {
 
       cancelAnimationFrame(this.requestId);
 
-      $id("graph-container").style.display = "flex";
+      $id("graph-container").style.display = "grid";
 
       $id("spin-canvas").style.filter = "blur(1rem)";
       $id("spin-canvas").style.opacity = "10%";
@@ -267,10 +267,10 @@ class Model {
     for (const name of ["E", "M", "C", "chi"]) {
       const canvas = $id(`${name}-canvas`);
       this[`${name}Context`] = canvas.getContext("2d");
-      canvas.style.width = `${16 * 13.5}px`;
-      canvas.style.height = `${16 * 13.5}px`;
-      canvas.width = 32 * 13.5;
-      canvas.height = 32 * 13.5;
+      canvas.style.width = `${16 * 11.5}px`;
+      canvas.style.height = `${16 * 11.5}px`;
+      canvas.width = 32 * 11.5;
+      canvas.height = 32 * 11.5;
     }
 
     this.EHistory = Array(this.historyLength);
@@ -625,10 +625,10 @@ class Model {
   drawGraph() {
     // Canvas coordinates
     // Do not confuse them with x and y (position of spin).
-    const XLeft = 32 * 2.5;
-    const XRight = 32 * 12.5;
-    const YTop = 32 * 1;
-    const Ybottom = 32 * 11;
+    const XLeft = 32 * 1;
+    const XRight = 32 * 11;
+    const YTop = 32 * 0.5;
+    const Ybottom = 32 * 10.5;
 
     const TMax = 10;
 
