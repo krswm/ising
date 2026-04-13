@@ -74,139 +74,137 @@
         <div id="chi"></div>
       </div>
     </div>
-    <div id="control-container">
-      <div id="control">
-        <header>
-          <h1>Ising Model Simulation</h1>
-          <div>with the Metropolis Algorithm</div>
-          <div id="header-link"><a href="https://github.com/krswm/ising">Repository on GitHub</a></div>
-        </header>
+    <div id="control">
+      <header>
+        <h1>Ising Model Simulation</h1>
+        <div>with the Metropolis Algorithm</div>
+        <div><a href="https://github.com/krswm/ising">Repository on GitHub</a></div>
+      </header>
 
-        <div class="box" id="system">
-          <div class="button-container">
-            <button class="clickable" id="pause"></button>
-            <button class="clickable" id="play" style="display: none;"></button>
-            <button class="clickable" id="enter-graph-mode">Enter graph mode</button>
-            <button class="clickable" id="leave-graph-mode" style="display: none;">Leave graph mode</button>
-          </div>
-
-          <div class="slider" id="speed">
-            <div class="parameter">
-              <div>Simulation speed</div>
-              <input type="number" />
-            </div>
-            <input type="range" />
-          </div>
+      <div class="box" id="system">
+        <div class="button-container">
+          <button class="clickable" id="pause"></button>
+          <button class="clickable" id="play" style="display: none;"></button>
+          <button class="clickable" id="enter-graph-mode">Enter graph mode</button>
+          <button class="clickable" id="leave-graph-mode" style="display: none;">Leave graph mode</button>
         </div>
 
-        <div class="box">
-          <div class="slider" id="T">
-            <div class="parameter">
-              <div>Temperature</div>
-              <div>\(k_{\mathrm{B}} T =\)</div>
-              <input type="number" />
-            </div>
-            <input type="range" />
-          </div>
-        </div>
-
-        <div class="box">
-          <div class="parameter" id="N">
-            <div>Size</div>
-            <div>\(N =\)</div>
-            <input id="Nx" type="number" value="20" min="1" />
-            <div>\(\times\)</div>
-            <input id="Ny" type="number" value="20" min="1" />
-          </div>
-        </div>
-
-        <div class="box">
-          <div id="isingFormula">
-            \[\vphantom{\Bigg|} E = - \sum_{\langle i \, j \rangle} J_{i j} \sigma_i \sigma_j - h \sum_i \sigma_i\]
-          </div>
-        </div>
-
-        <div class="box">
-          <div class="button-container">
-            <button class="clickable" id="reset">Reset states</button>
-            <button class="clickable" id="randomize">Randomize states</button>
-          </div>
-          <details>
-            <summary>States \(\sigma\)</summary>
-            <div class="details-list" id="sContainer"></div>
-            <div class="button-container">
-              <button class="clickable" id="add-state">Add</button>
-              <button class="clickable" id="remove-state">Remove</button>
-            </div>
-          </details>
-        </div>
-
-        <div class="box">
-          <details>
-            <summary>Coupling \(J\)</summary>
-
-            <div class="details-list" id="JContainer">
-              <div class="slider" id="J1">
-                <div class="parameter">
-                  <div>Holizontal</div>
-                  <div>\(J\)<img class="J" src="img/J1.svg"></img> \(=\)</div>
-                  <input type="number" />
-                </div>
-                <input type="range" list="zero-stop" />
-              </div>
-
-              <div class="slider" id="J2">
-                <div class="parameter">
-                  <div>Vertical</div>
-                  <div>\(J\)<img class="J" src="img/J2.svg"></img> \(=\)</div>
-                  <input type="number" />
-                </div>
-                <input type="range" list="zero-stop" />
-              </div>
-
-              <div class="slider" id="J3">
-                <div class="parameter">
-                  <div>Diagonal</div>
-                  <div>\(J\)<img class="J" src="img/J3.svg"></img> \(=\)</div>
-                  <input type="number" />
-                </div>
-                <input type="range" list="zero-stop" />
-              </div>
-
-              <div class="slider" id="J4">
-                <div class="parameter">
-                  <div>Diagonal</div>
-                  <div>\(J\)<img class="J" src="img/J4.svg"></img> \(=\)</div>
-                  <input type="number" />
-                </div>
-                <input type="range" list="zero-stop" />
-              </div>
-
-              <div class="slider" id="J0">
-                <div class="parameter">
-                  <div>Self</div>
-                  <div>\(J\)<img class="J" src="img/J0.svg"></img> \(=\)</div>
-                  <input type="number" />
-                </div>
-                <input type="range" list="zero-stop" />
-              </div>
-            </div>
-          </details>
-        </div>
-
-        <div class="box slider" id="h">
+        <div class="slider" id="speed">
           <div class="parameter">
-            <div>Field</div>
-            <div>\(h =\)</div>
+            <div>Simulation speed</div>
             <input type="number" />
           </div>
-          <input type="range" list="zero-stop" />
+          <input type="range" />
         </div>
-
-        <datalist id="zero-stop">
-          <option value="0"></option>
-        </datalist>
       </div>
+
+      <div class="box">
+        <div class="slider" id="T">
+          <div class="parameter">
+            <div>Temperature</div>
+            <div>\(k_{\mathrm{B}} T =\)</div>
+            <input type="number" />
+          </div>
+          <input type="range" />
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="parameter" id="N">
+          <div>Size</div>
+          <div>\(N =\)</div>
+          <input id="Nx" type="number" value="20" min="1" />
+          <div>\(\times\)</div>
+          <input id="Ny" type="number" value="20" min="1" />
+        </div>
+      </div>
+
+      <div class="box">
+        <div id="hamiltonian-container">
+          <div id="hamiltonian">\(\displaystyle E = - \sum_{\{ i \, j \}} J_{i j} \sigma_i \sigma_j - h \sum_i \sigma_i\)</div>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="button-container">
+          <button class="clickable" id="reset">Initialize</button>
+          <button class="clickable" id="randomize">Randomize</button>
+        </div>
+        <details>
+          <summary>States \(\sigma\)</summary>
+          <div class="details-list" id="sContainer"></div>
+          <div class="button-container">
+            <button class="clickable" id="add-state">Add</button>
+            <button class="clickable" id="remove-state">Remove</button>
+          </div>
+        </details>
+      </div>
+
+      <div class="box">
+        <details>
+          <summary>Coupling \(J\)</summary>
+
+          <div class="details-list" id="JContainer">
+            <div class="slider" id="J1">
+              <div class="parameter">
+                <div>Holizontal</div>
+                <div>\(J\)<img class="J" src="img/J1.svg"></img> \(=\)</div>
+                <input type="number" />
+              </div>
+              <input type="range" list="zero-stop" />
+            </div>
+
+            <div class="slider" id="J2">
+              <div class="parameter">
+                <div>Vertical</div>
+                <div>\(J\)<img class="J" src="img/J2.svg"></img> \(=\)</div>
+                <input type="number" />
+              </div>
+              <input type="range" list="zero-stop" />
+            </div>
+
+            <div class="slider" id="J3">
+              <div class="parameter">
+                <div>Diagonal</div>
+                <div>\(J\)<img class="J" src="img/J3.svg"></img> \(=\)</div>
+                <input type="number" />
+              </div>
+              <input type="range" list="zero-stop" />
+            </div>
+
+            <div class="slider" id="J4">
+              <div class="parameter">
+                <div>Diagonal</div>
+                <div>\(J\)<img class="J" src="img/J4.svg"></img> \(=\)</div>
+                <input type="number" />
+              </div>
+              <input type="range" list="zero-stop" />
+            </div>
+
+            <div class="slider" id="J0">
+              <div class="parameter">
+                <div>Self</div>
+                <div>\(J\)<img class="J" src="img/J0.svg"></img> \(=\)</div>
+                <input type="number" />
+              </div>
+              <input type="range" list="zero-stop" />
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="box slider" id="h">
+        <div class="parameter">
+          <div>Field</div>
+          <div>\(h =\)</div>
+          <input type="number" />
+        </div>
+        <input type="range" list="zero-stop" />
+      </div>
+
+      <datalist id="zero-stop">
+        <option value="0"></option>
+      </datalist>
     </div>
     <script src="script.js"></script>
   </body>

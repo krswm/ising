@@ -1,6 +1,9 @@
 body {
-  font-family: system-ui;
+  display: grid;
+
   margin: 0rem;
+  
+  font-family: system-ui;
 }
 
 #output {
@@ -53,7 +56,7 @@ body {
   width: min-content;
   padding: 0.5rem;
   border: 1px solid oklch(80% 0% 0deg);
-  border-radius: 1rem;
+  border-radius: 0.5rem;
 
   background-color: white;
 }
@@ -79,67 +82,72 @@ body {
   place-self: center;
 
   display: grid;
-  grid: 3.5rem 3.5rem 3.5rem 3.5rem / 1fr auto auto auto auto auto 8rem;
+  grid: 3.5rem 3.5rem 3.5rem 3.5rem / 1fr auto auto auto auto auto 6rem;
 
-  width: 32rem;
+  width: 30rem  /* 32rem - 1rem - 1rem */
 }
 #stat > div {
-  place-self: baseline center;
+  place-self: center;
 
   line-height: 3.5rem;
 }
 #stat > div:nth-of-type(7n + 1) {
-  place-self: center start;
+  justify-self: start;
 }
 #stat > div:nth-of-type(7n + 3), #stat > div:nth-of-type(7n + 6) {
   padding: 0rem 0.5rem;
 }
 #stat > div:nth-of-type(7n + 7) {
-  place-self: center end;
+  justify-self: end;
 
   font-variant-numeric: tabular-nums;
   font-size: 1.5rem;
 }
 
-#control-container {
-  display: flex;
-  justify-content: center;
-
-  background-color: oklch(95% 0% 0deg);
-
-  min-height: 100vh;
-}
-
 #control {
+  place-self: start center;
+  
   display: flex;
   flex-direction: column;
   gap: 1rem;
 
-  overflow: hidden scroll;
+  box-sizing: border-box;
+  width: 100%;
   padding: 1rem;
+
+  background-color: oklch(95% 0% 0deg);
+  overflow: hidden scroll;
 }
 
-#header-link {
+#control > header {
+  align-self: center;
+
+  box-sizing: border-box;
+  width: 22rem;  /* 24rem - 1rem - 1rem */
+}
+#control > header > div:nth-of-type(2) {
   padding-top: 0.5rem;
 }
-
-#control header a {
+#control > header > div:nth-of-type(2) > a {
   color: oklch(50% 0% 0deg);
 }
-
-#control header a:hover {
+#control > header > div:nth-of-type(2) > a:hover {
   color: black;
 }
 
-#control > .box {
-  background-color: oklch(100% 0% 0deg);
-  border-radius: 0.5rem;
-
-  padding: 1rem;
+.box {
+  align-self: center;
 
   display: flex;
   flex-direction: column;
   gap: 1rem;
+
+  box-sizing: border-box;
+  width: 22rem;  /* 24rem - 1rem - 1rem */
+  border-radius: 0.5rem;
+  padding: 1rem;
+
+  background-color: white;
 }
 
 #control .clickable {
@@ -296,24 +304,33 @@ body {
   gap: 1rem;
 }
 
-@media (width < 64rem) {
-  #control {
-    width: 32rem;
-  }
+#N input {
+  width: 4rem !important;
 }
 
-@media (width >= 64rem) {
+#hamiltonian-container {
+  display: grid;
+  grid: 3.5rem / 1fr;
+}
+
+#hamiltonian {
+  place-self: center;
+
+  line-height: 3.5rem;
+}
+
+/* 32rem + 24rem = 56rem */
+@media (width >= 56rem) {
   body {
-    display: flex;
-
-    height: 100vh;
-  }
-
-  #output {
-    flex: auto;
+    grid: 100vh / minmax(32rem, 1fr) 24rem;
   }
 
   #control {
-    width: 24rem;
+    height: 100vh;
+  }
+}
+@media (width < 56rem) {
+  body {
+    grid: 100vh auto / 100vw;
   }
 }

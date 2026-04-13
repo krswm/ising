@@ -40,21 +40,13 @@ class Model {
     this.historyLength = 100;
     this.additionalHistoryLength = 100;
 
-    this.T = 2;
-    this.J1 = 1;
-    this.J2 = 1;
-    this.J3 = 0;
-    this.J4 = 0;
-    this.J0 = 0;
-    this.h = 0;
-    this.speed = 0.25;
     this.Nx = 20;
     this.Ny = 20;
 
     this.possibleSpins = [1, -1];
 
     for (const [id, numberMin, rangeMin, rangeMax, initialValue] of [
-      ["speed", 0,     0,  1, 0.2],
+      ["speed", 0,     0,  1, 0.1],
       ["T",     0,     0, 10, 2  ],
       ["J1",    null, -1,  1, 1  ],
       ["J2",    null, -1,  1, 1  ],
@@ -63,6 +55,8 @@ class Model {
       ["J0",    null, -1,  1, 0  ],
       ["h",     null, -2,  2, 0  ],
     ]) {
+      this[id] = initialValue;
+
       for (const elem of $query(`#${id} input`)) {
         if (elem.type === "number" && numberMin !== null) {
           elem.min = numberMin;
@@ -201,7 +195,7 @@ class Model {
 
       $id("graph-container").style.display = "grid";
 
-      $id("canvas").style.filter = "blur(1rem)";
+      $id("canvas").style.filter = "blur(0.5rem)";
       $id("canvas").style.opacity = "10%";
 
       this.graphT = [];
