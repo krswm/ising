@@ -4,44 +4,38 @@ body {
 }
 
 #output {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid: 1fr auto / 1fr;
   gap: 1rem;
 
   box-sizing: border-box;
+  height: 100vh;
   padding: 1rem;
 }
 
 #canvas-container {
-  flex: auto;
+  grid-area: 1 / 1;
+  z-index: 0;
+
+  display: grid;
 
   position: relative;
-}
-
-#spin-canvas-container {
-  position: absolute;
-
-  width: 100%;
   height: 100%;
+  width: 100%;
+}
+#canvas {
+  place-self: center;
 
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  position: absolute;  /* For ResizeObserner. */
 }
 
 #graph-container {
-  position: absolute;
+  grid-area: 1 / 1;
+  z-index: 1;
+  place-self: center;
 
   display: grid;
   gap: 1rem;
-  grid-auto-flow: column;
-
-  width: 100%;
-  height: 100%;
-
-  justify-content: center;
-  align-content: center;
-
   grid: auto auto / auto auto;
 
   overflow: hidden;
@@ -55,65 +49,56 @@ body {
     ". . x ." 1rem /
     1rem 1rem 10rem 0.5rem;
 
-  background-color: white;
+  height: min-content;
+  width: min-content;
+  padding: 0.5rem;
   border: 1px solid oklch(80% 0% 0deg);
   border-radius: 1rem;
-  padding: 0.5rem;
 
-  width: min-content;
-  height: min-content;
+  background-color: white;
 }
 .graph > canvas {
-  grid-area: c;
+  grid-area: c;  /* canvas */
 }
 .graph > div {
-  justify-self: center;
-  align-self: center;
+  place-self: center;
 
   font-size: 0.75rem;
 }
 .graph > div:nth-of-type(1) {
-  grid-area: x;
+  grid-area: x;  /* x label */
 }
 .graph > div:nth-of-type(2) {
-  grid-area: y;
+  grid-area: y;  /* y label */
 
   transform: rotate(-90deg);
 }
 
-#stat-container {
-  display: flex;
-  justify-content: center;
-
-  overflow: hidden;
-}
-
 #stat {
+  grid-area: 2 / 1;
+  place-self: center;
+
   display: grid;
-  grid: repeat(4, 3.5rem) / 1fr auto auto auto auto auto 8rem;
+  grid: 3.5rem 3.5rem 3.5rem 3.5rem / 1fr auto auto auto auto auto 8rem;
 
   width: 32rem;
 }
+#stat > div {
+  place-self: baseline center;
 
-#stat div {
-  text-align: center;
-  align-content: center;
+  line-height: 3.5rem;
 }
-
-#stat div.stat-name {
-  padding-right: 2rem;
-  text-align: start;
+#stat > div:nth-of-type(7n + 1) {
+  place-self: center start;
 }
-
-#stat div.stat-equal {
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
+#stat > div:nth-of-type(7n + 3), #stat > div:nth-of-type(7n + 6) {
+  padding: 0rem 0.5rem;
 }
+#stat > div:nth-of-type(7n + 7) {
+  place-self: center end;
 
-#stat div.stat-value {
-  font-size: 1.5rem;
   font-variant-numeric: tabular-nums;
-  text-align: end;
+  font-size: 1.5rem;
 }
 
 #control-container {
@@ -121,6 +106,8 @@ body {
   justify-content: center;
 
   background-color: oklch(95% 0% 0deg);
+
+  min-height: 100vh;
 }
 
 #control {
@@ -310,14 +297,6 @@ body {
 }
 
 @media (width < 64rem) {
-  #output {
-    height: 100vh;
-  }
-
-  #control-container {
-    min-height: 100vh;
-  }
-
   #control {
     width: 32rem;
   }

@@ -16,68 +16,62 @@
   <body>
     <div id="output">
       <div id="canvas-container">
-        <div id="spin-canvas-container">
-          <canvas id="spin-canvas">real-time visualization of the spin configulation</canvas>
+        <canvas id="canvas">visualization of the spin configuration</canvas>
+      </div>
+      <div id="graph-container" style="display: none;">
+        <div class="graph">
+          <canvas id="E-canvas">graph for energy</canvas>
+          <div>\(k_{\mathrm{B}} T\)</div>
+          <div>\(E / N\)</div>
         </div>
-        <div id="graph-container" style="display: none;">
-          <div class="graph">
-            <canvas id="E-canvas">graph for energy</canvas>
-            <div>\(k_{\mathrm{B}} T\)</div>
-            <div>\(E / N\)</div>
-          </div>
-          <div class="graph">
-            <canvas id="M-canvas">graph for magnetization</canvas>
-            <div>\(k_{\mathrm{B}} T\)</div>
-            <div>\(M / N\)</div>
-          </div>
-          <div class="graph">
-            <canvas id="C-canvas">graph for heat capacity</canvas>
-            <div>\(k_{\mathrm{B}} T\)</div>
-            <div>\(C / N k_{\mathrm{B}}\)</div>
-          </div>
-          <div class="graph">
-            <canvas id="chi-canvas">graph for susceptibility</canvas>
-            <div>\(k_{\mathrm{B}} T\)</div>
-            <div>\(\chi / N\)</div>
-          </div>
+        <div class="graph">
+          <canvas id="M-canvas">graph for magnetization</canvas>
+          <div>\(k_{\mathrm{B}} T\)</div>
+          <div>\(M / N\)</div>
+        </div>
+        <div class="graph">
+          <canvas id="C-canvas">graph for heat capacity</canvas>
+          <div>\(k_{\mathrm{B}} T\)</div>
+          <div>\(C / N k_{\mathrm{B}}\)</div>
+        </div>
+        <div class="graph">
+          <canvas id="chi-canvas">graph for susceptibility</canvas>
+          <div>\(k_{\mathrm{B}} T\)</div>
+          <div>\(\chi / N\)</div>
         </div>
       </div>
-      <div id="stat-container">
-        <div id="stat">
-          <!-- Use \vphantom{\Bigg|} to align LaTeX vertically. -->
+      <div id="stat">
+        <div>Energy</div>
+        <div>\(\displaystyle \frac{E}{N}\)</div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div>\(=\)</div>
+        <div id="E"></div>
 
-          <div class="stat-name">Energy</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} \frac{E}{N}\)</div>
-          <div></div>
-          <div></div>
-          <div></div>
-          <div class="stat-equal">\(=\)</div>
-          <div class="stat-value" id="E"></div>
+        <div>Magnetization</div>
+        <div>\(\displaystyle \frac{M}{N}\)</div>
+        <div>\(=\)</div>
+        <div>\(\displaystyle \frac{1}{N}\)</div>
+        <div>\(\displaystyle \sum_i \sigma_i\)</div>
+        <div>\(=\)</div>
+        <div id="M"></div>
 
-          <div class="stat-name">Magnetization</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} \frac{M}{N}\)</div>
-          <div class="stat-equal">\(=\)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} \frac{1}{N}\)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} \sum_i \sigma_i\)</div>
-          <div class="stat-equal">\(=\)</div>
-          <div class="stat-value" id="M"></div>
+        <div>Heat capacity</div>
+        <div>\(\displaystyle \frac{C}{N k_{\mathrm{B}}}\)</div>
+        <div>\(=\)</div>
+        <div>\(\displaystyle \frac{1}{N}\)</div>
+        <div>\(\displaystyle \frac{\langle E^2 \rangle - \langle E \rangle^2}{(k_{\mathrm{B}} T)^2}\)</div>
+        <div>\(=\)</div>
+        <div id="C"></div>
 
-          <div class="stat-name">Heat capacity</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} \frac{C}{N k_{\mathrm{B}}}\)</div>
-          <div class="stat-equal">\(=\)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} \frac{1}{N}\)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} \frac{\langle E^2 \rangle - \langle E \rangle^2}{(k_{\mathrm{B}} T)^2}\)</div>
-          <div class="stat-equal">\(=\)</div>
-          <div class="stat-value" id="C"></div>
-
-          <div class="stat-name">Susceptibility</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} \frac{\chi}{N}\)</div>
-          <div class="stat-equal">\(=\)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} \frac{1}{N}\)</div>
-          <div>\(\displaystyle \vphantom{\Bigg|} \frac{\langle M^2 \rangle - \langle M \rangle^2}{k_{\mathrm{B}} T}\)</div>
-          <div class="stat-equal">\(=\)</div>
-          <div class="stat-value" id="chi"></div>
-        </div>
+        <div>Susceptibility</div>
+        <div>\(\displaystyle \frac{\chi}{N}\)</div>
+        <div>\(=\)</div>
+        <div>\(\displaystyle \frac{1}{N}\)</div>
+        <div>\(\displaystyle \frac{\langle M^2 \rangle - \langle M \rangle^2}{k_{\mathrm{B}} T}\)</div>
+        <div>\(=\)</div>
+        <div id="chi"></div>
       </div>
     </div>
     <div id="control-container">

@@ -31,7 +31,7 @@ for (const div of document.querySelectorAll(".slider")) {
 
 class Model {
   constructor() {
-    this.canvas = $id("spin-canvas");
+    this.canvas = $id("canvas");
     this.context = this.canvas.getContext("2d");
 
     this.arrow = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
@@ -201,8 +201,8 @@ class Model {
 
       $id("graph-container").style.display = "grid";
 
-      $id("spin-canvas").style.filter = "blur(1rem)";
-      $id("spin-canvas").style.opacity = "10%";
+      $id("canvas").style.filter = "blur(1rem)";
+      $id("canvas").style.opacity = "10%";
 
       this.graphT = [];
       this.EGraph = [];
@@ -231,8 +231,8 @@ class Model {
 
       $id("graph-container").style.display = "none";
 
-      $id("spin-canvas").style.filter = "none";
-      $id("spin-canvas").style.opacity = "unset";
+      $id("canvas").style.filter = "none";
+      $id("canvas").style.opacity = "unset";
 
       cancelAnimationFrame(this.requestId);
 
@@ -390,7 +390,7 @@ class Model {
 
     for (let i = 0; i < this.speed * this.Nx * this.Ny; i++) {
       this.calculateStatistics();
-      this.proposeNewConfigulation();
+      this.proposeNewConfiguration();
     }
     this.drawStates();
 
@@ -414,7 +414,7 @@ class Model {
     this.chiHistory = Array(this.historyLength);
 
     for (let i = 0; i < (this.historyLength + this.additionalHistoryLength) * this.Nx * this.Ny; i++) {
-      this.proposeNewConfigulation();
+      this.proposeNewConfiguration();
       if (i % (this.Nx * this.Ny) === 0) {
         this.calculateStatistics();
       }
@@ -463,7 +463,7 @@ class Model {
     }
   }
 
-  proposeNewConfigulation() {
+  proposeNewConfiguration() {
     // Randomly select a cell to change its state.
     const x = Math.floor(Math.random() * this.Nx);
     const y = Math.floor(Math.random() * this.Ny);
