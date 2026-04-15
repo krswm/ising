@@ -278,11 +278,8 @@ class Model {
   }
 
   createSpin(spin, i) {
-    const sDiv = document.createElement("div");
-    sDiv.classList.add("slider")
-
-    const div = document.createElement("div");
-    div.style.width = "100%";
+    /*
+    const emptyDiv = document.createElement("div");
 
     const canvas = document.createElement("canvas");
     canvas.id = `spin${i}`;
@@ -293,12 +290,6 @@ class Model {
     number.step = "0.01";
     number.value = `${spin}`;
 
-    const parameterDiv = document.createElement("div");
-    parameterDiv.classList.add("parameter");
-    parameterDiv.append(canvas);
-    parameterDiv.append(div);
-    parameterDiv.append(number);
-
     const range = document.createElement("input");
     // Order is important! Set min and max then value.
     range.type = "range";
@@ -307,7 +298,11 @@ class Model {
     range.step = "0.01";
     range.value = `${spin}`;
       
-    sDiv.append(parameterDiv);
+    const sDiv = document.createElement("div");
+    sDiv.classList.add("slider")
+    sDiv.append(canvas);
+    sDiv.append(emptyDiv);
+    sDiv.append(number);
     sDiv.append(range);
     this.sContainer.append(sDiv);
 
@@ -323,6 +318,7 @@ class Model {
     });
 
     this.possibleSpins[i] = spin;
+    */
   }
 
   removeSpin() {

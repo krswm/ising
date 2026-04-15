@@ -5,6 +5,21 @@ body {
   
   font-family: system-ui;
 }
+/* 32rem + 24rem = 56rem */
+@media (width >= 56rem) {
+  body {
+    grid: 100vh / 1fr 24rem;
+  }
+
+  #control {
+    height: 100vh;
+  }
+}
+@media (width < 56rem) {
+  body {
+    grid: 100vh auto / 100vw;
+  }
+}
 
 #output {
   display: grid;
@@ -39,21 +54,38 @@ body {
 
   display: grid;
   gap: 1rem;
-  grid: auto auto / auto auto;
 
-  overflow: hidden;
+  max-height: 100%;
+  max-width: 100%;
+
+  overflow: scroll;
+}
+/* 1rem + 13.5rem + 1rem + 13.5rem + 1rem + 14rem + 1rem = 45rem */
+@media (height >= 45rem) {
+  #graph-container {
+    grid: auto auto / auto auto;
+  }
+}
+@media (height < 45rem) {
+  #graph-container {
+    grid: auto / auto auto auto auto;
+  }
+}
+#graph-container > div:nth-of-type(even) {
+  order: 1;
 }
 .graph {
   display: grid;
-  grid-template:
+  grid:
     ". c c c" 0.5rem
     "y c c c" 10rem
     ". c c c" 1rem
     ". . x ." 1rem /
     1rem 1rem 10rem 0.5rem;
 
-  height: min-content;
-  width: min-content;
+  /* 0.5rem + 12.5rem + 0.5rem = 13.5rem */
+  height: 12.5rem;
+  width: 12.5rem;
   padding: 0.5rem;
   border: 1px solid oklch(80% 0% 0deg);
   border-radius: 0.5rem;
@@ -84,7 +116,8 @@ body {
   display: grid;
   grid: 3.5rem 3.5rem 3.5rem 3.5rem / 1fr auto auto auto auto auto 6rem;
 
-  width: 30rem  /* 32rem - 1rem - 1rem */
+  width: 30rem;  /* 32rem - 1rem - 1rem */
+  height: 14rem;  /* 3.5rem * 4 */
 }
 #stat > div {
   place-self: center;
@@ -119,22 +152,6 @@ body {
   overflow: hidden scroll;
 }
 
-#control > header {
-  align-self: center;
-
-  box-sizing: border-box;
-  width: 22rem;  /* 24rem - 1rem - 1rem */
-}
-#control > header > div:nth-of-type(2) {
-  padding-top: 0.5rem;
-}
-#control > header > div:nth-of-type(2) > a {
-  color: oklch(50% 0% 0deg);
-}
-#control > header > div:nth-of-type(2) > a:hover {
-  color: black;
-}
-
 .box {
   align-self: center;
 
@@ -150,86 +167,189 @@ body {
   background-color: white;
 }
 
-#control .clickable {
-  border: 1px solid oklch(80% 0% 0deg);
-  border-radius: 0.5rem;
-  background-color: oklch(100% 0% 0deg);
-
-  padding: 0.5rem;
-
-  font-size: 1rem;
-}
-
-#control .clickable:hover {
-  background-color: oklch(95% 0% 0deg);
-}
-
-#control .clickable:active {
-  background-color: oklch(90% 0% 0deg);
-}
-
-#control input[type="number"] {
-  font-size: 1.5rem;
-
-  width: 6rem;
-
-  border: 1px solid oklch(90% 0% 0deg);
-  border-radius: 0.5rem;
-  padding: 0.25rem;
-
-  font-family: system-ui;
-  font-variant-numeric: tabular-nums;
-}
-
-#control input[type="number"]:hover {
-  border-color: oklch(80% 0% 0deg);
-}
-
-#control > header > h1 {
-  margin: 0rem;
-}
-
 .button-container {
   display: flex;
   gap: 1rem;
 }
-
-.button-container button {
-  font-family: system-ui;
-  flex: 100%;
+button {
   height: 3rem;
+  width: 100%;
+  border: 1px solid oklch(80% 0% 0deg);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+
+  background-color: white;
+  cursor: pointer;
+  font-size: 1rem;
+}
+button:hover {
+  background-color: oklch(95% 0% 0deg);
+}
+button:active {
+  background-color: oklch(90% 0% 0deg);
 }
 
-.button-container img {
-  vertical-align: -0.25rem;
+#play, #pause {
+  flex: 0 0 3rem;
 
-  height: 1.5rem;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+#play {
+  background-image: url("img/play.svg");
+}
+#pause {
+  background-image: url("img/pause.svg");
+}
+
+.slider {
+  display: grid;
+  grid:
+    "t . m n" auto
+    "r r r r" auto /
+    auto 1fr auto auto;
+  gap: 0.5rem;
+}
+.slider > div {
+  align-self: center;
+}
+.slider > :nth-child(1) {
+  grid-area: t;  /* Text */
+}
+.slider > :nth-child(2) {
+  grid-area: m;  /* Math */
+}
+.slider > :nth-child(3) {
+  grid-area: n;  /* Number */
+}
+.slider > :nth-child(4) {
+  grid-area: r;  /* Range */
+}
+
+#N {
+  align-items: center;
+
+  display: grid;
+  grid: auto / auto 1fr auto auto auto auto;
+  gap: 0.5rem;
+}
+#N > input {
+  width: 4rem;
+}
+#N > :nth-child(2) {
+  grid-column: 3;
+}
+#N > :nth-child(3) {
+  grid-column: 4;
+}
+#N > :nth-child(4) {
+  grid-column: 5;
+}
+#N > :nth-child(5) {
+  grid-column: 6;
+}
+
+input[type="number"] {
+  box-sizing: border-box;
+  width: 6rem;
+  border: 1px solid oklch(90% 0% 0deg);
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+
+  -moz-appearance: textfield;
+  font-family: system-ui;
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+input[type="number"]:hover {
+  border-color: oklch(80% 0% 0deg);
+}
+input[type="number"]:active {
+  border-color: oklch(90% 0% 0deg);
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  margin: 0rem;
+
+  -webkit-appearance: none;
+}
+
+input[type="range"] {
+  height: 16px;
+  width: 100%;
+  margin: 0rem;
+
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  height: 1rem;
+  width: 1rem;
+  margin: -4px 0px;
+  border-radius: 0.5rem;
+
+  -webkit-appearance: none;
+  background-color: oklch(50% 0% 0deg);
+}
+input[type="range"]::-moz-range-thumb {
+  height: 1rem;
+  width: 1rem;
+  border: none;
+  border-radius: 50%;
+
+  background-color: oklch(50% 0% 0deg);
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 8px;
+  width: 100%;
+  border-radius: 4px;
+
+  background-color: oklch(90% 0% 0deg);
+}
+input[type="range"]::-moz-range-track {
+  height: 8px;
+  width: 100%;
+  border-radius: 4px;
+
+  background-color: oklch(90% 0% 0deg);
+}
+input[type="range"]::-webkit-slider-runnable-track:hover {
+  background-color: oklch(80% 0% 0deg);
+}
+input[type="range"]::-moz-range-track:hover {
+  background-color: oklch(80% 0% 0deg);
+}
+input[type="range"]::-webkit-slider-runnable-track:active {
+  background-color: oklch(90% 0% 0deg);
+}
+input[type="range"]::-moz-range-track:active {
+  background-color: oklch(90% 0% 0deg);
+}
+
+header {
+  align-self: center;
+
+  box-sizing: border-box;
+  width: 22rem;  /* 24rem - 1rem - 1rem */
+}
+header > h1 {
+  margin: 0rem;
+}
+header > div:nth-of-type(2) {
+  padding-top: 0.5rem;
+}
+header > div:nth-of-type(2) > a {
+  color: oklch(50% 0% 0deg);
+}
+header > div:nth-of-type(2) > a:hover {
+  color: black;
 }
 
 .details-list {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-#play, #pause {
-  flex: 0 0 3rem;
-  width: 3rem;
-  height: 3rem;
-
-  display: float;
-}
-
-#play {
-  background-image: url("img/play.svg");
-  background-repeat: no-repeat;
-  background-position: center center;
-}
-
-#pause {
-  background-image: url("img/pause.svg");
-  background-repeat: no-repeat;
-  background-position: center center;
 }
 
 #control > #legendContainer > .legend {
@@ -244,26 +364,6 @@ body {
   align-content: center;
 }
 
-#control div.slider {
-  display: flex;
-  flex-direction: column;
-}
-
-#control .parameter {
-  display: flex;
-  gap: 0.5rem;
-
-  align-items: center;
-
-  width: 100%;
-
-  box-sizing: border-box;
-}
-
-#control .parameter > div:nth-child(1) {
-  flex: auto;
-}
-
 #control > #legendContainer {
   gap: 2rem;
 }
@@ -273,7 +373,7 @@ body {
 }
 
 #control > details {
-  display: flex;
+ display: flex;
   flex-direction: column;
   gap: 0rem;
 }
@@ -282,30 +382,10 @@ body {
   font-size: 1rem;
 }
 
-#control .katex-display {
-  margin: 0rem;
-}
-
-#control #system {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-#control form {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
 #s-details {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-#N input {
-  width: 4rem !important;
 }
 
 #hamiltonian-container {
@@ -317,20 +397,4 @@ body {
   place-self: center;
 
   line-height: 3.5rem;
-}
-
-/* 32rem + 24rem = 56rem */
-@media (width >= 56rem) {
-  body {
-    grid: 100vh / minmax(32rem, 1fr) 24rem;
-  }
-
-  #control {
-    height: 100vh;
-  }
-}
-@media (width < 56rem) {
-  body {
-    grid: 100vh auto / 100vw;
-  }
 }
