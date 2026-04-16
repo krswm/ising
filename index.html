@@ -110,9 +110,9 @@
         <div id="N">
           <div>Size</div>
           <div>\(N =\)</div>
-          <input id="Nx" type="number" value="20" min="1" />
+          <input id="Nx" type="number" value="50" min="1" />
           <div>\(\times\)</div>
-          <input id="Ny" type="number" value="20" min="1" />
+          <input id="Ny" type="number" value="50" min="1" />
         </div>
       </div>
 
@@ -124,12 +124,13 @@
 
       <div class="box">
         <div class="button-container">
-          <button id="reset">Initialize</button>
-          <button id="randomize">Randomize</button>
+          <button id="reset">Reset \(\sigma\)</button>
+          <button id="randomize">Randomize \(\sigma\)</button>
         </div>
+
         <details>
-          <summary>States \(\sigma\)</summary>
-          <div class="details-list" id="sContainer"></div>
+          <summary>Allowed states \(\sigma\)</summary>
+          <div id="sigma"></div>
           <div class="button-container">
             <button id="add-state">Add</button>
             <button id="remove-state">Remove</button>
@@ -139,9 +140,9 @@
 
       <div class="box">
         <details>
-          <summary>Coupling \(J\)</summary>
+          <summary>Coupling constants \(J\)</summary>
 
-          <div class="details-list" id="JContainer">
+          <div id="J">
             <div class="slider" id="J1">
               <div>Holizontal</div>
               <div>\(J\)<img class="J" src="img/J1.svg"></img> \(=\)</div>
@@ -182,7 +183,7 @@
 
       <div class="box">
         <div class="slider" id="h">
-          <div>Field</div>
+          <div>External field</div>
           <div>\(h =\)</div>
           <input type="number" />
           <input type="range" />

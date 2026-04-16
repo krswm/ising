@@ -37,16 +37,16 @@ class Model {
     this.arrow = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
 
     // Currently historyLength >= additionalHistoryLength is assumed in the algorithm.
-    this.historyLength = 100;
-    this.additionalHistoryLength = 100;
+    this.historyLength = 50;
+    this.additionalHistoryLength = 50;
 
-    this.Nx = 20;
-    this.Ny = 20;
+    this.Nx = 50;
+    this.Ny = 50;
 
     this.possibleSpins = [1, -1];
 
     for (const [id, numberMin, rangeMin, rangeMax, initialValue] of [
-      ["speed", 0,     0,  1, 0.1],
+      ["speed", 0,     0,  1, 0.5],
       ["T",     0,     0, 10, 2  ],
       ["J1",    null, -1,  1, 1  ],
       ["J2",    null, -1,  1, 1  ],
@@ -251,7 +251,7 @@ class Model {
     // The state of the cell at (x, y) is this.states[this.Nx * y + x].
     this.states = Array(this.Nx * this.Ny).fill(0);
 
-    this.sContainer = $id("sContainer");
+    this.sContainer = $id("sigma");
     for (let i = 0; i < this.possibleSpins.length; i++) {
       const spin = this.possibleSpins[i];
       this.createSpin(spin, i);
@@ -278,7 +278,6 @@ class Model {
   }
 
   createSpin(spin, i) {
-    /*
     const emptyDiv = document.createElement("div");
 
     const canvas = document.createElement("canvas");
@@ -318,13 +317,12 @@ class Model {
     });
 
     this.possibleSpins[i] = spin;
-    */
   }
 
   removeSpin() {
     const l = this.possibleSpins.length - 1;
     this.possibleSpins.pop();
-    document.querySelector("#sContainer > :last-child").remove();
+    document.querySelector("#sigma > :last-child").remove();
 
   }
 
@@ -379,9 +377,11 @@ class Model {
     this.requestId = undefined;
 
     for (let i = 0; i < this.speed * this.Nx * this.Ny; i++) {
-      this.calculateStatistics();
+      // this.calculateStatistics();
+      // Why did I put it here!? It was a severe performance issue!
       this.proposeNewConfiguration();
     }
+    this.calculateStatistics();  // Should be here instead!
     this.drawStates();
 
     if (!this.requestId) {
@@ -437,7 +437,7 @@ class Model {
 
     this.timesAutoran = 0;
     this.TIndex++;
-    if (this.TIndex <= 1000) {
+    if (this.TIndex <= 500) {
       this.setT(this.TIndex * 0.01);
       this.states.fill(0);
 
@@ -620,7 +620,7 @@ class Model {
     const YTop = 32 * 0.5;
     const Ybottom = 32 * 10.5;
 
-    const TMax = 10;
+    const TMax = 5;
 
     // Q stands for quantity.
     for (const [QGraph, QHistory, QContext, isQAlwaysPositive] of [
