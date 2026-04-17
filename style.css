@@ -139,11 +139,11 @@ body {
 
 #control {
   place-self: start center;
-  
+
   display: flex;
   flex-direction: column;
   gap: 1rem;
-
+  
   box-sizing: border-box;
   width: 100%;
   padding: 1rem;
@@ -151,7 +151,6 @@ body {
   background-color: oklch(95% 0% 0deg);
   overflow: hidden scroll;
 }
-
 .box {
   align-self: center;
 
@@ -180,6 +179,7 @@ button {
 
   background-color: white;
   cursor: pointer;
+  font-family: system-ui;
   font-size: 1rem;
 }
 button:hover {
@@ -188,7 +188,6 @@ button:hover {
 button:active {
   background-color: oklch(90% 0% 0deg);
 }
-
 #play, #pause {
   flex: 0 0 3rem;
 
@@ -296,7 +295,7 @@ input[type="range"]::-moz-range-thumb {
   height: 1rem;
   width: 1rem;
   border: none;
-  border-radius: 50%;
+  border-radius: 0.5rem;
 
   background-color: oklch(50% 0% 0deg);
 }
@@ -346,49 +345,25 @@ header > div:nth-of-type(2) > a:hover {
   color: black;
 }
 
-#J {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+#hamiltonian {
+  place-self: center;
   
-  margin-top: 1rem;
+  line-height: 4rem;
 }
 
-#sigma {
+details[open], .stack {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  
-  margin: 1rem 0rem;
+}
+details > summary {
+  cursor: pointer;
+  list-style: url("img/closed.svg") inside;
+}
+details[open] > summary {
+  list-style: url("img/opened.svg") inside;
 }
 
 #control .J {
   vertical-align: -0.75rem;
-}
-
-#control > details {
- display: flex;
-  flex-direction: column;
-  gap: 0rem;
-}
-
-#control > details > summary {
-  font-size: 1rem;
-}
-
-#s-details {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-#hamiltonian-container {
-  display: grid;
-  grid: 3.5rem / 1fr;
-}
-
-#hamiltonian {
-  place-self: center;
-
-  line-height: 3.5rem;
 }

@@ -117,9 +117,7 @@
       </div>
 
       <div class="box">
-        <div id="hamiltonian-container">
-          <div id="hamiltonian">\(\displaystyle E = - \sum_{\{ i \, j \}} J_{i j} \sigma_i \sigma_j - h \sum_i \sigma_i\)</div>
-        </div>
+        <div id="hamiltonian">\(\displaystyle E = - \sum_{\{ i \, j \}} J_{i j} \sigma_i \sigma_j - h \sum_i \sigma_i\)</div>
       </div>
 
       <div class="box">
@@ -130,10 +128,14 @@
 
         <details>
           <summary>Allowed states \(\sigma\)</summary>
-          <div id="sigma"></div>
-          <div class="button-container">
-            <button id="add-state">Add</button>
-            <button id="remove-state">Remove</button>
+
+          <div class="stack">
+            <div class="stack" id="sigma"></div>
+
+            <div class="button-container">
+              <button id="add-state">Add</button>
+              <button id="remove-state">Remove</button>
+            </div>
           </div>
         </details>
       </div>
@@ -142,7 +144,7 @@
         <details>
           <summary>Coupling constants \(J\)</summary>
 
-          <div id="J">
+          <div class="stack">
             <div class="slider" id="J1">
               <div>Holizontal</div>
               <div>\(J\)<img class="J" src="img/J1.svg"></img> \(=\)</div>
