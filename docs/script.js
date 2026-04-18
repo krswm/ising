@@ -40,8 +40,8 @@ class Model {
     this.historyLength = 50;
     this.additionalHistoryLength = 50;
 
-    this.Nx = 50;
-    this.Ny = 50;
+    this.Nx = 10;
+    this.Ny = 10;
 
     this.possibleSpins = [1, -1];
 
@@ -167,7 +167,7 @@ class Model {
       drawStates();
     });
 
-    $id("add-state").addEventListener("click", (event) => {
+    $id("add").addEventListener("click", (event) => {
       this.createSpin(0, this.possibleSpins.length);
       this.redrawLegend();
 
@@ -175,7 +175,7 @@ class Model {
       this.drawStates();
     });
 
-    $id("remove-state").addEventListener("click", (event) => {
+    $id("remove").addEventListener("click", (event) => {
       if (this.possibleSpins.length < 3) {
         return
       }
@@ -187,13 +187,17 @@ class Model {
       this.drawStates();
     });
 
-    $id("enter-graph-mode").addEventListener("click", (event) => {
-      $id("enter-graph-mode").style.display = "none";
-      $id("leave-graph-mode").style.display = "unset";
+    $id("enter").addEventListener("click", (event) => {
+      $id("play").style.display = "none";
+      $id("pause").style.display = "none";
+      $id("continue").removeAttribute("style");
+      $id("continue").setAttribute("disabled", "");
+      $id("enter").style.display = "none";
+      $id("leave").removeAttribute("style");
 
       cancelAnimationFrame(this.requestId);
 
-      $id("graph-container").style.display = "grid";
+      $id("graph-container").removeAttribute("style");
 
       $id("canvas").style.filter = "blur(0.5rem)";
       $id("canvas").style.opacity = "10%";
@@ -219,19 +223,48 @@ class Model {
       this.autorun();
     });
 
-    $id("leave-graph-mode").addEventListener("click", (event) => {
-      $id("enter-graph-mode").style.display = "unset";
-      $id("leave-graph-mode").style.display = "none";
+    $id("leave").addEventListener("click", (event) => {
+      $id("play").style.display = "none";
+      $id("pause").removeAttribute("style");
+      $id("continue").style.display = "none";
+      $id("continue").removeAttribute("disabled");
+      $id("enter").removeAttribute("style");
+      $id("leave").style.display = "none";
 
       $id("graph-container").style.display = "none";
 
-      $id("canvas").style.filter = "none";
-      $id("canvas").style.opacity = "unset";
+      $id("canvas").removeAttribute("style");
 
       cancelAnimationFrame(this.requestId);
 
       clearTimeout(this.timeoutId);
       this.run();
+    });
+
+    $id("continue").addEventListener("click", (event) => {
+      $id("play").style.display = "none";
+      $id("pause").style.display = "none";
+      $id("continue").removeAttribute("style");
+      $id("continue").setAttribute("disabled", "");
+      $id("enter").style.display = "none";
+      $id("leave").removeAttribute("style");
+
+      cancelAnimationFrame(this.requestId);
+
+      $id("graph-container").removeAttribute("style");
+
+      $id("canvas").style.filter = "blur(0.5rem)";
+      $id("canvas").style.opacity = "10%";
+
+      this.EHistory = Array(this.historyLength);
+      this.MHistory = Array(this.historyLength);
+      this.CHistory = Array(this.historyLength);
+      this.chiHistory = Array(this.historyLength);
+
+      this.states.fill(0);
+
+      cancelAnimationFrame(this.requestId);
+      this.autorun();
     });
 
     this.canvasContainerWidth = (
@@ -278,11 +311,12 @@ class Model {
   }
 
   createSpin(spin, i) {
-    const emptyDiv = document.createElement("div");
-
     const canvas = document.createElement("canvas");
     canvas.id = `spin${i}`;
     canvas.style = "border-radius: 0.25rem; width: 32px; height: 32px;";
+
+    const div = document.createElement("div");
+    div.innerText = `State #${i + 1}`;
 
     const number = document.createElement("input");
     number.type = "number";
@@ -300,7 +334,7 @@ class Model {
     const sDiv = document.createElement("div");
     sDiv.classList.add("slider")
     sDiv.append(canvas);
-    sDiv.append(emptyDiv);
+    sDiv.append(div);
     sDiv.append(number);
     sDiv.append(range);
     this.sContainer.append(sDiv);
@@ -437,7 +471,7 @@ class Model {
 
     this.timesAutoran = 0;
     this.TIndex++;
-    if (this.TIndex <= 500) {
+    if (this.TIndex % 500 !== 1) {
       this.setT(this.TIndex * 0.01);
       this.states.fill(0);
 
@@ -449,7 +483,9 @@ class Model {
           this.requestId = requestAnimationFrame(this.autorun.bind(this));
       }
       */
-      this.timeoutId = setTimeout(this.autorun.bind(this));
+      this.timeoutId = setTimeout(() => { this.autorun(); });
+    } else {
+      $id("continue").removeAttribute("disabled");
     }
   }
 

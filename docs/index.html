@@ -85,13 +85,13 @@
         <div class="button-container">
           <button id="pause"></button>
           <button id="play" style="display: none;"></button>
-          <button id="enter-graph-mode">Enter graph mode</button>
-          <button id="leave-graph-mode" style="display: none;">Leave graph mode</button>
+          <button id="continue" style="display: none;">Continue</button>
+          <button id="enter">Enter graph mode</button>
+          <button id="leave" style="display: none;">Leave graph mode</button>
         </div>
 
         <div class="slider" id="speed">
           <div>Simulation speed</div>
-          <div></div>
           <input type="number" />
           <input type="range" />
         </div>
@@ -110,9 +110,9 @@
         <div id="N">
           <div>Size</div>
           <div>\(N =\)</div>
-          <input id="Nx" type="number" value="50" min="1" />
+          <input id="Nx" type="number" value="10" min="1" />
           <div>\(\times\)</div>
-          <input id="Ny" type="number" value="50" min="1" />
+          <input id="Ny" type="number" value="10" min="1" />
         </div>
       </div>
 
@@ -122,7 +122,7 @@
 
       <div class="box">
         <div class="button-container">
-          <button id="reset">Reset states</button>
+          <button id="reset">Set states to #1</button>
           <button id="randomize">Randomize states</button>
         </div>
 
@@ -137,8 +137,8 @@
             <div class="stack" id="sigma"></div>
 
             <div class="button-container">
-              <button id="add-state">Add</button>
-              <button id="remove-state">Remove</button>
+              <button id="add"></button>
+              <button id="remove"></button>
             </div>
           </div>
         </details>
@@ -154,36 +154,36 @@
 
           <div class="stack">
             <div class="slider" id="J1">
-              <div>Holizontal</div>
-              <div>\(J\)<img class="J" src="img/J1.svg"></img> \(=\)</div>
+              <img src="img/J1.svg"></img>
+              <div>Horizontal</div>
               <input type="number" />
               <input type="range" />
             </div>
 
             <div class="slider" id="J2">
+              <img src="img/J2.svg"></img>
               <div>Vertical</div>
-              <div>\(J\)<img class="J" src="img/J2.svg"></img> \(=\)</div>
               <input type="number" />
               <input type="range" />
             </div>
 
             <div class="slider" id="J3">
+              <img src="img/J3.svg"></img>
               <div>Diagonal</div>
-              <div>\(J\)<img class="J" src="img/J3.svg"></img> \(=\)</div>
               <input type="number" />
               <input type="range" />
             </div>
 
             <div class="slider" id="J4">
+              <img src="img/J4.svg"></img>
               <div>Diagonal</div>
-              <div>\(J\)<img class="J" src="img/J4.svg"></img> \(=\)</div>
               <input type="number" />
               <input type="range" />
             </div>
 
             <div class="slider" id="J0">
+              <img src="img/J0.svg"></img>
               <div>Self</div>
-              <div>\(J\)<img class="J" src="img/J0.svg"></img> \(=\)</div>
               <input type="number" />
               <input type="range" />
             </div>
