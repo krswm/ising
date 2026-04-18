@@ -357,11 +357,37 @@ details[open], .stack {
   gap: 1rem;
 }
 details > summary {
+  display: grid;
+  grid:
+    "s t . m" auto /
+    auto auto 1fr auto;
+  gap: 0.5rem;
+
   cursor: pointer;
-  list-style: url("img/closed.svg") inside;
 }
-details[open] > summary {
-  list-style: url("img/opened.svg") inside;
+details > summary > div {
+  place-self: center;
+
+  line-height: 2rem;
+}
+details > summary > div:nth-of-type(1) {
+  grid-area: s;  /* Spinner */
+
+  height: 1rem;
+  width: 1rem;
+
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-image: url("img/closed.svg");
+}
+details[open] > summary > div:nth-of-type(1) {
+  background-image: url("img/opened.svg");
+}
+details > summary > div:nth-of-type(2) {
+  grid-area: t;  /* Text */
+}
+details > summary > div:nth-of-type(3) {
+  grid-area: m;  /* Math */
 }
 
 #control .J {
