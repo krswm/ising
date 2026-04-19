@@ -1,47 +1,40 @@
 const $id = id => document.getElementById(id);
-const $query = query => document.querySelectorAll(query);
 
-// In JavaScript, for example, -11 % 10 is -1, not 9.
-const mod = (a, b) => ((a % b) + b) % b;
+// Shape of an arrow
+const arrowPath = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
 
 // "\u2212" is MINUS SIGN. "\u2014" is EM DASH.
-const toFixedFormat = number => (
+const formatToFixed = number => (
   isFinite(number) ? number.toFixed(3).replace("-", "\u2212") : "\u2014"
 );
-const toStringFormat = number => (
+const formatToString = number => (
   isFinite(number) ? number.toString().replace("-", "\u2212") : "\u2014"
 );
 
-function pairSlider(div) {
-  const number = div.querySelector('input[type="number"]');
-  const range = div.querySelector('input[type="range"]');
-
-  number.addEventListener("input", (event) => {
-    range.value = event.target.valueAsNumber;
-  });
-
-  range.addEventListener("input", (event) => {
-    number.value = event.target.valueAsNumber;
-  });
-}
-
-for (const div of document.querySelectorAll(".slider")) {
-  pairSlider(div);
-}
-
-class Model {
+class IsingModel {
   constructor() {
-    this.canvas = $id("canvas");
-    this.context = this.canvas.getContext("2d");
+    this.canvasDrawer = new CanvasDrawer(this);
+    this.graphDrawer = new GraphDrawer(this);
 
-    this.arrow = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
+    for (const div of document.querySelectorAll(".slider")) {
+      const number = div.querySelector('input[type="number"]');
+      const range = div.querySelector('input[type="range"]');
+
+      number.addEventListener("input", (event) => {
+        range.value = event.target.valueAsNumber;
+      });
+
+      range.addEventListener("input", (event) => {
+        number.value = event.target.valueAsNumber;
+      });
+    }
 
     // Currently historyLength >= additionalHistoryLength is assumed in the algorithm.
     this.historyLength = 50;
     this.additionalHistoryLength = 50;
 
-    this.Nx = 10;
-    this.Ny = 10;
+    this.Nx = 50;
+    this.Ny = 50;
 
     this.possibleSpins = [1, -1];
 
@@ -57,7 +50,7 @@ class Model {
     ]) {
       this[id] = initialValue;
 
-      for (const elem of $query(`#${id} input`)) {
+      for (const elem of document.querySelectorAll(`#${id} input`)) {
         if (elem.type === "number" && numberMin !== null) {
           elem.min = numberMin;
         } else if (elem.type === "range") {
@@ -96,7 +89,8 @@ class Model {
       }
 
       this.Nx = newNx;
-      this.drawStates();
+      this.canvasDrawer.resize();
+      this.canvasDrawer.draw();
     });
 
     $id("Ny").addEventListener("input", (event) => {
@@ -118,7 +112,8 @@ class Model {
       }
 
       this.Ny = newNy;
-      this.drawStates();
+      this.canvasDrawer.resize();
+      this.canvasDrawer.draw();
     });
 
     $id("play").addEventListener("click", (event) => {
@@ -146,7 +141,7 @@ class Model {
       this.MHistory = Array(this.historyLength);
       this.CHistory = Array(this.historyLength);
       this.chiHistory = Array(this.historyLength);
-      this.drawStates();
+      this.canvasDrawer.draw();
     });
 
     $id("randomize").addEventListener("click", (event) => {
@@ -164,7 +159,7 @@ class Model {
       for (let i = 0; i < this.Nx * this.Ny; i++) {
         this.states[i] = Math.floor(Math.random() * this.possibleSpins.length);
       }
-      drawStates();
+      this.canvasDrawer.draw();
     });
 
     $id("add").addEventListener("click", (event) => {
@@ -172,7 +167,7 @@ class Model {
       this.redrawLegend();
 
       this.states.fill(0);
-      this.drawStates();
+      this.canvasDrawer.draw();
     });
 
     $id("remove").addEventListener("click", (event) => {
@@ -184,7 +179,7 @@ class Model {
       this.redrawLegend();
 
       this.states.fill(0);
-      this.drawStates();
+      this.canvasDrawer.draw();
     });
 
     $id("enter").addEventListener("click", (event) => {
@@ -233,7 +228,10 @@ class Model {
 
       $id("graph-container").style.display = "none";
 
-      $id("canvas").removeAttribute("style");
+      // Do not use removeAttribute,
+      // otherwise style.width and style.height will be lost.
+      $id("canvas").style.filter = "";
+      $id("canvas").style.opacity = "";
 
       cancelAnimationFrame(this.requestId);
 
@@ -267,20 +265,6 @@ class Model {
       this.autorun();
     });
 
-    this.canvasContainerWidth = (
-      $id("canvas-container").offsetWidth
-    );
-    this.canvasContainerHeight = (
-      $id("canvas-container").offsetHeight
-    );
-    new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        this.canvasContainerWidth = entry.target.offsetWidth;
-        this.canvasContainerHeight = entry.target.offsetHeight;
-      }
-      this.drawStates();
-    }).observe($id("canvas-container"));
-
     // The state of the cell at (x, y) is this.states[this.Nx * y + x].
     this.states = Array(this.Nx * this.Ny).fill(0);
 
@@ -291,21 +275,12 @@ class Model {
     }
     this.redrawLegend();
 
-    for (const name of ["E", "M", "C", "chi"]) {
-      const canvas = $id(`${name}-canvas`);
-      this[`${name}Context`] = canvas.getContext("2d");
-      canvas.style.width = `${16 * 11.5}px`;
-      canvas.style.height = `${16 * 11.5}px`;
-      canvas.width = 32 * 11.5;
-      canvas.height = 32 * 11.5;
-    }
-
     this.EHistory = Array(this.historyLength);
     this.MHistory = Array(this.historyLength);
     this.CHistory = Array(this.historyLength);
     this.chiHistory = Array(this.historyLength);
 
-    this.drawStates();
+    this.canvasDrawer.draw();
 
     this.requestId = requestAnimationFrame(this.run.bind(this));
   }
@@ -383,7 +358,7 @@ class Model {
       spinContext.fillRect(0, 0, zoom, zoom);
 
       const arrow = new Path2D();
-      arrow.addPath(this.arrow, {
+      arrow.addPath(arrowPath, {
         a: zoom / 16,
         d: spin / Math.max(Math.abs(max_spin), Math.abs(min_spin)) * zoom / 16,
         e: 0.5 * zoom,
@@ -402,7 +377,7 @@ class Model {
 
   setT(T) {
     this.T = T;
-    for (const elem of $query("#T input")) {
+    for (const elem of document.querySelectorAll("#T input")) {
       elem.value = `${this.T.toFixed(2).replace(/\.?0*$/, "")}`;
     }
   }
@@ -416,7 +391,7 @@ class Model {
       this.proposeNewConfiguration();
     }
     this.calculateStatistics();  // Should be here instead!
-    this.drawStates();
+    this.canvasDrawer.draw();
 
     if (!this.requestId) {
       this.requestId = requestAnimationFrame(this.run.bind(this));
@@ -443,7 +418,7 @@ class Model {
         this.calculateStatistics();
       }
     }
-    this.drawStates();
+    this.canvasDrawer.draw();
 
     this.timesAutoran++;
 
@@ -467,7 +442,7 @@ class Model {
     this.MGraph.push(M_);
     this.CGraph.push(C_);
     this.chiGraph.push(chi_);
-    this.drawGraph();
+    this.graphDrawer.draw();
 
     this.timesAutoran = 0;
     this.TIndex++;
@@ -507,10 +482,10 @@ class Model {
     const propSpin = this.possibleSpins[prop];
 
     const energyDifference = (
-        this.J1 * (this.getSpin(x + 1, y    ) + this.getSpin(x - 1, y    ))
-      + this.J2 * (this.getSpin(x,     y + 1) + this.getSpin(x,     y - 1))
-      + this.J3 * (this.getSpin(x + 1, y + 1) + this.getSpin(x - 1, y - 1))
-      + this.J4 * (this.getSpin(x - 1, y + 1) + this.getSpin(x + 1, y - 1))
+        this.J1 * (this.sigma(x + 1, y    ) + this.sigma(x - 1, y    ))
+      + this.J2 * (this.sigma(x,     y + 1) + this.sigma(x,     y - 1))
+      + this.J3 * (this.sigma(x + 1, y + 1) + this.sigma(x - 1, y - 1))
+      + this.J4 * (this.sigma(x - 1, y + 1) + this.sigma(x + 1, y - 1))
       + this.J0 * (currSpin + propSpin)
       + this.h
     ) * (currSpin - propSpin);
@@ -538,10 +513,10 @@ class Model {
       for (let x = 0; x < this.Nx; x++) {
         E += (
           /* No double counting! */
-          - this.J1 * this.getSpin(x + 1, y    )
-          - this.J2 * this.getSpin(x,     y + 1)
-          - this.J3 * this.getSpin(x + 1, y + 1)
-          - this.J4 * this.getSpin(x - 1, y + 1)
+          - this.J1 * this.sigma(x + 1, y    )
+          - this.J2 * this.sigma(x,     y + 1)
+          - this.J3 * this.sigma(x + 1, y + 1)
+          - this.J4 * this.sigma(x - 1, y + 1)
           - this.J0 * this.possibleSpins[this.states[this.Nx * y + x]]
           - this.h
         ) * this.possibleSpins[this.states[this.Nx * y + x]];
@@ -578,10 +553,10 @@ class Model {
     const EPerCell = E / (this.Nx * this.Ny);
     const CPerCell = C / (this.Nx * this.Ny);
     const chiPerCell = chi / (this.Nx * this.Ny);
-    $id("M").innerText = toFixedFormat(MPerCell);
-    $id("E").innerText = toFixedFormat(EPerCell);
-    $id("C").innerText = toFixedFormat(CPerCell);
-    $id("chi").innerText = toFixedFormat(chiPerCell);
+    $id("M").innerText = formatToFixed(MPerCell);
+    $id("E").innerText = formatToFixed(EPerCell);
+    $id("C").innerText = formatToFixed(CPerCell);
+    $id("chi").innerText = formatToFixed(chiPerCell);
 
     this.E = EPerCell;
     this.M = MPerCell;
@@ -589,81 +564,143 @@ class Model {
     this.chi = chiPerCell;
   }
 
-  getSpin(x, y) {
-    /// Get the state of the cell at (x, y),
-    /// considering the boundary condition if necessary.
+  sigma(x, y) {
+    // Get sigma with taking the periodic boundary condition into account.
 
-    return this.possibleSpins[
-      this.states[this.Nx * mod(y, this.Ny) + mod(x, this.Nx)]
-    ];
+    if (x === -1) {
+      x = this.Nx - 1;
+    } else if (x === this.Nx) {
+      x = 0;
+    }
+
+    if (y === -1) {
+      y = this.Ny - 1;
+    } else if (y === this.Ny) {
+      y = 0;
+    }
+
+    return this.possibleSpins[this.states[this.Nx * y + x]];
   }
 
-  drawStates() {
-    const lightnessMin = 5;
-    const lightnessMax = 95;
-    const sMin = Math.min(...this.possibleSpins);
-    const sMax = Math.max(...this.possibleSpins);
+}
 
-    const zoom = Math.floor(Math.min(
-      this.canvasContainerWidth / this.Nx * 2,
-      this.canvasContainerHeight / this.Ny * 2,
+class CanvasDrawer {
+  #lightnessMin = 5;
+  #lightnessMax = 95;
+  #lightnessRange = this.#lightnessMax - this.#lightnessMin;
+  #lightnessMiddle = (this.#lightnessMin + this.#lightnessMax) / 2;
+  #isingModel = undefined;
+  #context = undefined;
+
+  constructor(isingModel) {
+    this.#isingModel = isingModel;
+    this.#context = $id("canvas").getContext("2d");
+
+    new ResizeObserver(() => {
+      this.resize();
+      this.draw();
+    }).observe($id("canvas-container"));
+  }
+
+  resize() {
+    const dpr = window.devicePixelRatio;
+    this.zoom = Math.floor(Math.min(
+      $id("canvas-container").offsetWidth / this.#isingModel.Nx * dpr,
+      $id("canvas-container").offsetHeight / this.#isingModel.Ny * dpr,
     ));
 
-    /// Draw the cell states.
-    this.canvas.width = this.Nx * zoom;
-    this.canvas.height = this.Ny * zoom;
-    this.canvas.style.width = `${this.Nx * zoom / 2}px`;
-    this.canvas.style.height = `${this.Ny * zoom / 2}px`;
+    this.willDrawArrows = this.zoom >= 8 * dpr;
+    $id("canvas").style.width = `${this.#isingModel.Nx * this.zoom / dpr}px`;
+    $id("canvas").style.height = `${this.#isingModel.Ny * this.zoom / dpr}px`;
+    $id("canvas").width = this.#isingModel.Nx * this.zoom;
+    $id("canvas").height = this.#isingModel.Ny * this.zoom;
+  }
 
-    for (let y = 0; y < this.Ny; y++) {
-      for (let x = 0; x < this.Nx; x++) {
-        const spin = this.possibleSpins[this.states[this.Nx * y + x]];
-        const l = (
-          (lightnessMax - lightnessMin) * (spin - sMin ) / (sMax - sMin ) + lightnessMin
+  draw() {
+    const sigmaMin = Math.min(...this.#isingModel.possibleSpins);
+    const sigmaMax = Math.max(...this.#isingModel.possibleSpins);
+    const sigmaRange = sigmaMax - sigmaMin;
+    const sigmaAbsMax = Math.max(Math.abs(sigmaMax), Math.abs(sigmaMin));
+
+    this.#context.lineWidth = this.zoom / 16;
+    this.#context.lineJoin = "round";
+
+    for (let y = 0; y < this.#isingModel.Ny; y++) {
+      for (let x = 0; x < this.#isingModel.Nx; x++) {
+        const sigma = this.#isingModel.sigma(x, y);
+
+        // Draw background.
+        const backgroundLightness = (
+          (sigma - sigmaMin) / sigmaRange
+          * this.#lightnessRange + this.#lightnessMin
         );
-        this.context.fillStyle = `oklch(${l}% 0% 0deg)`;
+        this.#context.fillStyle = `oklch(${backgroundLightness}% 0% 0deg)`;
+        this.#context.fillRect(
+          x * this.zoom, y * this.zoom, this.zoom, this.zoom
+        );
 
-        this.context.setTransform(1, 0, 0, 1, 0, 0);
-        this.context.fillRect(x * zoom, y * zoom, zoom, zoom);
-
-        if (zoom >= 16) {
-          this.context.fillStyle = "oklch(50% 0% 0deg)";
-
-          const arrow = new Path2D();
-          arrow.addPath(this.arrow, {
-            a: zoom / 16,
-            d: spin / Math.max(Math.abs(sMax), Math.abs(sMin )) * zoom / 16,
-            e: (x + 0.5) * zoom,
-            f: (y + 0.5) * zoom,
+        // Draw arrow.
+        if (this.willDrawArrows) {
+          const transformedArrowPath = new Path2D();
+          transformedArrowPath.addPath(arrowPath, {
+            a: this.zoom / 16,
+            d: sigma / sigmaAbsMax * this.zoom / 16,
+            e: (x + 0.5) * this.zoom,
+            f: (y + 0.5) * this.zoom,
           });
-
-          this.context.fill(arrow);
-
-          this.context.lineWidth = zoom / 16;
-          this.context.lineJoin = "round";
-          this.context.strokeStyle = "oklch(50% 0% 0deg)";
-          this.context.stroke(arrow);
+          const arrowLightness = (
+            backgroundLightness < this.#lightnessMiddle
+            ? backgroundLightness + this.#lightnessRange / 2
+            : backgroundLightness - this.#lightnessRange / 2
+          );
+          this.#context.fillStyle = `oklch(${arrowLightness}% 0% 0deg)`;
+          this.#context.fill(transformedArrowPath);
+          this.#context.strokeStyle = `oklch(${arrowLightness}% 0% 0deg)`;
+          this.#context.stroke(transformedArrowPath);
         }
       }
     }
   }
+}
 
-  drawGraph() {
-    // Canvas coordinates
-    // Do not confuse them with x and y (position of spin).
-    const XLeft = 32 * 1;
-    const XRight = 32 * 11;
-    const YTop = 32 * 0.5;
-    const Ybottom = 32 * 10.5;
+class GraphDrawer {
+  #isingModel = undefined;
 
+  // X and Y are canvas coordinates.
+  // Do not confuse them with x and y.
+  #XLeft = 32 * 1;
+  #XRight = 32 * 11;
+  #YTop = 32 * 0.5;
+  #YBottom = 32 * 10.5;
+
+  constructor(isingModel) {
+    this.#isingModel = isingModel;
+
+    for (const [canvas, contextName] of [
+      [$id("E-canvas"),   "EContext"  ],
+      [$id("M-canvas"),   "MContext"  ],
+      [$id("C-canvas"),   "CContext"  ],
+      [$id("chi-canvas"), "chiContext"],
+    ]) {
+      this[contextName] = canvas.getContext("2d");
+      canvas.style.width = `${16 * 11.5}px`;
+      canvas.style.height = `${16 * 11.5}px`;
+      canvas.width = 32 * 11.5;
+      canvas.height = 32 * 11.5;
+    }
+  }
+
+  draw() {
     const TMax = 5;
+
+    const model = this.#isingModel;
 
     // Q stands for quantity.
     for (const [QGraph, QHistory, QContext, isQAlwaysPositive] of [
-      [this.EGraph, this.EHistory, this.EContext, false],
-      [this.MGraph, this.MHistory, this.MContext, false],
-      [this.CGraph, this.CHistory, this.CContext, true],
-      [this.chiGraph, this.chiHistory, this.chiContext, true],
+      [model.EGraph,   model.EHistory,   this.EContext,   false],
+      [model.MGraph,   model.MHistory,   this.MContext,   false],
+      [model.CGraph,   model.CHistory,   this.CContext,   true ],
+      [model.chiGraph, model.chiHistory, this.chiContext, true ],
     ]) {
       // Erase.
       QContext.clearRect(0, 0, QContext.canvas.width, QContext.canvas.height);
@@ -673,11 +710,11 @@ class Model {
 
       // Draw vertical lines.
       for (let T = 0; T <= TMax; T++) {
-        const X = XLeft + T / TMax * (XRight - XLeft);
+        const X = this.#XLeft + T / TMax * (this.#XRight - this.#XLeft);
 
         QContext.beginPath();
-        QContext.moveTo(X, YTop);
-        QContext.lineTo(X, Ybottom);
+        QContext.moveTo(X, this.#YTop);
+        QContext.lineTo(X, this.#YBottom);
         QContext.strokeStyle = "oklch(80% 0% 0deg)";
         QContext.stroke();
 
@@ -685,21 +722,21 @@ class Model {
         QContext.textAlign = "center";
         QContext.textBaseline = "middle";
         QContext.fillStyle = "oklch(80% 0% 0deg)";
-        QContext.fillText(toStringFormat(T), X, Ybottom + 16);
+        QContext.fillText(formatToString(T), X, this.#YBottom + 16);
       }
 
       // Draw horizontal lines.
       for (let Q = QMin; Q <= QMax; Q++) {
         let Y;
         if (QMin === QMax) {
-          Y = isQAlwaysPositive ? Ybottom : Ybottom - (Ybottom - YTop) / 2;
+          Y = isQAlwaysPositive ? this.#YBottom : this.#YBottom - (this.#YBottom - this.#YTop) / 2;
         } else {
-          Y = Ybottom - (Q - QMin) / (QMax - QMin) * (Ybottom - YTop);
+          Y = this.#YBottom - (Q - QMin) / (QMax - QMin) * (this.#YBottom - this.#YTop);
         }
 
         QContext.beginPath();
-        QContext.moveTo(XLeft, Y);
-        QContext.lineTo(XRight, Y);
+        QContext.moveTo(this.#XLeft, Y);
+        QContext.lineTo(this.#XRight, Y);
         QContext.strokeStyle = "oklch(80% 0% 0deg)";
         QContext.stroke();
 
@@ -708,23 +745,23 @@ class Model {
         QContext.textAlign = "center";
         QContext.textBaseline = "middle";
         QContext.fillStyle = "oklch(80% 0% 0deg)";
-        QContext.translate(XLeft - 16, Y);
+        QContext.translate(this.#XLeft - 16, Y);
         QContext.rotate(-Math.PI / 2);
-        QContext.fillText(toStringFormat(Q), 0, 0);
+        QContext.fillText(formatToString(Q), 0, 0);
         QContext.restore();
       }
 
       // Draw dots.
-      for (const [i, T] of this.graphT.entries()) {
+      for (const [i, T] of model.graphT.entries()) {
         const Q = QGraph[i];
 
-        const X = XLeft + T / TMax * (XRight - XLeft);
+        const X = this.#XLeft + T / TMax * (this.#XRight - this.#XLeft);
 
         let Y;
         if (QMin === QMax) {
-          Y = isQAlwaysPositive ? Ybottom : Ybottom - (Ybottom - YTop) / 2;
+          Y = isQAlwaysPositive ? this.#YBottom : this.#YBottom - (this.#YBottom - this.#YTop) / 2;
         } else {
-          Y = Ybottom - (Q - QMin) / (QMax - QMin) * (Ybottom - YTop);
+          Y = this.#YBottom - (Q - QMin) / (QMax - QMin) * (this.#YBottom - this.#YTop);
         }
 
         QContext.beginPath();
@@ -736,4 +773,4 @@ class Model {
   }
 }
 
-const model = new Model();
+const isingModel = new IsingModel();
