@@ -13,9 +13,6 @@ const formatToString = number => (
 
 class IsingModel {
   constructor() {
-    this.canvasDrawer = new CanvasDrawer(this);
-    this.graphDrawer = new GraphDrawer(this);
-
     for (const div of document.querySelectorAll(".slider")) {
       const number = div.querySelector('input[type="number"]');
       const range = div.querySelector('input[type="range"]');
@@ -280,6 +277,9 @@ class IsingModel {
     this.CHistory = Array(this.historyLength);
     this.chiHistory = Array(this.historyLength);
 
+    this.canvasDrawer = new CanvasDrawer(this);
+    this.graphDrawer = new GraphDrawer(this);
+
     this.canvasDrawer.draw();
 
     this.requestId = requestAnimationFrame(this.run.bind(this));
@@ -332,7 +332,6 @@ class IsingModel {
     const l = this.possibleSpins.length - 1;
     this.possibleSpins.pop();
     document.querySelector("#sigma > :last-child").remove();
-
   }
 
   redrawLegend() {
@@ -585,57 +584,64 @@ class IsingModel {
 }
 
 class CanvasDrawer {
-  #lightnessMin = 5;
-  #lightnessMax = 95;
-  #lightnessRange = this.#lightnessMax - this.#lightnessMin;
-  #lightnessMiddle = (this.#lightnessMin + this.#lightnessMax) / 2;
-  #isingModel = undefined;
-  #context = undefined;
-
   constructor(isingModel) {
-    this.#isingModel = isingModel;
-    this.#context = $id("canvas").getContext("2d");
+    this.lightnessMin = 5;
+    this.lightnessMax = 95;
+    this.lightnessRange = this.lightnessMax - this.lightnessMin;
+    this.lightnessMiddle = (this.lightnessMin + this.lightnessMax) / 2;
+
+    this.isingModel = isingModel;
+    this.context = $id("canvas").getContext("2d");
+
+    // Watch for changes on window.devicePixelRatio.
+    window.matchMedia("(min-resolution: 2dppx)")
+    .addEventListener("change", (event) => {
+      this.resize();
+      this.draw();
+    });
 
     new ResizeObserver(() => {
       this.resize();
       this.draw();
     }).observe($id("canvas-container"));
+
+    this.resize();
   }
 
   resize() {
     const dpr = window.devicePixelRatio;
     this.zoom = Math.floor(Math.min(
-      $id("canvas-container").offsetWidth / this.#isingModel.Nx * dpr,
-      $id("canvas-container").offsetHeight / this.#isingModel.Ny * dpr,
+      $id("canvas-container").offsetWidth / this.isingModel.Nx * dpr,
+      $id("canvas-container").offsetHeight / this.isingModel.Ny * dpr,
     ));
 
     this.willDrawArrows = this.zoom >= 8 * dpr;
-    $id("canvas").style.width = `${this.#isingModel.Nx * this.zoom / dpr}px`;
-    $id("canvas").style.height = `${this.#isingModel.Ny * this.zoom / dpr}px`;
-    $id("canvas").width = this.#isingModel.Nx * this.zoom;
-    $id("canvas").height = this.#isingModel.Ny * this.zoom;
+    $id("canvas").style.width = `${this.isingModel.Nx * this.zoom / dpr}px`;
+    $id("canvas").style.height = `${this.isingModel.Ny * this.zoom / dpr}px`;
+    $id("canvas").width = this.isingModel.Nx * this.zoom;
+    $id("canvas").height = this.isingModel.Ny * this.zoom;
   }
 
   draw() {
-    const sigmaMin = Math.min(...this.#isingModel.possibleSpins);
-    const sigmaMax = Math.max(...this.#isingModel.possibleSpins);
+    const sigmaMin = Math.min(...this.isingModel.possibleSpins);
+    const sigmaMax = Math.max(...this.isingModel.possibleSpins);
     const sigmaRange = sigmaMax - sigmaMin;
     const sigmaAbsMax = Math.max(Math.abs(sigmaMax), Math.abs(sigmaMin));
 
-    this.#context.lineWidth = this.zoom / 16;
-    this.#context.lineJoin = "round";
+    this.context.lineWidth = this.zoom / 16;
+    this.context.lineJoin = "round";
 
-    for (let y = 0; y < this.#isingModel.Ny; y++) {
-      for (let x = 0; x < this.#isingModel.Nx; x++) {
-        const sigma = this.#isingModel.sigma(x, y);
+    for (let y = 0; y < this.isingModel.Ny; y++) {
+      for (let x = 0; x < this.isingModel.Nx; x++) {
+        const sigma = this.isingModel.sigma(x, y);
 
         // Draw background.
         const backgroundLightness = (
           (sigma - sigmaMin) / sigmaRange
-          * this.#lightnessRange + this.#lightnessMin
+          * this.lightnessRange + this.lightnessMin
         );
-        this.#context.fillStyle = `oklch(${backgroundLightness}% 0% 0deg)`;
-        this.#context.fillRect(
+        this.context.fillStyle = `oklch(${backgroundLightness}% 0% 0deg)`;
+        this.context.fillRect(
           x * this.zoom, y * this.zoom, this.zoom, this.zoom
         );
 
@@ -649,14 +655,14 @@ class CanvasDrawer {
             f: (y + 0.5) * this.zoom,
           });
           const arrowLightness = (
-            backgroundLightness < this.#lightnessMiddle
-            ? backgroundLightness + this.#lightnessRange / 2
-            : backgroundLightness - this.#lightnessRange / 2
+            backgroundLightness < this.lightnessMiddle
+            ? backgroundLightness + this.lightnessRange / 2
+            : backgroundLightness - this.lightnessRange / 2
           );
-          this.#context.fillStyle = `oklch(${arrowLightness}% 0% 0deg)`;
-          this.#context.fill(transformedArrowPath);
-          this.#context.strokeStyle = `oklch(${arrowLightness}% 0% 0deg)`;
-          this.#context.stroke(transformedArrowPath);
+          this.context.fillStyle = `oklch(${arrowLightness}% 0% 0deg)`;
+          this.context.fill(transformedArrowPath);
+          this.context.strokeStyle = `oklch(${arrowLightness}% 0% 0deg)`;
+          this.context.stroke(transformedArrowPath);
         }
       }
     }
@@ -664,36 +670,47 @@ class CanvasDrawer {
 }
 
 class GraphDrawer {
-  #isingModel = undefined;
-
-  // X and Y are canvas coordinates.
-  // Do not confuse them with x and y.
-  #XLeft = 32 * 1;
-  #XRight = 32 * 11;
-  #YTop = 32 * 0.5;
-  #YBottom = 32 * 10.5;
-
   constructor(isingModel) {
-    this.#isingModel = isingModel;
+    this.isingModel = isingModel;
 
-    for (const [canvas, contextName] of [
-      [$id("E-canvas"),   "EContext"  ],
-      [$id("M-canvas"),   "MContext"  ],
-      [$id("C-canvas"),   "CContext"  ],
-      [$id("chi-canvas"), "chiContext"],
+    this.EContext = $id("E-canvas").getContext("2d");
+    this.MContext = $id("M-canvas").getContext("2d");
+    this.CContext = $id("C-canvas").getContext("2d");
+    this.chiContext = $id("chi-canvas").getContext("2d");
+
+    // Watch for changes on window.devicePixelRatio.
+    window.matchMedia("(min-resolution: 2dppx)")
+    .addEventListener("change", (event) => {
+      this.resize();
+      this.draw();
+    });
+
+    this.resize();
+  }
+
+  resize() {
+    // Canvas pixel per 1rem.
+    this.rem = 16 * window.devicePixelRatio;
+
+    // X and Y are in canvas coordinates.
+    // Do not confuse them with x and y.
+    this.XLeft = 1 * this.rem;
+    this.XRight = 11 * this.rem;
+    this.YTop = 0.5 * this.rem;
+    this.YBottom = 10.5 * this.rem;
+
+    for (const canvas of [
+      $id("E-canvas"), $id("M-canvas"), $id("C-canvas"), $id("chi-canvas")
     ]) {
-      this[contextName] = canvas.getContext("2d");
-      canvas.style.width = `${16 * 11.5}px`;
-      canvas.style.height = `${16 * 11.5}px`;
-      canvas.width = 32 * 11.5;
-      canvas.height = 32 * 11.5;
+      canvas.width = 11.5 * this.rem;
+      canvas.height = 11.5 * this.rem;
     }
   }
 
   draw() {
-    const TMax = 5;
+    const model = this.isingModel;
 
-    const model = this.#isingModel;
+    const TMax = 5;
 
     // Q stands for quantity.
     for (const [QGraph, QHistory, QContext, isQAlwaysPositive] of [
@@ -705,67 +722,150 @@ class GraphDrawer {
       // Erase.
       QContext.clearRect(0, 0, QContext.canvas.width, QContext.canvas.height);
 
-      const QMax = Math.ceil(Math.max(...QGraph));
+      // const QMax = Math.ceil(Math.max(...QGraph));
+      let QMax = 0;
+      let QTicks = ["0.0"];
+      if (isQAlwaysPositive) {
+        const max = Math.max(...QGraph);
+        const exp = Math.ceil(Math.log10(max)) - 1;
+        const man = max / 10 ** exp;
+        if (man <= 2.5) {
+          QMax = 2.5 * 10 ** exp;
+          if (exp === -1) {
+            QTicks = ["0", "0.05", "0.1", "0.15", "0.2", "0.25"];
+          } else if (exp === 0) {
+            QTicks = ["0", "0.5", "1", "1.5", "2", "2.5"];
+          } else if (exp === 1) {
+            QTicks = ["0", "5", "10", "15", "20", "25"];
+          } else {
+            QTicks = [];
+            for (const tick of ["0", "0.5", "1", "1.5", "2", "2.5"]) {
+              QTicks.push(`${tick}e${exp}`);
+            }
+          }
+        } else if (man <= 5) {
+          QMax = 5 * 10 ** exp;
+          if (exp === -1) {
+            QTicks = ["0", "0.1", "0.2", "0.3", "0.4", "0.5"];
+          } else if (exp === 0) {
+            QTicks = ["0", "1", "2", "3", "4", "5"];
+          } else if (exp === 1) {
+            QTicks = ["0", "10", "20", "30", "40", "50"];
+          } else {
+            for (const tick of ["0", "1", "2", "3", "4", "5"]) {
+              QTicks.push(`${tick}e${exp}`);
+            }
+          }
+        } else if (man <= 10) {
+          QMax = 10 * 10 ** exp;
+          if (exp === -1) {
+            QTicks = ["0", "0.2", "0.4", "0.6", "0.8", "1"];
+          } else if (exp === 0) {
+            QTicks = ["0", "2", "4", "6", "8", "10"];
+          } else if (exp === 1) {
+            QTicks = ["0", "20", "40", "60", "80", "100"];
+          } else {
+            for (const tick of ["0", "2", "4", "6", "8", "10"]) {
+              QTicks.push(`${tick}e${exp}`);
+            }
+          }
+        }
+      } else {
+        QMax = Math.ceil(Math.max(...QGraph));
+      }
+      
       const QMin = isQAlwaysPositive ? 0 : Math.floor(Math.min(...QGraph));
 
       // Draw vertical lines.
       for (let T = 0; T <= TMax; T++) {
-        const X = this.#XLeft + T / TMax * (this.#XRight - this.#XLeft);
+        const X = this.XLeft + T / TMax * (this.XRight - this.XLeft);
 
         QContext.beginPath();
-        QContext.moveTo(X, this.#YTop);
-        QContext.lineTo(X, this.#YBottom);
+        QContext.moveTo(X, this.YTop);
+        QContext.lineTo(X, this.YBottom);
         QContext.strokeStyle = "oklch(80% 0% 0deg)";
+        QContext.strokeWidth = `{this.rem}`;
         QContext.stroke();
 
-        QContext.font = "16px system-ui";
+        QContext.font = `${this.rem / 2}px system-ui`;
         QContext.textAlign = "center";
         QContext.textBaseline = "middle";
         QContext.fillStyle = "oklch(80% 0% 0deg)";
-        QContext.fillText(formatToString(T), X, this.#YBottom + 16);
+        QContext.fillText(formatToString(T), X, this.YBottom + this.rem / 2);
       }
 
       // Draw horizontal lines.
-      for (let Q = QMin; Q <= QMax; Q++) {
-        let Y;
-        if (QMin === QMax) {
-          Y = isQAlwaysPositive ? this.#YBottom : this.#YBottom - (this.#YBottom - this.#YTop) / 2;
-        } else {
-          Y = this.#YBottom - (Q - QMin) / (QMax - QMin) * (this.#YBottom - this.#YTop);
+      if (isQAlwaysPositive) {
+        for (let i = 0; i <= 5; i++) {
+          const Q = QMax / 5 * i;
+
+          let Y;
+          if (QMin === QMax) {
+            Y = isQAlwaysPositive ? this.YBottom : this.YBottom - (this.YBottom - this.YTop) / 2;
+          } else {
+            Y = this.YBottom - (Q - QMin) / (QMax - QMin) * (this.YBottom - this.YTop);
+          }
+
+          QContext.beginPath();
+          QContext.moveTo(this.XLeft, Y);
+          QContext.lineTo(this.XRight, Y);
+          QContext.strokeStyle = "oklch(80% 0% 0deg)";
+          QContext.strokeWidth = `{this.rem}`;
+          QContext.stroke();
+
+          QContext.save();
+          QContext.font = `${this.rem / 2}px system-ui`;
+          QContext.textAlign = "center";
+          QContext.textBaseline = "middle";
+          QContext.fillStyle = "oklch(80% 0% 0deg)";
+          QContext.translate(this.XLeft - this.rem / 2, Y);
+          QContext.rotate(-Math.PI / 2);
+          QContext.fillText(QTicks[i], 0, 0);
+          QContext.restore();
         }
+      } else {
+        for (let Q = QMin; Q <= QMax; Q++) {
+          let Y;
+          if (QMin === QMax) {
+            Y = isQAlwaysPositive ? this.YBottom : this.YBottom - (this.YBottom - this.YTop) / 2;
+          } else {
+            Y = this.YBottom - (Q - QMin) / (QMax - QMin) * (this.YBottom - this.YTop);
+          }
 
-        QContext.beginPath();
-        QContext.moveTo(this.#XLeft, Y);
-        QContext.lineTo(this.#XRight, Y);
-        QContext.strokeStyle = "oklch(80% 0% 0deg)";
-        QContext.stroke();
+          QContext.beginPath();
+          QContext.moveTo(this.XLeft, Y);
+          QContext.lineTo(this.XRight, Y);
+          QContext.strokeStyle = "oklch(80% 0% 0deg)";
+          QContext.strokeWidth = `{this.rem}`;
+          QContext.stroke();
 
-        QContext.save();
-        QContext.font = "16px system-ui";
-        QContext.textAlign = "center";
-        QContext.textBaseline = "middle";
-        QContext.fillStyle = "oklch(80% 0% 0deg)";
-        QContext.translate(this.#XLeft - 16, Y);
-        QContext.rotate(-Math.PI / 2);
-        QContext.fillText(formatToString(Q), 0, 0);
-        QContext.restore();
+          QContext.save();
+          QContext.font = `${this.rem / 2}px system-ui`;
+          QContext.textAlign = "center";
+          QContext.textBaseline = "middle";
+          QContext.fillStyle = "oklch(80% 0% 0deg)";
+          QContext.translate(this.XLeft - this.rem / 2, Y);
+          QContext.rotate(-Math.PI / 2);
+          QContext.fillText(formatToString(Q), 0, 0);
+          QContext.restore();
+        }
       }
 
       // Draw dots.
       for (const [i, T] of model.graphT.entries()) {
         const Q = QGraph[i];
 
-        const X = this.#XLeft + T / TMax * (this.#XRight - this.#XLeft);
+        const X = this.XLeft + T / TMax * (this.XRight - this.XLeft);
 
         let Y;
         if (QMin === QMax) {
-          Y = isQAlwaysPositive ? this.#YBottom : this.#YBottom - (this.#YBottom - this.#YTop) / 2;
+          Y = isQAlwaysPositive ? this.YBottom : this.YBottom - (this.YBottom - this.YTop) / 2;
         } else {
-          Y = this.#YBottom - (Q - QMin) / (QMax - QMin) * (this.#YBottom - this.#YTop);
+          Y = this.YBottom - (Q - QMin) / (QMax - QMin) * (this.YBottom - this.YTop);
         }
 
         QContext.beginPath();
-        QContext.ellipse(X, Y, 2, 2, 0, 0, 2 * Math.PI);
+        QContext.ellipse(X, Y, this.rem / 16, this.rem / 16, 0, 0, 2 * Math.PI);
         QContext.fillStyle = "black";
         QContext.fill();
       }

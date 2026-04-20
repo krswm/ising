@@ -94,6 +94,10 @@ body {
 }
 .graph > canvas {
   grid-area: c;  /* canvas */
+
+  /* 0.5rem + 10rem + 1rem = 11.5rem */
+  height: 11.5rem;
+  width: 11.5rem;
 }
 .graph > div {
   place-self: center;
