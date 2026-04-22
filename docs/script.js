@@ -35,6 +35,8 @@ class IsingModel {
 
     this.possibleSpins = [1, -1];
 
+    this.sigmaDrawer = new SigmaDrawer(this);
+
     for (const [id, numberMin, rangeMin, rangeMax, initialValue] of [
       ["speed", 0,     0,  1, 0.5],
       ["T",     0,     0, 10, 2  ],
@@ -164,6 +166,7 @@ class IsingModel {
       this.redrawLegend();
 
       this.states.fill(0);
+      this.canvasDrawer.resize();
       this.canvasDrawer.draw();
     });
 
@@ -286,92 +289,15 @@ class IsingModel {
   }
 
   createSpin(spin, i) {
-    const canvas = document.createElement("canvas");
-    canvas.id = `spin${i}`;
-    canvas.style = "border-radius: 0.25rem; width: 32px; height: 32px;";
-
-    const div = document.createElement("div");
-    div.innerText = `State #${i + 1}`;
-
-    const number = document.createElement("input");
-    number.type = "number";
-    number.step = "0.01";
-    number.value = `${spin}`;
-
-    const range = document.createElement("input");
-    // Order is important! Set min and max then value.
-    range.type = "range";
-    range.min = "-2";
-    range.max = "2";
-    range.step = "0.01";
-    range.value = `${spin}`;
-      
-    const sDiv = document.createElement("div");
-    sDiv.classList.add("slider")
-    sDiv.append(canvas);
-    sDiv.append(div);
-    sDiv.append(number);
-    sDiv.append(range);
-    this.sContainer.append(sDiv);
-
-    number.addEventListener("input", (event) => {
-      range.value = event.target.valueAsNumber;
-      this.possibleSpins[i] = event.target.valueAsNumber;
-      this.redrawLegend();
-    });
-    range.addEventListener("input", (event) => {
-      number.value = event.target.valueAsNumber;
-      this.possibleSpins[i] = event.target.valueAsNumber;
-      this.redrawLegend();
-    });
-
-    this.possibleSpins[i] = spin;
+    this.sigmaDrawer.addState(spin, i);
   }
 
   removeSpin() {
-    const l = this.possibleSpins.length - 1;
-    this.possibleSpins.pop();
-    document.querySelector("#sigma > :last-child").remove();
+    this.sigmaDrawer.removeState();
   }
 
   redrawLegend() {
-    const min_l = 5;
-    const max_l = 95;
-    const min_spin = Math.min(...this.possibleSpins);
-    const max_spin = Math.max(...this.possibleSpins);
-    const zoom = 64;
-
-    for (const [i, slider] of this.sContainer.childNodes.entries()) {
-      const spin = this.possibleSpins[i];
-      const spinCanvas = slider.querySelector("canvas");
-
-      spinCanvas.width = 64;
-      spinCanvas.height = 64;
-
-      const spinContext = spinCanvas.getContext("2d");
-
-      const l = (max_l - min_l) * (spin - min_spin) / (max_spin - min_spin) + min_l;
-      spinContext.fillStyle = `oklch(${l}% 0% 0deg)`;
-
-      spinContext.setTransform(1, 0, 0, 1, 0, 0);
-      spinContext.fillRect(0, 0, zoom, zoom);
-
-      const arrow = new Path2D();
-      arrow.addPath(arrowPath, {
-        a: zoom / 16,
-        d: spin / Math.max(Math.abs(max_spin), Math.abs(min_spin)) * zoom / 16,
-        e: 0.5 * zoom,
-        f: 0.5 * zoom,
-      });
-
-      spinContext.fillStyle = "oklch(50% 0% 0deg)";
-      spinContext.fill(arrow);
-
-      spinContext.lineWidth = 4;
-      spinContext.lineJoin = "round";
-      spinContext.strokeStyle = "oklch(50% 0% 0deg)";
-      spinContext.stroke(arrow);
-    }
+    this.sigmaDrawer.draw();
   }
 
   setT(T) {
@@ -583,15 +509,62 @@ class IsingModel {
 
 }
 
+function getPredrawnCanvases(possibleSpins, zoom) {
+  const lightnessMin = 5;
+  const lightnessMax = 95;
+  const lightnessRange = lightnessMax - lightnessMin;
+  const lightnessMiddle = (lightnessMin + lightnessMax) / 2;
+
+  const sigmaMin = Math.min(...possibleSpins);
+  const sigmaMax = Math.max(...possibleSpins);
+  const sigmaRange = sigmaMax - sigmaMin;
+  const sigmaAbsMax = Math.max(Math.abs(sigmaMax), Math.abs(sigmaMin));
+
+  const canvases = [];
+  for (const sigma of possibleSpins) {
+    const canvas = new OffscreenCanvas(zoom, zoom);
+    const context = canvas.getContext("2d", {transparent: false});
+
+    context.lineWidth = zoom / 16;
+    context.lineJoin = "round";
+
+    // Draw background.
+    const backgroundLightness = (
+      (sigma - sigmaMin) / sigmaRange * lightnessRange + lightnessMin
+    );
+    context.fillStyle = `oklch(${backgroundLightness}% 0% 0deg)`;
+    context.fillRect(0, 0, zoom, zoom);
+
+    // Draw arrow.
+    if (zoom >= 8 * window.devicePixelRatio) {
+      const transformedArrowPath = new Path2D();
+      transformedArrowPath.addPath(arrowPath, {
+        a: zoom / 16,
+        d: sigma / sigmaAbsMax * zoom / 16,
+        e: 0.5 * zoom,
+        f: 0.5 * zoom,
+      });
+      const arrowLightness = (
+        backgroundLightness < lightnessMiddle
+        ? backgroundLightness + lightnessRange / 2
+        : backgroundLightness - lightnessRange / 2
+      );
+      context.fillStyle = `oklch(${arrowLightness}% 0% 0deg)`;
+      context.fill(transformedArrowPath);
+      context.strokeStyle = `oklch(${arrowLightness}% 0% 0deg)`;
+      context.stroke(transformedArrowPath);
+    }
+
+    canvases.push(canvas);
+  }
+
+  return canvases;
+}
+
 class CanvasDrawer {
   constructor(isingModel) {
-    this.lightnessMin = 5;
-    this.lightnessMax = 95;
-    this.lightnessRange = this.lightnessMax - this.lightnessMin;
-    this.lightnessMiddle = (this.lightnessMin + this.lightnessMax) / 2;
-
     this.isingModel = isingModel;
-    this.context = $id("canvas").getContext("2d");
+    this.context = $id("canvas").getContext("2d", {alpha: false});
 
     // Watch for changes on window.devicePixelRatio.
     window.matchMedia("(min-resolution: 2dppx)")
@@ -615,56 +588,122 @@ class CanvasDrawer {
       $id("canvas-container").offsetHeight / this.isingModel.Ny * dpr,
     ));
 
-    this.willDrawArrows = this.zoom >= 8 * dpr;
     $id("canvas").style.width = `${this.isingModel.Nx * this.zoom / dpr}px`;
     $id("canvas").style.height = `${this.isingModel.Ny * this.zoom / dpr}px`;
     $id("canvas").width = this.isingModel.Nx * this.zoom;
     $id("canvas").height = this.isingModel.Ny * this.zoom;
-  }
 
-  draw() {
     const sigmaMin = Math.min(...this.isingModel.possibleSpins);
     const sigmaMax = Math.max(...this.isingModel.possibleSpins);
     const sigmaRange = sigmaMax - sigmaMin;
     const sigmaAbsMax = Math.max(Math.abs(sigmaMax), Math.abs(sigmaMin));
 
-    this.context.lineWidth = this.zoom / 16;
-    this.context.lineJoin = "round";
+    this.canvases = getPredrawnCanvases(
+      this.isingModel.possibleSpins, this.zoom
+    );
+  }
 
+  draw() {
     for (let y = 0; y < this.isingModel.Ny; y++) {
       for (let x = 0; x < this.isingModel.Nx; x++) {
-        const sigma = this.isingModel.sigma(x, y);
-
-        // Draw background.
-        const backgroundLightness = (
-          (sigma - sigmaMin) / sigmaRange
-          * this.lightnessRange + this.lightnessMin
+        this.context.drawImage(
+          this.canvases[this.isingModel.states[this.isingModel.Nx * y + x]],
+          x * this.zoom, y * this.zoom,
         );
-        this.context.fillStyle = `oklch(${backgroundLightness}% 0% 0deg)`;
-        this.context.fillRect(
-          x * this.zoom, y * this.zoom, this.zoom, this.zoom
-        );
-
-        // Draw arrow.
-        if (this.willDrawArrows) {
-          const transformedArrowPath = new Path2D();
-          transformedArrowPath.addPath(arrowPath, {
-            a: this.zoom / 16,
-            d: sigma / sigmaAbsMax * this.zoom / 16,
-            e: (x + 0.5) * this.zoom,
-            f: (y + 0.5) * this.zoom,
-          });
-          const arrowLightness = (
-            backgroundLightness < this.lightnessMiddle
-            ? backgroundLightness + this.lightnessRange / 2
-            : backgroundLightness - this.lightnessRange / 2
-          );
-          this.context.fillStyle = `oklch(${arrowLightness}% 0% 0deg)`;
-          this.context.fill(transformedArrowPath);
-          this.context.strokeStyle = `oklch(${arrowLightness}% 0% 0deg)`;
-          this.context.stroke(transformedArrowPath);
-        }
       }
+    }
+  }
+}
+
+class SigmaDrawer {
+  constructor(isingModel) {
+    this.isingModel = isingModel;
+
+    // Watch for changes on window.devicePixelRatio.
+    window.matchMedia("(min-resolution: 2dppx)")
+    .addEventListener("change", (event) => {
+      this.resize();
+      this.draw();
+    });
+  }
+
+  resize() {
+  }
+
+  addState(spin, i) {
+    const canvas = document.createElement("canvas");
+    canvas.id = `spin${i}`;
+    canvas.style = "border-radius: 0.25rem; width: 32px; height: 32px;";
+
+    const div = document.createElement("div");
+    div.innerText = `State #${i + 1}`;
+
+    const number = document.createElement("input");
+    number.type = "number";
+    number.step = "0.01";
+    number.value = `${spin}`;
+
+    const range = document.createElement("input");
+    // Order is important! Set min and max then value.
+    range.type = "range";
+    range.min = "-2";
+    range.max = "2";
+    range.step = "0.01";
+    range.value = `${spin}`;
+      
+    const sDiv = document.createElement("div");
+    sDiv.classList.add("slider")
+    sDiv.append(canvas);
+    sDiv.append(div);
+    sDiv.append(number);
+    sDiv.append(range);
+    $id("sigma").append(sDiv);
+
+    number.addEventListener("input", (event) => {
+      range.value = event.target.valueAsNumber;
+      this.isingModel.possibleSpins[i] = event.target.valueAsNumber;
+      this.draw();
+      this.isingModel.spinDrawer.resize();
+    });
+    range.addEventListener("input", (event) => {
+      number.value = event.target.valueAsNumber;
+      this.isingModel.possibleSpins[i] = event.target.valueAsNumber;
+      this.draw();
+      this.isingModel.spinDrawer.resize();
+    });
+
+    this.isingModel.possibleSpins[i] = spin;
+  }
+
+  removeState() {
+    const l = this.isingModel.possibleSpins.length - 1;
+    this.isingModel.possibleSpins.pop();
+
+    document.isingModel.querySelector("#sigma > div:last-of-type").remove();
+
+    this.isingModel.canvasDrawer.resize();
+  }
+
+  draw() {
+    const min_l = 5;
+    const max_l = 95;
+    const min_spin = Math.min(...this.isingModel.possibleSpins);
+    const max_spin = Math.max(...this.isingModel.possibleSpins);
+    const zoom = 64;
+
+    const canvases = getPredrawnCanvases(this.isingModel.possibleSpins, 64);
+    for (
+      const [i, slider] of document.querySelectorAll("#sigma > div").entries()
+    ) {
+      const spin = this.isingModel.possibleSpins[i];
+      const spinCanvas = slider.querySelector("canvas");
+
+      spinCanvas.width = 64;
+      spinCanvas.height = 64;
+
+      const spinContext = spinCanvas.getContext("2d");
+
+      spinContext.drawImage(canvases[i], 0, 0);
     }
   }
 }
