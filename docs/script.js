@@ -33,7 +33,7 @@ class IsingModel {
     this.Nx = 50;
     this.Ny = 50;
 
-    this.possibleSpins = [1, -1];
+    this.sigmas = [1, -1];
 
     this.sigmaDrawer = new SigmaDrawer(this);
 
@@ -156,14 +156,15 @@ class IsingModel {
       this.chiHistory = Array(this.historyLength);
 
       for (let i = 0; i < this.Nx * this.Ny; i++) {
-        this.states[i] = Math.floor(Math.random() * this.possibleSpins.length);
+        this.states[i] = Math.floor(Math.random() * this.sigmas.length);
       }
       this.canvasDrawer.draw();
     });
 
     $id("add").addEventListener("click", (event) => {
-      this.createSpin(0, this.possibleSpins.length);
-      this.redrawLegend();
+      this.sigmas.push(0);
+      this.sigmaDrawer.changeNumberOfStates();
+      this.sigmaDrawer.draw();
 
       this.states.fill(0);
       this.canvasDrawer.resize();
@@ -171,12 +172,14 @@ class IsingModel {
     });
 
     $id("remove").addEventListener("click", (event) => {
-      if (this.possibleSpins.length < 3) {
+      if (this.sigmas.length < 3) {
         return
       }
 
-      this.removeSpin();
-      this.redrawLegend();
+      this.sigmas.pop();
+
+      this.sigmaDrawer.changeNumberOfStates();
+      this.sigmaDrawer.draw();
 
       this.states.fill(0);
       this.canvasDrawer.draw();
@@ -268,12 +271,8 @@ class IsingModel {
     // The state of the cell at (x, y) is this.states[this.Nx * y + x].
     this.states = Array(this.Nx * this.Ny).fill(0);
 
-    this.sContainer = $id("sigma");
-    for (let i = 0; i < this.possibleSpins.length; i++) {
-      const spin = this.possibleSpins[i];
-      this.createSpin(spin, i);
-    }
-    this.redrawLegend();
+    this.sigmaDrawer.changeNumberOfStates();
+    this.sigmaDrawer.draw();
 
     this.EHistory = Array(this.historyLength);
     this.MHistory = Array(this.historyLength);
@@ -286,18 +285,6 @@ class IsingModel {
     this.canvasDrawer.draw();
 
     this.requestId = requestAnimationFrame(this.run.bind(this));
-  }
-
-  createSpin(spin, i) {
-    this.sigmaDrawer.addState(spin, i);
-  }
-
-  removeSpin() {
-    this.sigmaDrawer.removeState();
-  }
-
-  redrawLegend() {
-    this.sigmaDrawer.draw();
   }
 
   setT(T) {
@@ -399,12 +386,12 @@ class IsingModel {
 
     // Proposed state
     const prop = (
-      (Math.floor(Math.random() * (this.possibleSpins.length - 1)) + curr + 1)
-      % this.possibleSpins.length
+      (Math.floor(Math.random() * (this.sigmas.length - 1)) + curr + 1)
+      % this.sigmas.length
     );
 
-    const currSpin = this.possibleSpins[curr];
-    const propSpin = this.possibleSpins[prop];
+    const currSpin = this.sigmas[curr];
+    const propSpin = this.sigmas[prop];
 
     const energyDifference = (
         this.J1 * (this.sigma(x + 1, y    ) + this.sigma(x - 1, y    ))
@@ -442,10 +429,10 @@ class IsingModel {
           - this.J2 * this.sigma(x,     y + 1)
           - this.J3 * this.sigma(x + 1, y + 1)
           - this.J4 * this.sigma(x - 1, y + 1)
-          - this.J0 * this.possibleSpins[this.states[this.Nx * y + x]]
+          - this.J0 * this.sigmas[this.states[this.Nx * y + x]]
           - this.h
-        ) * this.possibleSpins[this.states[this.Nx * y + x]];
-        M += this.possibleSpins[this.states[this.Nx * y + x]];
+        ) * this.sigmas[this.states[this.Nx * y + x]];
+        M += this.sigmas[this.states[this.Nx * y + x]];
       }
     }
 
@@ -504,29 +491,26 @@ class IsingModel {
       y = 0;
     }
 
-    return this.possibleSpins[this.states[this.Nx * y + x]];
+    return this.sigmas[this.states[this.Nx * y + x]];
   }
 
 }
 
-function getPredrawnCanvases(possibleSpins, zoom) {
+function getPredrawnCanvases(sigmas, zoom) {
   const lightnessMin = 5;
   const lightnessMax = 95;
   const lightnessRange = lightnessMax - lightnessMin;
   const lightnessMiddle = (lightnessMin + lightnessMax) / 2;
 
-  const sigmaMin = Math.min(...possibleSpins);
-  const sigmaMax = Math.max(...possibleSpins);
+  const sigmaMin = Math.min(...sigmas);
+  const sigmaMax = Math.max(...sigmas);
   const sigmaRange = sigmaMax - sigmaMin;
   const sigmaAbsMax = Math.max(Math.abs(sigmaMax), Math.abs(sigmaMin));
 
   const canvases = [];
-  for (const sigma of possibleSpins) {
+  for (const sigma of sigmas) {
     const canvas = new OffscreenCanvas(zoom, zoom);
     const context = canvas.getContext("2d", {transparent: false});
-
-    context.lineWidth = zoom / 16;
-    context.lineJoin = "round";
 
     // Draw background.
     const backgroundLightness = (
@@ -535,14 +519,14 @@ function getPredrawnCanvases(possibleSpins, zoom) {
     context.fillStyle = `oklch(${backgroundLightness}% 0% 0deg)`;
     context.fillRect(0, 0, zoom, zoom);
 
-    // Draw arrow.
+    // Draw an arrow.
     if (zoom >= 8 * window.devicePixelRatio) {
       const transformedArrowPath = new Path2D();
       transformedArrowPath.addPath(arrowPath, {
         a: zoom / 16,
         d: sigma / sigmaAbsMax * zoom / 16,
-        e: 0.5 * zoom,
-        f: 0.5 * zoom,
+        e: zoom / 2,
+        f: zoom / 2,
       });
       const arrowLightness = (
         backgroundLightness < lightnessMiddle
@@ -551,13 +535,14 @@ function getPredrawnCanvases(possibleSpins, zoom) {
       );
       context.fillStyle = `oklch(${arrowLightness}% 0% 0deg)`;
       context.fill(transformedArrowPath);
+      context.lineWidth = zoom / 16;
+      context.lineJoin = "round";
       context.strokeStyle = `oklch(${arrowLightness}% 0% 0deg)`;
       context.stroke(transformedArrowPath);
     }
 
     canvases.push(canvas);
   }
-
   return canvases;
 }
 
@@ -593,14 +578,7 @@ class CanvasDrawer {
     $id("canvas").width = this.isingModel.Nx * this.zoom;
     $id("canvas").height = this.isingModel.Ny * this.zoom;
 
-    const sigmaMin = Math.min(...this.isingModel.possibleSpins);
-    const sigmaMax = Math.max(...this.isingModel.possibleSpins);
-    const sigmaRange = sigmaMax - sigmaMin;
-    const sigmaAbsMax = Math.max(Math.abs(sigmaMax), Math.abs(sigmaMin));
-
-    this.canvases = getPredrawnCanvases(
-      this.isingModel.possibleSpins, this.zoom
-    );
+    this.canvases = getPredrawnCanvases(this.isingModel.sigmas, this.zoom);
   }
 
   draw() {
@@ -622,88 +600,65 @@ class SigmaDrawer {
     // Watch for changes on window.devicePixelRatio.
     window.matchMedia("(min-resolution: 2dppx)")
     .addEventListener("change", (event) => {
-      this.resize();
       this.draw();
     });
   }
 
-  resize() {
-  }
+  changeNumberOfStates() {
+    $id("sigma").replaceChildren();
 
-  addState(spin, i) {
-    const canvas = document.createElement("canvas");
-    canvas.id = `spin${i}`;
-    canvas.style = "border-radius: 0.25rem; width: 32px; height: 32px;";
+    for (const [i, sigma] of this.isingModel.sigmas.entries()) {
+      const canvas = document.createElement("canvas");
 
-    const div = document.createElement("div");
-    div.innerText = `State #${i + 1}`;
+      const text = document.createElement("div");
+      text.innerText = `State #${i + 1}`;
 
-    const number = document.createElement("input");
-    number.type = "number";
-    number.step = "0.01";
-    number.value = `${spin}`;
+      const number = document.createElement("input");
+      number.type = "number";
+      number.step = "0.01";
+      number.value = `${sigma}`;
 
-    const range = document.createElement("input");
-    // Order is important! Set min and max then value.
-    range.type = "range";
-    range.min = "-2";
-    range.max = "2";
-    range.step = "0.01";
-    range.value = `${spin}`;
-      
-    const sDiv = document.createElement("div");
-    sDiv.classList.add("slider")
-    sDiv.append(canvas);
-    sDiv.append(div);
-    sDiv.append(number);
-    sDiv.append(range);
-    $id("sigma").append(sDiv);
+      const range = document.createElement("input");
+      range.type = "range";
+      range.min = "-2";
+      range.max = "2";
+      range.step = "0.01";
+      range.value = `${sigma}`;
+        
+      const div = document.createElement("div");
+      div.classList.add("slider")
+      div.append(canvas);
+      div.append(text);
+      div.append(number);
+      div.append(range);
+      $id("sigma").append(div);
 
-    number.addEventListener("input", (event) => {
-      range.value = event.target.valueAsNumber;
-      this.isingModel.possibleSpins[i] = event.target.valueAsNumber;
-      this.draw();
-      this.isingModel.spinDrawer.resize();
-    });
-    range.addEventListener("input", (event) => {
-      number.value = event.target.valueAsNumber;
-      this.isingModel.possibleSpins[i] = event.target.valueAsNumber;
-      this.draw();
-      this.isingModel.spinDrawer.resize();
-    });
-
-    this.isingModel.possibleSpins[i] = spin;
-  }
-
-  removeState() {
-    const l = this.isingModel.possibleSpins.length - 1;
-    this.isingModel.possibleSpins.pop();
-
-    document.isingModel.querySelector("#sigma > div:last-of-type").remove();
-
-    this.isingModel.canvasDrawer.resize();
+      number.addEventListener("input", (event) => {
+        range.value = event.target.valueAsNumber;
+        this.isingModel.sigmas[i] = event.target.valueAsNumber;
+        this.draw();
+        this.isingModel.spinDrawer.resize();
+      });
+      range.addEventListener("input", (event) => {
+        number.value = event.target.valueAsNumber;
+        this.isingModel.sigmas[i] = event.target.valueAsNumber;
+        this.draw();
+        this.isingModel.spinDrawer.resize();
+      });
+    }
   }
 
   draw() {
-    const min_l = 5;
-    const max_l = 95;
-    const min_spin = Math.min(...this.isingModel.possibleSpins);
-    const max_spin = Math.max(...this.isingModel.possibleSpins);
-    const zoom = 64;
-
-    const canvases = getPredrawnCanvases(this.isingModel.possibleSpins, 64);
+    const zoom = 32 * window.devicePixelRatio;
+    const canvases = getPredrawnCanvases(this.isingModel.sigmas, zoom);
+ 
     for (
-      const [i, slider] of document.querySelectorAll("#sigma > div").entries()
+      const [i, canvas]
+      of document.querySelectorAll("#sigma > div > canvas").entries()
     ) {
-      const spin = this.isingModel.possibleSpins[i];
-      const spinCanvas = slider.querySelector("canvas");
-
-      spinCanvas.width = 64;
-      spinCanvas.height = 64;
-
-      const spinContext = spinCanvas.getContext("2d");
-
-      spinContext.drawImage(canvases[i], 0, 0);
+      canvas.width = zoom;
+      canvas.height = zoom;
+      canvas.getContext("2d").drawImage(canvases[i], 0, 0);
     }
   }
 }
