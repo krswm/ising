@@ -197,6 +197,7 @@ class IsingModel {
 
       $id("graph-container").removeAttribute("style");
 
+      $id("canvas-container").style.overflow = "hidden";
       $id("canvas").style.filter = "blur(0.5rem)";
       $id("canvas").style.opacity = "10%";
 
@@ -233,6 +234,7 @@ class IsingModel {
 
       // Do not use removeAttribute,
       // otherwise style.width and style.height will be lost.
+      $id("canvas").style.overflow = "";
       $id("canvas").style.filter = "";
       $id("canvas").style.opacity = "";
 
@@ -568,10 +570,13 @@ class CanvasDrawer {
 
   resize() {
     const dpr = window.devicePixelRatio;
-    this.zoom = Math.floor(Math.min(
-      $id("canvas-container").offsetWidth / this.isingModel.Nx * dpr,
-      $id("canvas-container").offsetHeight / this.isingModel.Ny * dpr,
-    ));
+    this.zoom = Math.max(
+      Math.floor(Math.min(
+        $id("canvas-container").offsetWidth / this.isingModel.Nx * dpr,
+        $id("canvas-container").offsetHeight / this.isingModel.Ny * dpr,
+      )),
+      1,
+    );
 
     $id("canvas").style.width = `${this.isingModel.Nx * this.zoom / dpr}px`;
     $id("canvas").style.height = `${this.isingModel.Ny * this.zoom / dpr}px`;
@@ -605,7 +610,9 @@ class SigmaDrawer {
   }
 
   changeNumberOfStates() {
-    $id("sigma").replaceChildren();
+    for (const div of document.querySelectorAll(".sigma")) {
+      div.remove();
+    }
 
     for (const [i, sigma] of this.isingModel.sigmas.entries()) {
       const canvas = document.createElement("canvas");
@@ -626,24 +633,26 @@ class SigmaDrawer {
       range.value = `${sigma}`;
         
       const div = document.createElement("div");
+      div.classList.add("sigma")
       div.classList.add("slider")
       div.append(canvas);
       div.append(text);
       div.append(number);
       div.append(range);
-      $id("sigma").append(div);
+      $id("sigma-container").insertBefore(
+        div, document.querySelector("#sigma-container > .button-container")
+      );
 
       number.addEventListener("input", (event) => {
-        range.value = event.target.valueAsNumber;
-        this.isingModel.sigmas[i] = event.target.valueAsNumber;
+        range.value = number.valueAsNumber;
+        this.isingModel.sigmas[i] = number.valueAsNumber;
         this.draw();
-        this.isingModel.spinDrawer.resize();
       });
+
       range.addEventListener("input", (event) => {
-        number.value = event.target.valueAsNumber;
-        this.isingModel.sigmas[i] = event.target.valueAsNumber;
+        number.value = range.valueAsNumber;
+        this.isingModel.sigmas[i] = range.valueAsNumber;
         this.draw();
-        this.isingModel.spinDrawer.resize();
       });
     }
   }
@@ -654,7 +663,7 @@ class SigmaDrawer {
  
     for (
       const [i, canvas]
-      of document.querySelectorAll("#sigma > div > canvas").entries()
+      of document.querySelectorAll(".sigma > canvas").entries()
     ) {
       canvas.width = zoom;
       canvas.height = zoom;
@@ -726,40 +735,40 @@ class GraphDrawer {
         if (man <= 2.5) {
           QMax = 2.5 * 10 ** exp;
           if (exp === -1) {
-            QTicks = ["0", "0.05", "0.1", "0.15", "0.2", "0.25"];
+            QTicks = ["0", "0.05", "0.1", "0.15", "0.2"];
           } else if (exp === 0) {
-            QTicks = ["0", "0.5", "1", "1.5", "2", "2.5"];
+            QTicks = ["0", "0.5", "1", "1.5", "2"];
           } else if (exp === 1) {
-            QTicks = ["0", "5", "10", "15", "20", "25"];
+            QTicks = ["0", "5", "10", "15", "20"];
           } else {
             QTicks = [];
-            for (const tick of ["0", "0.5", "1", "1.5", "2", "2.5"]) {
+            for (const tick of ["0", "0.5", "1", "1.5", "2"]) {
               QTicks.push(`${tick}e${exp}`);
             }
           }
         } else if (man <= 5) {
           QMax = 5 * 10 ** exp;
           if (exp === -1) {
-            QTicks = ["0", "0.1", "0.2", "0.3", "0.4", "0.5"];
+            QTicks = ["0", "0.1", "0.2", "0.3", "0.4"];
           } else if (exp === 0) {
-            QTicks = ["0", "1", "2", "3", "4", "5"];
+            QTicks = ["0", "1", "2", "3", "4"];
           } else if (exp === 1) {
-            QTicks = ["0", "10", "20", "30", "40", "50"];
+            QTicks = ["0", "10", "20", "30", "40"];
           } else {
-            for (const tick of ["0", "1", "2", "3", "4", "5"]) {
+            for (const tick of ["0", "1", "2", "3", "4"]) {
               QTicks.push(`${tick}e${exp}`);
             }
           }
         } else if (man <= 10) {
           QMax = 10 * 10 ** exp;
           if (exp === -1) {
-            QTicks = ["0", "0.2", "0.4", "0.6", "0.8", "1"];
+            QTicks = ["0", "0.2", "0.4", "0.6", "0.8"];
           } else if (exp === 0) {
-            QTicks = ["0", "2", "4", "6", "8", "10"];
+            QTicks = ["0", "2", "4", "6", "8"];
           } else if (exp === 1) {
-            QTicks = ["0", "20", "40", "60", "80", "100"];
+            QTicks = ["0", "20", "40", "60", "80"];
           } else {
-            for (const tick of ["0", "2", "4", "6", "8", "10"]) {
+            for (const tick of ["0", "2", "4", "6", "8"]) {
               QTicks.push(`${tick}e${exp}`);
             }
           }
@@ -790,8 +799,8 @@ class GraphDrawer {
 
       // Draw horizontal lines.
       if (isQAlwaysPositive) {
-        for (let i = 0; i <= 5; i++) {
-          const Q = QMax / 5 * i;
+        for (let i = 0; i <= 4; i++) {
+          const Q = QMax / 4 * i;
 
           let Y;
           if (QMin === QMax) {
