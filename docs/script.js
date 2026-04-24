@@ -732,8 +732,8 @@ class GraphDrawer {
         const max = Math.max(...QGraph);
         const exp = Math.ceil(Math.log10(max)) - 1;
         const man = max / 10 ** exp;
-        if (man <= 2.5) {
-          QMax = 2.5 * 10 ** exp;
+        if (man <= 2) {
+          QMax = 2 * 10 ** exp;
           if (exp === -1) {
             QTicks = ["0", "0.05", "0.1", "0.15", "0.2"];
           } else if (exp === 0) {
@@ -746,8 +746,8 @@ class GraphDrawer {
               QTicks.push(`${tick}e${exp}`);
             }
           }
-        } else if (man <= 5) {
-          QMax = 5 * 10 ** exp;
+        } else if (man <= 4) {
+          QMax = 4 * 10 ** exp;
           if (exp === -1) {
             QTicks = ["0", "0.1", "0.2", "0.3", "0.4"];
           } else if (exp === 0) {
@@ -759,8 +759,8 @@ class GraphDrawer {
               QTicks.push(`${tick}e${exp}`);
             }
           }
-        } else if (man <= 10) {
-          QMax = 10 * 10 ** exp;
+        } else {
+          QMax = 8 * 10 ** exp;
           if (exp === -1) {
             QTicks = ["0", "0.2", "0.4", "0.6", "0.8"];
           } else if (exp === 0) {
