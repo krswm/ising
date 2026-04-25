@@ -13,18 +13,7 @@ const formatToString = number => (
 
 class IsingModel {
   constructor() {
-    for (const div of document.querySelectorAll(".slider")) {
-      const number = div.querySelector('input[type="number"]');
-      const range = div.querySelector('input[type="range"]');
-
-      number.addEventListener("input", (event) => {
-        range.value = event.target.valueAsNumber;
-      });
-
-      range.addEventListener("input", (event) => {
-        number.value = event.target.valueAsNumber;
-      });
-    }
+    this.ui = new UI(this);
 
     // Currently historyLength >= additionalHistoryLength is assumed in the algorithm.
     this.historyLength = 50;
@@ -36,34 +25,6 @@ class IsingModel {
     this.sigmas = [1, -1];
 
     this.sigmaDrawer = new SigmaDrawer(this);
-
-    for (const [id, numberMin, rangeMin, rangeMax, initialValue] of [
-      ["speed", 0,     0,  1, 0.5],
-      ["T",     0,     0, 10, 2  ],
-      ["J1",    null, -1,  1, 1  ],
-      ["J2",    null, -1,  1, 1  ],
-      ["J3",    null, -1,  1, 0  ],
-      ["J4",    null, -1,  1, 0  ],
-      ["J0",    null, -1,  1, 0  ],
-      ["h",     null, -2,  2, 0  ],
-    ]) {
-      this[id] = initialValue;
-
-      for (const elem of document.querySelectorAll(`#${id} input`)) {
-        if (elem.type === "number" && numberMin !== null) {
-          elem.min = numberMin;
-        } else if (elem.type === "range") {
-          elem.min = rangeMin;
-          elem.max = rangeMax;
-        }
-        elem.step = 0.01;
-        elem.value = initialValue;
-
-        elem.addEventListener("input", (event) => {
-          this[id] = elem.valueAsNumber;
-        });
-      }
-    }
 
     $id("Nx").addEventListener("input", (event) => {
       const oldNx = this.Nx;
@@ -495,7 +456,62 @@ class IsingModel {
 
     return this.sigmas[this.states[this.Nx * y + x]];
   }
+}
 
+class UI {
+  constructor(isingModel) {
+    this.isingModel = isingModel;
+
+    for (const [id, numberMin, rangeMin, rangeMax, initialValue] of [
+      ["speed", 0,     0,  1, 0.5],
+      ["T",     0,     0, 10, 2  ],
+      ["J1",    null, -1,  1, 1  ],
+      ["J2",    null, -1,  1, 1  ],
+      ["J3",    null, -1,  1, 0  ],
+      ["J4",    null, -1,  1, 0  ],
+      ["J0",    null, -1,  1, 0  ],
+      ["h",     null, -2,  2, 0  ],
+    ]) {
+      this.isingModel[id] = initialValue;
+
+      const div = $id(id);
+      const number = div.querySelector('input[type="number"]');
+      const range = div.querySelector('input[type="range"]');
+
+      if (numberMin !== null) {
+        number.min = numberMin;
+      }
+      number.step = 0.01;
+      number.value = initialValue;
+      
+      range.min = rangeMin;
+      range.max = rangeMax;
+      range.step = 0.01;
+      range.value = initialValue;
+
+      number.addEventListener("input", () => {
+        range.value = number.valueAsNumber;
+        this.isingModel[id] = number.valueAsNumber;
+      });
+      range.addEventListener("input", () => {
+        number.value = range.valueAsNumber;
+        this.isingModel[id] = range.valueAsNumber;
+      });
+    }
+
+
+    for (const div of document.querySelectorAll(".slider")) {
+      const number = div.querySelector('input[type="number"]');
+      const range = div.querySelector('input[type="range"]');
+
+      number.addEventListener("input", () => {
+        range.value = number.valueAsNumber;
+      });
+      range.addEventListener("input", () => {
+        number.value = range.valueAsNumber;
+      });
+    }
+  }
 }
 
 function getPredrawnCanvases(sigmas, zoom) {
@@ -648,7 +664,6 @@ class SigmaDrawer {
         this.isingModel.sigmas[i] = number.valueAsNumber;
         this.draw();
       });
-
       range.addEventListener("input", (event) => {
         number.value = range.valueAsNumber;
         this.isingModel.sigmas[i] = range.valueAsNumber;
