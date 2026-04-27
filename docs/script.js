@@ -5,7 +5,7 @@ const arrowPath = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
 
 // "\u2212" is MINUS SIGN. "\u2014" is EM DASH.
 const formatToFixed = number => (
-  isFinite(number0.5 number.toFixed(3).replace("-", "\u2212") : "\u2014"
+  isFinite(number) ? number.toFixed(3).replace("-", "\u2212") : "\u2014"
 );
 const formatToString = number => (
   isFinite(number) ? number.toString().replace("-", "\u2212") : "\u2014"
@@ -13,93 +13,14 @@ const formatToString = number => (
 
 class Model {
   constructor() {
-    this.speed50 0.550  this.T = 2;
-    this.J1 = 50;
-    this.J2 = 1;
-    this.J3 = 0;
-    this.J4 = 0;
-    this.J0 = 0;
-    this.h = 0;
-    this.Nx = 50;
-    this.Ny = 50;
-    this.control = new Control(this);
-
+    this.setUpControl();
+    
     // Currently historyLength >= additionalHistoryLength is assumed in the algorithm.
     this.historyLength = 50;
     this.additionalHistoryLength = 50;
 
     this.sigmas = [1, -1];
     this.sigmaDrawer = new SigmaDrawer(this);
-
-    $id("play").addEventListener("click", (event) => {
-      if (!this.requestId) {
-        this.requestId = requestAnimationFrame(this.run.bind(this));
-      }
-
-      $id("play").style.display = "none";
-      $id("pause").style.display = "inline-block";
-    });
-
-    $id("pause").addEventListener("click", (event) => {
-      if (this.requestId) {
-        cancelAnimationFrame(this.requestId);
-        this.requestId = undefined;
-      }
-
-      $id("pause").style.display = "none";
-      $id("play").style.display = "inline-block";
-    });
-
-    $id("reset").addEventListener("click", (event) => {
-      this.states.fill(0);
-      this.EHistory = Array(this.historyLength);
-      this.MHistory = Array(this.historyLength);
-      this.CHistory = Array(this.historyLength);
-      this.chiHistory = Array(this.historyLength);
-      this.canvasDrawer.draw();
-    });
-
-    $id("randomize").addEventListener("click", (event) => {
-      this.EHistory = Array(this.historyLength);
-      this.MHistory = Array(this.historyLength);
-      this.CHistory = Array(this.historyLength);
-      this.chiHistory = Array(this.historyLength);
-
-      if (this.requestId) {
-        this.requestId = undefined;
-      }
-
-      this.chiHistory = Array(this.historyLength);
-
-      for (let i = 0; i < this.Nx * this.Ny; i++) {
-        this.states[i] = Math.floor(Math.random() * this.sigmas.length);
-      }
-      this.canvasDrawer.draw();
-    });
-
-    $id("add").addEventListener("click", (event) => {
-      this.sigmas.push(0);
-      this.sigmaDrawer.changeNumberOfStates();
-      this.sigmaDrawer.draw();
-
-      this.states.fill(0);
-      this.canvasDrawer.resize();
-      this.canvasDrawer.draw();
-    });
-
-    $id("remove").addEventListener("click", (event) => {
-      if (this.sigmas.length < 3) {
-        return
-      }
-
-      this.sigmas.pop();
-
-      this.sigmaDrawer.changeNumberOfStates();
-      this.sigmaDrawer.draw();
-
-      this.states.fill(0);
-      this.canvasDrawer.draw();
-    });
 
     $id("enter").addEventListener("click", (event) => {
       $id("play").style.display = "none";
@@ -203,6 +124,122 @@ class Model {
     this.canvasDrawer.draw();
 
     this.requestId = requestAnimationFrame(this.run.bind(this));
+  }
+
+  setUpControl() {
+    for (const [id, numberMin, rangeMin, rangeMax, initialValue] of [
+      ["speed", 0,     0,  1, 0.5],
+      ["T",     0,     0, 10, 2  ],
+      ["J1",    null, -1,  1, 1  ],
+      ["J2",    null, -1,  1, 1  ],
+      ["J3",    null, -1,  1, 0  ],
+      ["J4",    null, -1,  1, 0  ],
+      ["J0",    null, -1,  1, 0  ],
+      ["h",     null, -2,  2, 0  ],
+    ]) {
+      this[id] = initialValue;
+      
+      const number = $id(id).querySelector('input[type="number"]');
+      if (numberMin !== null) {
+        number.min = numberMin;
+      }
+      number.step = 0.01;
+      number.value = initialValue;
+      number.addEventListener("input", () => {
+        this[id] = number.valueAsNumber;
+        range.value = number.valueAsNumber;
+      });
+      
+      const range = $id(id).querySelector('input[type="range"]');
+      range.min = rangeMin;
+      range.max = rangeMax;
+      range.step = 0.01;
+      range.value = initialValue;
+      range.addEventListener("input", () => {
+        this[id] = range.valueAsNumber;
+        number.value = range.valueAsNumber;
+      });
+    }
+
+    for (const [id, initialValue] of [["Nx", 50], ["Ny", 50]]) {
+      this[id] = initialValue;
+      $id(id).min = 1;
+      $id(id).value = initialValue;
+      $id(id).addEventListener("input", () => {
+        this[id] = $id(id).valueAsNumber;
+        this.states = new Array(this.Nx * this.Ny);
+        this.reset();
+        this.canvasDrawer.resize();
+      });
+    }
+
+    $id("play").addEventListener("click", () => {
+      $id("play").style.display = "none";
+      $id("pause").style.display = "";
+      if (this.requestId) {
+        cancelAnimationFrame(this.requestId);
+        this.requestId = undefined;
+      }
+      this.requestId = requestAnimationFrame(this.run.bind(this));
+    });
+
+    $id("pause").addEventListener("click", () => {
+      $id("pause").style.display = "none";
+      $id("play").style.display = "";
+      if (this.requestId) {
+        cancelAnimationFrame(this.requestId);
+        this.requestId = undefined;
+      }
+    });
+
+    $id("reset").addEventListener("click", () => {
+      this.reset();
+    });
+    $id("randomize").addEventListener("click", () => {
+      this.randomize();
+    });
+
+    $id("add").addEventListener("click", (event) => {
+      this.sigmas.push(0);
+      this.sigmaDrawer.changeNumberOfStates();
+      this.sigmaDrawer.draw();
+
+      this.canvasDrawer.resize();
+      this.canvasDrawer.draw();
+    });
+
+    $id("remove").addEventListener("click", (event) => {
+      if (this.sigmas.length < 3) {
+        return;
+      }
+
+      this.sigmas.pop();
+      this.sigmaDrawer.changeNumberOfStates();
+      this.sigmaDrawer.draw();
+
+      this.canvasDrawer.resize();
+      this.canvasDrawer.draw();
+    });
+  }
+
+  reset() {
+    this.states.fill(0);
+    this.EHistory = Array(this.historyLength);
+    this.MHistory = Array(this.historyLength);
+    this.CHistory = Array(this.historyLength);
+    this.chiHistory = Array(this.historyLength);
+    this.canvasDrawer.draw();
+  }
+
+  randomize() {
+    for (let i = 0; i < this.Nx * this.Ny; i++) {
+      this.states[i] = Math.floor(Math.random() * this.sigmas.length);
+    }
+    this.EHistory = Array(this.historyLength);
+    this.MHistory = Array(this.historyLength);
+    this.CHistory = Array(this.historyLength);
+    this.chiHistory = Array(this.historyLength);
+    this.canvasDrawer.draw();
   }
 
   setT(T) {
@@ -410,111 +447,6 @@ class Model {
     }
 
     return this.sigmas[this.states[this.Nx * y + x]];
-  }
-}
-
-class Control {
-  constructor(model) {
-    this.model = model;
-
-    for (const [id, numberMin, rangeMin, rangeMax] of [
-      ["speed", 0,     0,  1],
-      ["T",     0,     0, 10],
-      ["J1",    null, -1,  1],
-      ["J2",    null, -1,  1],
-      ["J3",    null, -1,  1],
-      ["J4",    null, -1,  1],
-      ["J0",    null, -1,  1],
-      ["h",     null, -2,  2],
-    ]) {
-      const div = $id(id);
-      const number = div.querySelector('input[type="number"]');
-      const range = div.querySelector('input[type="range"]');
-
-      if (numberMin !== null) {
-        number.min = numberMin;
-      }
-      number.step = 0.01;
-      number.value = this.model[id];
-      
-      range.min = rangeMin;
-      range.max = rangeMax;
-      range.step = 0.01;
-      range.value = this.model[id];
-
-      number.addEventListener("input", () => {
-        range.value = number.valueAsNumber;
-        this.model[id] = number.valueAsNumber;
-      });
-      range.addEventListener("input", () => {
-        number.value = range.valueAsNumber;
-        this.model[id] = range.valueAsNumber;
-      });
-    }
-
-    {
-      $id("Nx").value = this.model.Nx;
-      $id("Nx").min = 1;
-
-      $id("Nx").addEventListener("input", (event) => {
-        const oldNx = this.model.Nx;
-        const newNx = event.target.valueAsNumber;
-
-        const newStates = this.model.states.slice();
-
-        if (newNx < oldNx) {
-          // ABC    AB
-          // DEF -> DE
-          // GHI    GH
-          for (let y = this.model.Ny - 1; y >= 0; y--) {
-            newStates.splice(oldNx * y + newNx, oldNx - newNx);
-          }
-        } else if (newNx > oldNx) {
-          // ABC    ABC1
-          // DEF -> DEF1
-          // GHI    GHI1
-          for (let y = 0; y < this.model.Ny; y++) {
-            newStates.splice(
-              newNx * y + oldNx, 0, ...Array(newNx - oldNx).fill(0)
-            );
-          }
-        }
-
-        this.model.states = newStates;
-
-        this.model.Nx = newNx;
-        this.model.canvasDrawer.resize();
-        this.model.canvasDrawer.draw();
-      });
-    }
-
-    {
-      $id("Ny").value = this.model.Ny;
-      $id("Ny").min = 1;
-
-      $id("Ny").addEventListener("input", (event) => {
-        const oldNy = this.model.Ny;
-        const newNy = event.target.valueAsNumber;
-
-        if (newNy < oldNy) {
-          // ABC    ABC
-          // DEF -> DEF
-          // GHI
-          this.model.states.splice(this.model.Nx * newNy);
-        } else if (newNy > oldNy) {
-          // ABC    ABC1
-          // DEF -> DEF1
-          // GHI    GHI1
-          this.model.states.splice(
-            this.model.Nx * oldNy, 0, ...Array(this.model.Nx * (newNy - oldNy)).fill(0)
-          );
-        }
-
-        this.model.Ny = newNy;
-        this.model.canvasDrawer.resize();
-        this.model.canvasDrawer.draw();
-      });
-    }
   }
 }
 
