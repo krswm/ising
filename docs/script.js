@@ -5,76 +5,31 @@ const arrowPath = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
 
 // "\u2212" is MINUS SIGN. "\u2014" is EM DASH.
 const formatToFixed = number => (
-  isFinite(number) ? number.toFixed(3).replace("-", "\u2212") : "\u2014"
+  isFinite(number0.5 number.toFixed(3).replace("-", "\u2212") : "\u2014"
 );
 const formatToString = number => (
   isFinite(number) ? number.toString().replace("-", "\u2212") : "\u2014"
 );
 
-class IsingModel {
+class Model {
   constructor() {
-    this.ui = new UI(this);
+    this.speed50 0.550  this.T = 2;
+    this.J1 = 50;
+    this.J2 = 1;
+    this.J3 = 0;
+    this.J4 = 0;
+    this.J0 = 0;
+    this.h = 0;
+    this.Nx = 50;
+    this.Ny = 50;
+    this.control = new Control(this);
 
     // Currently historyLength >= additionalHistoryLength is assumed in the algorithm.
     this.historyLength = 50;
     this.additionalHistoryLength = 50;
 
-    this.Nx = 50;
-    this.Ny = 50;
-
     this.sigmas = [1, -1];
-
     this.sigmaDrawer = new SigmaDrawer(this);
-
-    $id("Nx").addEventListener("input", (event) => {
-      const oldNx = this.Nx;
-      const newNx = event.target.valueAsNumber;
-
-      if (newNx < oldNx) {
-        // ABC    AB
-        // DEF -> DE
-        // GHI    GH
-        for (let y = this.Ny - 1; y >= 0; y--) {
-          this.states.splice(oldNx * y + newNx, oldNx - newNx);
-        }
-      } else if (newNx > oldNx) {
-        // ABC    ABC1
-        // DEF -> DEF1
-        // GHI    GHI1
-        for (let y = 0; y < this.Ny; y++) {
-          this.states.splice(
-            newNx * y + oldNx, 0, ...Array(newNx - oldNx).fill(0)
-          );
-        }
-      }
-
-      this.Nx = newNx;
-      this.canvasDrawer.resize();
-      this.canvasDrawer.draw();
-    });
-
-    $id("Ny").addEventListener("input", (event) => {
-      const oldNy = this.Ny;
-      const newNy = event.target.valueAsNumber;
-
-      if (newNy < oldNy) {
-        // ABC    ABC
-        // DEF -> DEF
-        // GHI
-        this.states.splice(this.Nx * newNy);
-      } else if (newNy > oldNy) {
-        // ABC    ABC1
-        // DEF -> DEF1
-        // GHI    GHI1
-        this.states.splice(
-          this.Nx * oldNy, 0, ...Array(this.Nx * (newNy - oldNy)).fill(0)
-        );
-      }
-
-      this.Ny = newNy;
-      this.canvasDrawer.resize();
-      this.canvasDrawer.draw();
-    });
 
     $id("play").addEventListener("click", (event) => {
       if (!this.requestId) {
@@ -458,22 +413,20 @@ class IsingModel {
   }
 }
 
-class UI {
-  constructor(isingModel) {
-    this.isingModel = isingModel;
+class Control {
+  constructor(model) {
+    this.model = model;
 
-    for (const [id, numberMin, rangeMin, rangeMax, initialValue] of [
-      ["speed", 0,     0,  1, 0.5],
-      ["T",     0,     0, 10, 2  ],
-      ["J1",    null, -1,  1, 1  ],
-      ["J2",    null, -1,  1, 1  ],
-      ["J3",    null, -1,  1, 0  ],
-      ["J4",    null, -1,  1, 0  ],
-      ["J0",    null, -1,  1, 0  ],
-      ["h",     null, -2,  2, 0  ],
+    for (const [id, numberMin, rangeMin, rangeMax] of [
+      ["speed", 0,     0,  1],
+      ["T",     0,     0, 10],
+      ["J1",    null, -1,  1],
+      ["J2",    null, -1,  1],
+      ["J3",    null, -1,  1],
+      ["J4",    null, -1,  1],
+      ["J0",    null, -1,  1],
+      ["h",     null, -2,  2],
     ]) {
-      this.isingModel[id] = initialValue;
-
       const div = $id(id);
       const number = div.querySelector('input[type="number"]');
       const range = div.querySelector('input[type="range"]');
@@ -482,33 +435,84 @@ class UI {
         number.min = numberMin;
       }
       number.step = 0.01;
-      number.value = initialValue;
+      number.value = this.model[id];
       
       range.min = rangeMin;
       range.max = rangeMax;
       range.step = 0.01;
-      range.value = initialValue;
+      range.value = this.model[id];
 
       number.addEventListener("input", () => {
         range.value = number.valueAsNumber;
-        this.isingModel[id] = number.valueAsNumber;
+        this.model[id] = number.valueAsNumber;
       });
       range.addEventListener("input", () => {
         number.value = range.valueAsNumber;
-        this.isingModel[id] = range.valueAsNumber;
+        this.model[id] = range.valueAsNumber;
       });
     }
 
+    {
+      $id("Nx").value = this.model.Nx;
+      $id("Nx").min = 1;
 
-    for (const div of document.querySelectorAll(".slider")) {
-      const number = div.querySelector('input[type="number"]');
-      const range = div.querySelector('input[type="range"]');
+      $id("Nx").addEventListener("input", (event) => {
+        const oldNx = this.model.Nx;
+        const newNx = event.target.valueAsNumber;
 
-      number.addEventListener("input", () => {
-        range.value = number.valueAsNumber;
+        const newStates = this.model.states.slice();
+
+        if (newNx < oldNx) {
+          // ABC    AB
+          // DEF -> DE
+          // GHI    GH
+          for (let y = this.model.Ny - 1; y >= 0; y--) {
+            newStates.splice(oldNx * y + newNx, oldNx - newNx);
+          }
+        } else if (newNx > oldNx) {
+          // ABC    ABC1
+          // DEF -> DEF1
+          // GHI    GHI1
+          for (let y = 0; y < this.model.Ny; y++) {
+            newStates.splice(
+              newNx * y + oldNx, 0, ...Array(newNx - oldNx).fill(0)
+            );
+          }
+        }
+
+        this.model.states = newStates;
+
+        this.model.Nx = newNx;
+        this.model.canvasDrawer.resize();
+        this.model.canvasDrawer.draw();
       });
-      range.addEventListener("input", () => {
-        number.value = range.valueAsNumber;
+    }
+
+    {
+      $id("Ny").value = this.model.Ny;
+      $id("Ny").min = 1;
+
+      $id("Ny").addEventListener("input", (event) => {
+        const oldNy = this.model.Ny;
+        const newNy = event.target.valueAsNumber;
+
+        if (newNy < oldNy) {
+          // ABC    ABC
+          // DEF -> DEF
+          // GHI
+          this.model.states.splice(this.model.Nx * newNy);
+        } else if (newNy > oldNy) {
+          // ABC    ABC1
+          // DEF -> DEF1
+          // GHI    GHI1
+          this.model.states.splice(
+            this.model.Nx * oldNy, 0, ...Array(this.model.Nx * (newNy - oldNy)).fill(0)
+          );
+        }
+
+        this.model.Ny = newNy;
+        this.model.canvasDrawer.resize();
+        this.model.canvasDrawer.draw();
       });
     }
   }
@@ -565,8 +569,8 @@ function getPredrawnCanvases(sigmas, zoom) {
 }
 
 class CanvasDrawer {
-  constructor(isingModel) {
-    this.isingModel = isingModel;
+  constructor(model) {
+    this.model = model;
     this.context = $id("canvas").getContext("2d", {alpha: false});
 
     // Watch for changes on window.devicePixelRatio.
@@ -588,25 +592,25 @@ class CanvasDrawer {
     const dpr = window.devicePixelRatio;
     this.zoom = Math.max(
       Math.floor(Math.min(
-        $id("canvas-container").offsetWidth / this.isingModel.Nx * dpr,
-        $id("canvas-container").offsetHeight / this.isingModel.Ny * dpr,
+        $id("canvas-container").offsetWidth / this.model.Nx * dpr,
+        $id("canvas-container").offsetHeight / this.model.Ny * dpr,
       )),
       1,
     );
 
-    $id("canvas").style.width = `${this.isingModel.Nx * this.zoom / dpr}px`;
-    $id("canvas").style.height = `${this.isingModel.Ny * this.zoom / dpr}px`;
-    $id("canvas").width = this.isingModel.Nx * this.zoom;
-    $id("canvas").height = this.isingModel.Ny * this.zoom;
+    $id("canvas").style.width = `${this.model.Nx * this.zoom / dpr}px`;
+    $id("canvas").style.height = `${this.model.Ny * this.zoom / dpr}px`;
+    $id("canvas").width = this.model.Nx * this.zoom;
+    $id("canvas").height = this.model.Ny * this.zoom;
 
-    this.canvases = getPredrawnCanvases(this.isingModel.sigmas, this.zoom);
+    this.canvases = getPredrawnCanvases(this.model.sigmas, this.zoom);
   }
 
   draw() {
-    for (let y = 0; y < this.isingModel.Ny; y++) {
-      for (let x = 0; x < this.isingModel.Nx; x++) {
+    for (let y = 0; y < this.model.Ny; y++) {
+      for (let x = 0; x < this.model.Nx; x++) {
         this.context.drawImage(
-          this.canvases[this.isingModel.states[this.isingModel.Nx * y + x]],
+          this.canvases[this.model.states[this.model.Nx * y + x]],
           x * this.zoom, y * this.zoom,
         );
       }
@@ -615,8 +619,8 @@ class CanvasDrawer {
 }
 
 class SigmaDrawer {
-  constructor(isingModel) {
-    this.isingModel = isingModel;
+  constructor(model) {
+    this.model = model;
 
     // Watch for changes on window.devicePixelRatio.
     window.matchMedia("(min-resolution: 2dppx)")
@@ -630,7 +634,7 @@ class SigmaDrawer {
       div.remove();
     }
 
-    for (const [i, sigma] of this.isingModel.sigmas.entries()) {
+    for (const [i, sigma] of this.model.sigmas.entries()) {
       const canvas = document.createElement("canvas");
 
       const text = document.createElement("div");
@@ -661,12 +665,12 @@ class SigmaDrawer {
 
       number.addEventListener("input", (event) => {
         range.value = number.valueAsNumber;
-        this.isingModel.sigmas[i] = number.valueAsNumber;
+        this.model.sigmas[i] = number.valueAsNumber;
         this.draw();
       });
       range.addEventListener("input", (event) => {
         number.value = range.valueAsNumber;
-        this.isingModel.sigmas[i] = range.valueAsNumber;
+        this.model.sigmas[i] = range.valueAsNumber;
         this.draw();
       });
     }
@@ -674,7 +678,7 @@ class SigmaDrawer {
 
   draw() {
     const zoom = 32 * window.devicePixelRatio;
-    const canvases = getPredrawnCanvases(this.isingModel.sigmas, zoom);
+    const canvases = getPredrawnCanvases(this.model.sigmas, zoom);
  
     for (
       const [i, canvas]
@@ -688,8 +692,8 @@ class SigmaDrawer {
 }
 
 class GraphDrawer {
-  constructor(isingModel) {
-    this.isingModel = isingModel;
+  constructor(model) {
+    this.model = model;
 
     this.EContext = $id("E-canvas").getContext("2d");
     this.MContext = $id("M-canvas").getContext("2d");
@@ -726,7 +730,7 @@ class GraphDrawer {
   }
 
   draw() {
-    const model = this.isingModel;
+    const model = this.model;
 
     const TMax = 5;
 
@@ -740,59 +744,7 @@ class GraphDrawer {
       // Erase.
       QContext.clearRect(0, 0, QContext.canvas.width, QContext.canvas.height);
 
-      // const QMax = Math.ceil(Math.max(...QGraph));
-      let QMax = 0;
-      let QTicks = ["0.0"];
-      if (isQAlwaysPositive) {
-        const max = Math.max(...QGraph);
-        const exp = Math.ceil(Math.log10(max)) - 1;
-        const man = max / 10 ** exp;
-        if (man <= 2) {
-          QMax = 2 * 10 ** exp;
-          if (exp === -1) {
-            QTicks = ["0", "0.05", "0.1", "0.15", "0.2"];
-          } else if (exp === 0) {
-            QTicks = ["0", "0.5", "1", "1.5", "2"];
-          } else if (exp === 1) {
-            QTicks = ["0", "5", "10", "15", "20"];
-          } else {
-            QTicks = [];
-            for (const tick of ["0", "0.5", "1", "1.5", "2"]) {
-              QTicks.push(`${tick}e${exp}`);
-            }
-          }
-        } else if (man <= 4) {
-          QMax = 4 * 10 ** exp;
-          if (exp === -1) {
-            QTicks = ["0", "0.1", "0.2", "0.3", "0.4"];
-          } else if (exp === 0) {
-            QTicks = ["0", "1", "2", "3", "4"];
-          } else if (exp === 1) {
-            QTicks = ["0", "10", "20", "30", "40"];
-          } else {
-            for (const tick of ["0", "1", "2", "3", "4"]) {
-              QTicks.push(`${tick}e${exp}`);
-            }
-          }
-        } else {
-          QMax = 8 * 10 ** exp;
-          if (exp === -1) {
-            QTicks = ["0", "0.2", "0.4", "0.6", "0.8"];
-          } else if (exp === 0) {
-            QTicks = ["0", "2", "4", "6", "8"];
-          } else if (exp === 1) {
-            QTicks = ["0", "20", "40", "60", "80"];
-          } else {
-            for (const tick of ["0", "2", "4", "6", "8"]) {
-              QTicks.push(`${tick}e${exp}`);
-            }
-          }
-        }
-      } else {
-        QMax = Math.ceil(Math.max(...QGraph));
-      }
-      
-      const QMin = isQAlwaysPositive ? 0 : Math.floor(Math.min(...QGraph));
+      const [QMin, QMax, QTicks] = this.getQMinQMax(QGraph);
 
       // Draw vertical lines.
       for (let T = 0; T <= TMax; T++) {
@@ -814,8 +766,8 @@ class GraphDrawer {
 
       // Draw horizontal lines.
       if (isQAlwaysPositive) {
-        for (let i = 0; i <= 4; i++) {
-          const Q = QMax / 4 * i;
+        for (let i = 0; i <= 5; i++) {
+          const Q = QMax / 5 * i;
 
           let Y;
           if (QMin === QMax) {
@@ -889,6 +841,50 @@ class GraphDrawer {
       }
     }
   }
+
+  getQMinQMax(QGraph) {
+    const max = Math.max(...QGraph);
+    let min = Math.min(...QGraph);
+    const ran = max - min;
+    let exp = Math.ceil(Math.log10(ran)) - 1;
+    let man = ran / 10 ** exp;
+
+    for (const [newMan, altExp, altMan] of [
+      [2.5, exp, 5], [5, exp, 10], [10, exp + 1, 2.5],
+    ]) {
+      if (man <= newMan) {
+        let inc = newMan * 10 ** exp / 5;
+        const newMin = Math.floor(min / inc) * inc;
+        const newMax = newMan * 10 ** exp + newMin
+        if (max <= newMax) {
+          min = newMin;
+          man = newMan;
+        } else {
+          exp = altExp;
+          man = altMan;
+          inc = man * 10 ** exp / 5;
+          min = Math.floor(min / inc) * inc;
+        }
+        break;
+      }
+    }
+    
+    const QMin = min;
+    const QMax = man * 10 ** exp + min;
+
+    const QTicks = [];
+    if (exp >= -2 && exp <= 2) {
+      for (let i = 0; i <= 5; i++) {
+        QTicks.push((man * i * 10 ** exp / 5 + min).toString().replace("-", "\u2212"));
+      }
+    } else {
+      for (let i = 0; i <= 5; i++) {
+        QTicks.push((man * i * 10 ** exp / 5 + min).toExponential().replace("-", "\u2212"));
+      }
+    }
+
+    return [QMin, QMax, QTicks];
+  }
 }
 
-const isingModel = new IsingModel();
+const model = new Model();
