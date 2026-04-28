@@ -569,9 +569,6 @@ class SigmaDrawer {
     for (const [i, sigma] of this.model.sigmas.entries()) {
       const canvas = document.createElement("canvas");
 
-      const text = document.createElement("div");
-      text.innerText = `State #${i + 1}`;
-
       const number = document.createElement("input");
       number.type = "number";
       number.step = "0.01";
@@ -588,7 +585,6 @@ class SigmaDrawer {
       div.classList.add("sigma")
       div.classList.add("slider")
       div.append(canvas);
-      div.append(text);
       div.append(number);
       div.append(range);
       $id("sigma-container").insertBefore(
@@ -606,6 +602,8 @@ class SigmaDrawer {
         this.draw();
       });
     }
+
+    $id("remove").disabled = this.model.sigmas.length <= 2;
   }
 
   draw() {

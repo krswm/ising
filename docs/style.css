@@ -65,12 +65,13 @@ body {
   overflow: scroll;
 }
 /* 1rem + 13.5rem + 1rem + 13.5rem + 1rem + 14rem + 1rem = 45rem */
-@media (height >= 45rem) {
+/* 45rem + 1rem = 46rem for slight thickness of border. */
+@media (height >= 46rem) {
   #graph-container {
     grid: auto auto / auto auto;
   }
 }
-@media (height < 45rem) {
+@media (height < 46rem) {
   #graph-container {
     grid: auto / auto auto auto auto;
   }
@@ -372,8 +373,8 @@ button {
   font-size: 1rem;
 }
 button:disabled {
-  color: oklch(80% 0% 0deg);
   cursor: auto;
+  opacity: 50%;
 }
 button:not(:disabled):hover {
   background-color: oklch(95% 0% 0deg);
