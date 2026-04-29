@@ -3,116 +3,49 @@ const $id = id => document.getElementById(id);
 // Shape of an arrow
 const arrowPath = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
 
-// "\u2212" is MINUS SIGN. "\u2014" is EM DASH.
+// "\u2212": MINUS SIGN
+// "\u2014": EM DASH
 const formatToFixed = number => (
   isFinite(number) ? number.toFixed(3).replace("-", "\u2212") : "\u2014"
 );
-const formatToString = number => (
-  isFinite(number) ? number.toString().replace("-", "\u2212") : "\u2014"
-);
+
+// Spin configuration
+class Conf extends Array {
+  resize(Nx, Ny) {
+    this.length = Nx * Ny;
+    this.reset();
+  }
+  
+  reset() {
+    this.fill(0);
+  }
+  
+  randomize() {
+    for (const [i, ] of this.entries()) {
+      this[i] = Math.floor(2 * Math.random());
+    }
+  }
+}
 
 class Model {
   constructor() {
-    this.setUpControl();
-    
-    // Currently historyLength >= additionalHistoryLength is assumed in the algorithm.
-    this.historyLength = 50;
-    this.additionalHistoryLength = 50;
+    // this.conf[this.Nx * y + x]: State at the cell (x, y)
+    this.conf = new Conf();
 
+    this.setUpControl();
+
+    this.conf.resize(this.Nx, this.Ny);
+    this.conf.randomize();
+    
     this.sigmas = [1, -1];
     this.sigmaDrawer = new SigmaDrawer(this);
-
-    $id("enter").addEventListener("click", (event) => {
-      $id("play").style.display = "none";
-      $id("pause").style.display = "none";
-      $id("continue").removeAttribute("style");
-      $id("continue").setAttribute("disabled", "");
-      $id("enter").style.display = "none";
-      $id("leave").removeAttribute("style");
-
-      cancelAnimationFrame(this.requestId);
-
-      $id("graph-container").removeAttribute("style");
-
-      $id("canvas-container").style.overflow = "hidden";
-      $id("canvas").style.filter = "blur(0.5rem)";
-      $id("canvas").style.opacity = "10%";
-
-      this.graphT = [];
-      this.EGraph = [];
-      this.MGraph = [];
-      this.CGraph = [];
-      this.chiGraph= [];
-
-      this.timesAutoran = 0;
-      this.TIndex = 1;
-      this.setT(this.TIndex * 0.1);
-
-      this.EHistory = Array(this.historyLength);
-      this.MHistory = Array(this.historyLength);
-      this.CHistory = Array(this.historyLength);
-      this.chiHistory = Array(this.historyLength);
-
-      this.states.fill(0);
-
-      cancelAnimationFrame(this.requestId);
-      this.autorun();
-    });
-
-    $id("leave").addEventListener("click", (event) => {
-      $id("play").style.display = "none";
-      $id("pause").removeAttribute("style");
-      $id("continue").style.display = "none";
-      $id("continue").removeAttribute("disabled");
-      $id("enter").removeAttribute("style");
-      $id("leave").style.display = "none";
-
-      $id("graph-container").style.display = "none";
-
-      // Do not use removeAttribute,
-      // otherwise style.width and style.height will be lost.
-      $id("canvas").style.overflow = "";
-      $id("canvas").style.filter = "";
-      $id("canvas").style.opacity = "";
-
-      cancelAnimationFrame(this.requestId);
-
-      clearTimeout(this.timeoutId);
-      this.run();
-    });
-
-    $id("continue").addEventListener("click", (event) => {
-      $id("play").style.display = "none";
-      $id("pause").style.display = "none";
-      $id("continue").removeAttribute("style");
-      $id("continue").setAttribute("disabled", "");
-      $id("enter").style.display = "none";
-      $id("leave").removeAttribute("style");
-
-      cancelAnimationFrame(this.requestId);
-
-      $id("graph-container").removeAttribute("style");
-
-      $id("canvas").style.filter = "blur(0.5rem)";
-      $id("canvas").style.opacity = "10%";
-
-      this.EHistory = Array(this.historyLength);
-      this.MHistory = Array(this.historyLength);
-      this.CHistory = Array(this.historyLength);
-      this.chiHistory = Array(this.historyLength);
-
-      this.states.fill(0);
-
-      cancelAnimationFrame(this.requestId);
-      this.autorun();
-    });
-
-    // The state of the cell at (x, y) is this.states[this.Nx * y + x].
-    this.states = Array(this.Nx * this.Ny).fill(0);
 
     this.sigmaDrawer.changeNumberOfStates();
     this.sigmaDrawer.draw();
 
+    // Currently historyLength >= additionalHistoryLength is assumed in the algorithm.
+    this.historyLength = 50;
+    this.additionalHistoryLength = 50;
     this.EHistory = Array(this.historyLength);
     this.MHistory = Array(this.historyLength);
     this.CHistory = Array(this.historyLength);
@@ -167,8 +100,7 @@ class Model {
       $id(id).value = initialValue;
       $id(id).addEventListener("input", () => {
         this[id] = $id(id).valueAsNumber;
-        this.states = new Array(this.Nx * this.Ny);
-        this.reset();
+        this.conf.resize(this.Nx, this.Ny);
         this.canvasDrawer.resize();
       });
     }
@@ -193,10 +125,10 @@ class Model {
     });
 
     $id("reset").addEventListener("click", () => {
-      this.reset();
+      this.conf.reset();
     });
     $id("randomize").addEventListener("click", () => {
-      this.randomize();
+      this.conf.randomize();
     });
 
     $id("add").addEventListener("click", (event) => {
@@ -204,12 +136,13 @@ class Model {
       this.sigmaDrawer.changeNumberOfStates();
       this.sigmaDrawer.draw();
 
+      this.conf.reset();
       this.canvasDrawer.resize();
       this.canvasDrawer.draw();
     });
 
     $id("remove").addEventListener("click", (event) => {
-      if (this.sigmas.length < 3) {
+      if (this.sigmas.length <= 2) {
         return;
       }
 
@@ -217,29 +150,96 @@ class Model {
       this.sigmaDrawer.changeNumberOfStates();
       this.sigmaDrawer.draw();
 
+      this.conf.reset();
       this.canvasDrawer.resize();
       this.canvasDrawer.draw();
     });
-  }
 
-  reset() {
-    this.states.fill(0);
-    this.EHistory = Array(this.historyLength);
-    this.MHistory = Array(this.historyLength);
-    this.CHistory = Array(this.historyLength);
-    this.chiHistory = Array(this.historyLength);
-    this.canvasDrawer.draw();
-  }
+    $id("enter").addEventListener("click", (event) => {
+      $id("play").style.display = "none";
+      $id("pause").style.display = "none";
+      $id("continue").removeAttribute("style");
+      $id("continue").setAttribute("disabled", "");
+      $id("enter").style.display = "none";
+      $id("leave").removeAttribute("style");
 
-  randomize() {
-    for (let i = 0; i < this.Nx * this.Ny; i++) {
-      this.states[i] = Math.floor(Math.random() * this.sigmas.length);
-    }
-    this.EHistory = Array(this.historyLength);
-    this.MHistory = Array(this.historyLength);
-    this.CHistory = Array(this.historyLength);
-    this.chiHistory = Array(this.historyLength);
-    this.canvasDrawer.draw();
+      cancelAnimationFrame(this.requestId);
+
+      $id("graph-container").removeAttribute("style");
+
+      $id("canvas-container").style.overflow = "hidden";
+      $id("canvas").style.filter = "blur(0.5rem)";
+      $id("canvas").style.opacity = "10%";
+
+      this.graphT = [];
+      this.EGraph = [];
+      this.MGraph = [];
+      this.CGraph = [];
+      this.chiGraph= [];
+
+      this.timesAutoran = 0;
+      this.TIndex = 1;
+      this.setT(this.TIndex * 0.1);
+
+      this.EHistory = Array(this.historyLength);
+      this.MHistory = Array(this.historyLength);
+      this.CHistory = Array(this.historyLength);
+      this.chiHistory = Array(this.historyLength);
+
+      this.conf.fill(0);
+      this.conf.reset();
+
+      cancelAnimationFrame(this.requestId);
+      this.autorun();
+    });
+
+    $id("leave").addEventListener("click", (event) => {
+      $id("play").style.display = "none";
+      $id("pause").removeAttribute("style");
+      $id("continue").style.display = "none";
+      $id("continue").removeAttribute("disabled");
+      $id("enter").removeAttribute("style");
+      $id("leave").style.display = "none";
+
+      $id("graph-container").style.display = "none";
+
+      // Do not use removeAttribute,
+      // otherwise style.width and style.height will be lost.
+      $id("canvas").style.overflow = "";
+      $id("canvas").style.filter = "";
+      $id("canvas").style.opacity = "";
+
+      cancelAnimationFrame(this.requestId);
+
+      clearTimeout(this.timeoutId);
+      this.run();
+    });
+
+    $id("continue").addEventListener("click", (event) => {
+      $id("play").style.display = "none";
+      $id("pause").style.display = "none";
+      $id("continue").removeAttribute("style");
+      $id("continue").setAttribute("disabled", "");
+      $id("enter").style.display = "none";
+      $id("leave").removeAttribute("style");
+
+      cancelAnimationFrame(this.requestId);
+
+      $id("graph-container").removeAttribute("style");
+
+      $id("canvas").style.filter = "blur(0.5rem)";
+      $id("canvas").style.opacity = "10%";
+
+      this.EHistory = Array(this.historyLength);
+      this.MHistory = Array(this.historyLength);
+      this.CHistory = Array(this.historyLength);
+      this.chiHistory = Array(this.historyLength);
+
+      this.conf.fill(0);
+
+      cancelAnimationFrame(this.requestId);
+      this.autorun();
+    });
   }
 
   setT(T) {
@@ -315,7 +315,7 @@ class Model {
     this.TIndex++;
     if (this.TIndex % 500 !== 1) {
       this.setT(this.TIndex * 0.01);
-      this.states.fill(0);
+      this.conf.fill(0);
 
       this.EHistory = Array(this.historyLength);
       this.MHistory = Array(this.historyLength);
@@ -337,7 +337,7 @@ class Model {
     const y = Math.floor(Math.random() * this.Ny);
 
     // Current state
-    const curr = this.states[this.Nx * y + x];
+    const curr = this.conf[this.Nx * y + x];
 
     // Proposed state
     const prop = (
@@ -360,7 +360,7 @@ class Model {
     if (energyDifference < 0) {
       // If the new configuration has less energy,
       // always change the state.
-      this.states[this.Nx * y + x] = prop;
+      this.conf[this.Nx * y + x] = prop;
     } else {
       // If the new configuration has more energy,
       // change the state by the acceptance ratio.
@@ -368,7 +368,7 @@ class Model {
         this.T <= 0 ? 0 : Math.exp(-energyDifference / this.T)
       );
       if (Math.random() < acceptanceRatio) {
-        this.states[this.Nx * y + x] = prop;
+        this.conf[this.Nx * y + x] = prop;
       }
     }
   }
@@ -384,10 +384,10 @@ class Model {
           - this.J2 * this.sigma(x,     y + 1)
           - this.J3 * this.sigma(x + 1, y + 1)
           - this.J4 * this.sigma(x - 1, y + 1)
-          - this.J0 * this.sigmas[this.states[this.Nx * y + x]]
+          - this.J0 * this.sigmas[this.conf[this.Nx * y + x]]
           - this.h
-        ) * this.sigmas[this.states[this.Nx * y + x]];
-        M += this.sigmas[this.states[this.Nx * y + x]];
+        ) * this.sigmas[this.conf[this.Nx * y + x]];
+        M += this.sigmas[this.conf[this.Nx * y + x]];
       }
     }
 
@@ -446,7 +446,7 @@ class Model {
       y = 0;
     }
 
-    return this.sigmas[this.states[this.Nx * y + x]];
+    return this.sigmas[this.conf[this.Nx * y + x]];
   }
 }
 
@@ -542,7 +542,7 @@ class CanvasDrawer {
     for (let y = 0; y < this.model.Ny; y++) {
       for (let x = 0; x < this.model.Nx; x++) {
         this.context.drawImage(
-          this.canvases[this.model.states[this.model.Nx * y + x]],
+          this.canvases[this.model.conf[this.model.Nx * y + x]],
           x * this.zoom, y * this.zoom,
         );
       }
@@ -691,7 +691,7 @@ class GraphDrawer {
         QContext.textAlign = "center";
         QContext.textBaseline = "middle";
         QContext.fillStyle = "oklch(80% 0% 0deg)";
-        QContext.fillText(formatToString(T), X, this.YBottom + this.rem / 2);
+        QContext.fillText(`${T}`, X, this.YBottom + this.rem / 2);
       }
 
       // Draw horizontal lines.
@@ -746,7 +746,7 @@ class GraphDrawer {
           QContext.fillStyle = "oklch(80% 0% 0deg)";
           QContext.translate(this.XLeft - this.rem / 2, Y);
           QContext.rotate(-Math.PI / 2);
-          QContext.fillText(formatToString(Q), 0, 0);
+          QContext.fillText(`${Q}`, 0, 0);
           QContext.restore();
         }
       }
