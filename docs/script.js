@@ -9,54 +9,41 @@ const formatToFixed = number => (
   isFinite(number) ? number.toFixed(3).replace("-", "\u2212") : "\u2014"
 );
 
-// Spin configuration
-class Conf extends Array {
-  resize(Nx, Ny) {
-    this.length = Nx * Ny;
-    this.reset();
-  }
-  
-  reset() {
-    this.fill(0);
-  }
-  
-  randomize() {
-    for (const [i, ] of this.entries()) {
-      this[i] = Math.floor(2 * Math.random());
-    }
-  }
-}
-
 class Model {
   constructor() {
-    // this.conf[this.Nx * y + x]: State at the cell (x, y)
-    this.conf = new Conf();
-
     this.setUpControl();
 
-    this.conf.resize(this.Nx, this.Ny);
-    this.conf.randomize();
-    
+    this.historyLength = 50;
+    this.additionalHistoryLength = 50;
+    this.EHistory = new Array(this.historyLength);
+    this.MHistory = new Array(this.historyLength);
+    this.CHistory = new Array(this.historyLength);
+    this.chiHistory = new Array(this.historyLength);
+
+    // this.sigmas[this.states[this.Nx * y + x]]: sigma on (x, y)
     this.sigmas = [1, -1];
     this.sigmaDrawer = new SigmaDrawer(this);
 
-    this.sigmaDrawer.changeNumberOfStates();
-    this.sigmaDrawer.draw();
-
-    // Currently historyLength >= additionalHistoryLength is assumed in the algorithm.
-    this.historyLength = 50;
-    this.additionalHistoryLength = 50;
-    this.EHistory = Array(this.historyLength);
-    this.MHistory = Array(this.historyLength);
-    this.CHistory = Array(this.historyLength);
-    this.chiHistory = Array(this.historyLength);
+    // this.states[this.Nx * y + x]: State on (x, y)
+    this.states = new Array(this.Nx * this.Ny);
+    this.randomizeStates();
 
     this.canvasDrawer = new CanvasDrawer(this);
-    this.graphDrawer = new GraphDrawer(this);
-
     this.canvasDrawer.draw();
 
+    this.graphDrawer = new GraphDrawer(this);
+
     this.requestId = requestAnimationFrame(this.run.bind(this));
+  }
+
+  resetStates() {
+    this.states.fill(0);
+  }
+
+  randomizeStates() {
+    for (const [i, ] of this.states.entries()) {
+      this.states[i] = Math.floor(2 * Math.random());
+    }
   }
 
   setUpControl() {
@@ -100,7 +87,8 @@ class Model {
       $id(id).value = initialValue;
       $id(id).addEventListener("input", () => {
         this[id] = $id(id).valueAsNumber;
-        this.conf.resize(this.Nx, this.Ny);
+        this.states.length = this.Nx, this.Ny;
+        this.states.fill(0);
         this.canvasDrawer.resize();
       });
     }
@@ -125,10 +113,10 @@ class Model {
     });
 
     $id("reset").addEventListener("click", () => {
-      this.conf.reset();
+      this.resetStates();
     });
     $id("randomize").addEventListener("click", () => {
-      this.conf.randomize();
+      this.randomizeStates();
     });
 
     $id("add").addEventListener("click", (event) => {
@@ -136,7 +124,7 @@ class Model {
       this.sigmaDrawer.changeNumberOfStates();
       this.sigmaDrawer.draw();
 
-      this.conf.reset();
+      this.resetStates();
       this.canvasDrawer.resize();
       this.canvasDrawer.draw();
     });
@@ -150,7 +138,7 @@ class Model {
       this.sigmaDrawer.changeNumberOfStates();
       this.sigmaDrawer.draw();
 
-      this.conf.reset();
+      this.resetStates();
       this.canvasDrawer.resize();
       this.canvasDrawer.draw();
     });
@@ -186,8 +174,7 @@ class Model {
       this.CHistory = Array(this.historyLength);
       this.chiHistory = Array(this.historyLength);
 
-      this.conf.fill(0);
-      this.conf.reset();
+      this.resetStates();
 
       cancelAnimationFrame(this.requestId);
       this.autorun();
@@ -235,7 +222,7 @@ class Model {
       this.CHistory = Array(this.historyLength);
       this.chiHistory = Array(this.historyLength);
 
-      this.conf.fill(0);
+      this.states.fill(0);
 
       cancelAnimationFrame(this.requestId);
       this.autorun();
@@ -315,7 +302,7 @@ class Model {
     this.TIndex++;
     if (this.TIndex % 500 !== 1) {
       this.setT(this.TIndex * 0.01);
-      this.conf.fill(0);
+      this.states.fill(0);
 
       this.EHistory = Array(this.historyLength);
       this.MHistory = Array(this.historyLength);
@@ -337,7 +324,7 @@ class Model {
     const y = Math.floor(Math.random() * this.Ny);
 
     // Current state
-    const curr = this.conf[this.Nx * y + x];
+    const curr = this.states[this.Nx * y + x];
 
     // Proposed state
     const prop = (
@@ -360,7 +347,7 @@ class Model {
     if (energyDifference < 0) {
       // If the new configuration has less energy,
       // always change the state.
-      this.conf[this.Nx * y + x] = prop;
+      this.states[this.Nx * y + x] = prop;
     } else {
       // If the new configuration has more energy,
       // change the state by the acceptance ratio.
@@ -368,7 +355,7 @@ class Model {
         this.T <= 0 ? 0 : Math.exp(-energyDifference / this.T)
       );
       if (Math.random() < acceptanceRatio) {
-        this.conf[this.Nx * y + x] = prop;
+        this.states[this.Nx * y + x] = prop;
       }
     }
   }
@@ -384,10 +371,10 @@ class Model {
           - this.J2 * this.sigma(x,     y + 1)
           - this.J3 * this.sigma(x + 1, y + 1)
           - this.J4 * this.sigma(x - 1, y + 1)
-          - this.J0 * this.sigmas[this.conf[this.Nx * y + x]]
+          - this.J0 * this.sigmas[this.states[this.Nx * y + x]]
           - this.h
-        ) * this.sigmas[this.conf[this.Nx * y + x]];
-        M += this.sigmas[this.conf[this.Nx * y + x]];
+        ) * this.sigmas[this.states[this.Nx * y + x]];
+        M += this.sigmas[this.states[this.Nx * y + x]];
       }
     }
 
@@ -446,7 +433,7 @@ class Model {
       y = 0;
     }
 
-    return this.sigmas[this.conf[this.Nx * y + x]];
+    return this.sigmas[this.states[this.Nx * y + x]];
   }
 }
 
@@ -542,7 +529,7 @@ class CanvasDrawer {
     for (let y = 0; y < this.model.Ny; y++) {
       for (let x = 0; x < this.model.Nx; x++) {
         this.context.drawImage(
-          this.canvases[this.model.conf[this.model.Nx * y + x]],
+          this.canvases[this.model.states[this.model.Nx * y + x]],
           x * this.zoom, y * this.zoom,
         );
       }
@@ -559,6 +546,9 @@ class SigmaDrawer {
     .addEventListener("change", (event) => {
       this.draw();
     });
+
+    this.changeNumberOfStates();
+    this.draw();
   }
 
   changeNumberOfStates() {
