@@ -3,46 +3,134 @@ const $id = id => document.getElementById(id);
 // Shape of an arrow
 const arrowPath = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
 
-// "\u2212": MINUS SIGN
-// "\u2014": EM DASH
-const formatToFixed = number => (
-  isFinite(number) ? number.toFixed(3).replace("-", "\u2212") : "\u2014"
-);
-
 class Model {
   constructor() {
     this.setUpControl();
 
-    this.historyLength = 50;
-    this.additionalHistoryLength = 50;
-    this.EHistory = new Array(this.historyLength);
-    this.MHistory = new Array(this.historyLength);
-    this.CHistory = new Array(this.historyLength);
-    this.chiHistory = new Array(this.historyLength);
-
     // this.sigmas[this.states[this.Nx * y + x]]: sigma on (x, y)
     this.sigmas = [1, -1];
-    this.sigmaDrawer = new SigmaDrawer(this);
 
     // this.states[this.Nx * y + x]: State on (x, y)
     this.states = new Array(this.Nx * this.Ny);
+
+    // Expected values are calculated
+    // by averaging this.expvalHistoryLength most recent values.
+    this.expvalHistoryLength = 50;
+
+    // The y-axis values on the graph are calculated
+    // by averaging this.graphHistoryLength most recent values.
+    this.graphHistoryLength = 50;
+
+    // Store most recent values here.
+    // The newest entry is on the index 0.
+    // The oldest entry is on the index this.expvalHistoryLength - 1.
+    const historyLength = Math.max(
+      this.expvalHistoryLength, this.graphHistoryLength
+    );
+    this.EHistory   = new Array(historyLength);
+    this.MHistory   = new Array(historyLength);
+    this.CHistory   = new Array(historyLength);
+    this.chiHistory = new Array(historyLength);
+
+    // Store graph data here.
+    this.TGraph   = [];
+    this.EGraph   = [];
+    this.MGraph   = [];
+    this.CGraph   = [];
+    this.chiGraph = [];
+
     this.randomizeStates();
-
+    this.sigmaDrawer = new SigmaDrawer(this);
     this.canvasDrawer = new CanvasDrawer(this);
-    this.canvasDrawer.draw();
-
     this.graphDrawer = new GraphDrawer(this);
+    this.requestId = requestAnimationFrame(() => this.run());
+  }
 
-    this.requestId = requestAnimationFrame(this.run.bind(this));
+  sigma(x, y) {
+    // Get sigma with taking the periodic boundary condition into account.
+
+    // For example, -11 % 10 is -1 in JavaScript.
+    x = ((x % this.Nx) + this.Nx) % this.Nx;
+    y = ((y % this.Ny) + this.Ny) % this.Ny;
+
+    return this.sigmas[this.states[this.Nx * y + x]];
   }
 
   resetStates() {
     this.states.fill(0);
+    this.EHistory.fill(undefined);
+    this.MHistory.fill(undefined);
+    this.CHistory.fill(undefined);
+    this.chiHistory.fill(undefined);
   }
 
   randomizeStates() {
     for (const [i, ] of this.states.entries()) {
       this.states[i] = Math.floor(2 * Math.random());
+    }
+    this.EHistory.fill(undefined);
+    this.MHistory.fill(undefined);
+    this.CHistory.fill(undefined);
+    this.chiHistory.fill(undefined);
+  }
+
+  calculateStat() {
+    let E = 0;
+    let M = 0;
+    for (let y = 0; y < this.Ny; y++) {
+      for (let x = 0; x < this.Nx; x++) {
+        E += (
+          - this.J1 * this.sigma(x + 1, y    )
+          - this.J2 * this.sigma(x,     y + 1)
+          - this.J3 * this.sigma(x + 1, y + 1)
+          - this.J4 * this.sigma(x - 1, y + 1)
+          - this.J0 * this.sigma(x,     y    )
+          - this.h
+        ) * this.sigma(x, y);
+        M += this.sigma(x, y);
+      }
+    }
+    this.EHistory.pop();
+    this.EHistory.unshift(E);
+    this.MHistory.pop();
+    this.MHistory.unshift(M);
+
+    let EExpval  = 0;
+    let E2Expval = 0;
+    let MExpval  = 0;
+    let M2Expval = 0;
+    for (let i = 0; i < this.expvalHistoryLength; i++) {
+      EExpval  += this.EHistory[i];
+      E2Expval += this.EHistory[i] ** 2;
+      MExpval  += this.MHistory[i];
+      M2Expval += this.MHistory[i] ** 2;
+    }
+    EExpval  /= this.expvalHistoryLength;
+    E2Expval /= this.expvalHistoryLength;
+    MExpval  /= this.expvalHistoryLength;
+    M2Expval /= this.expvalHistoryLength;
+    const C = (E2Expval - EExpval ** 2) / this.T ** 2;
+    const chi = (M2Expval - MExpval ** 2) / this.T;
+    this.CHistory.pop();
+    this.CHistory.unshift(C);
+    this.chiHistory.pop();
+    this.chiHistory.unshift(chi);
+
+    return [
+      E   / (this.Nx * this.Ny),
+      M   / (this.Nx * this.Ny),
+      C   / (this.Nx * this.Ny),
+      chi / (this.Nx * this.Ny),
+    ];
+  }
+
+  drawStat(E, M, C, chi) {
+    for (const [id, value] of [["E", E], ["M", M], ["C", C], ["chi", chi]]) {
+      // "\u2212": MINUS SIGN
+      // "\u2014": EM DASH
+      $id(id).innerText = (
+        isFinite(value) ? value.toFixed(3).replace("-", "\u2212") : "\u2014"
+      );
     }
   }
 
@@ -87,9 +175,10 @@ class Model {
       $id(id).value = initialValue;
       $id(id).addEventListener("input", () => {
         this[id] = $id(id).valueAsNumber;
-        this.states.length = this.Nx, this.Ny;
-        this.states.fill(0);
+        this.states.length = this.Nx * this.Ny;
+        this.resetStates();
         this.canvasDrawer.resize();
+        this.canvasDrawer.draw();
       });
     }
 
@@ -113,10 +202,14 @@ class Model {
     });
 
     $id("reset").addEventListener("click", () => {
-      this.resetStates();
+      this.resetStates()
+      this.drawStat(...this.calculateStat());
+      this.canvasDrawer.draw();
     });
     $id("randomize").addEventListener("click", () => {
       this.randomizeStates();
+      this.drawStat(...this.calculateStat());
+      this.canvasDrawer.draw();
     });
 
     $id("add").addEventListener("click", (event) => {
@@ -125,6 +218,7 @@ class Model {
       this.sigmaDrawer.draw();
 
       this.resetStates();
+      this.drawStat(...this.calculateStat());
       this.canvasDrawer.resize();
       this.canvasDrawer.draw();
     });
@@ -139,6 +233,7 @@ class Model {
       this.sigmaDrawer.draw();
 
       this.resetStates();
+      this.drawStat(...this.calculateStat());
       this.canvasDrawer.resize();
       this.canvasDrawer.draw();
     });
@@ -159,20 +254,15 @@ class Model {
       $id("canvas").style.filter = "blur(0.5rem)";
       $id("canvas").style.opacity = "10%";
 
-      this.graphT = [];
-      this.EGraph = [];
-      this.MGraph = [];
-      this.CGraph = [];
-      this.chiGraph= [];
+      this.TGraph.length = 0;
+      this.EGraph.length = 0;
+      this.MGraph.length = 0;
+      this.CGraph.length = 0;
+      this.chiGraph.length = 0;
 
       this.timesAutoran = 0;
       this.TIndex = 1;
       this.setT(this.TIndex * 0.1);
-
-      this.EHistory = Array(this.historyLength);
-      this.MHistory = Array(this.historyLength);
-      this.CHistory = Array(this.historyLength);
-      this.chiHistory = Array(this.historyLength);
 
       this.resetStates();
 
@@ -217,12 +307,7 @@ class Model {
       $id("canvas").style.filter = "blur(0.5rem)";
       $id("canvas").style.opacity = "10%";
 
-      this.EHistory = Array(this.historyLength);
-      this.MHistory = Array(this.historyLength);
-      this.CHistory = Array(this.historyLength);
-      this.chiHistory = Array(this.historyLength);
-
-      this.states.fill(0);
+      this.resetStates();
 
       cancelAnimationFrame(this.requestId);
       this.autorun();
@@ -240,11 +325,9 @@ class Model {
     this.requestId = undefined;
 
     for (let i = 0; i < this.speed * this.Nx * this.Ny; i++) {
-      // this.calculateStatistics();
-      // Why did I put it here!? It was a severe performance issue!
       this.proposeNewConfiguration();
     }
-    this.calculateStatistics();  // Should be here instead!
+    this.drawStat(...this.calculateStat());
     this.canvasDrawer.draw();
 
     if (!this.requestId) {
@@ -256,63 +339,46 @@ class Model {
     this.requestId = undefined;
     this.timeoutId = undefined;
 
-    this.E = undefined;
-    this.M = undefined;
-    this.C = undefined;
-    this.chi = undefined;
+    this.resetStates();
 
-    this.EHistory = Array(this.historyLength);
-    this.MHistory = Array(this.historyLength);
-    this.CHistory = Array(this.historyLength);
-    this.chiHistory = Array(this.historyLength);
-
-    for (let i = 0; i < (this.historyLength + this.additionalHistoryLength) * this.Nx * this.Ny; i++) {
+    for (let i = 0; i < (this.expvalHistoryLength + this.graphHistoryLength) * this.Nx * this.Ny; i++) {
       this.proposeNewConfiguration();
       if (i % (this.Nx * this.Ny) === 0) {
-        this.calculateStatistics();
+        this.calculateStat();
       }
     }
     this.canvasDrawer.draw();
 
     this.timesAutoran++;
 
-    let E_ = 0;
-    let M_ = 0;
-    let C_ = 0;
-    let chi_ = 0;
-    for (let i = 0; i < this.additionalHistoryLength; i++) {
-      E_ += this.EHistory[i];
-      M_ += this.MHistory[i];
-      C_ += this.CHistory[i];
-      chi_ += this.chiHistory[i];
+    let E   = 0;
+    let M   = 0;
+    let C   = 0;
+    let chi = 0;
+    for (let i = 0; i < this.graphHistoryLength; i++) {
+      E   += this.EHistory[i];
+      M   += this.MHistory[i];
+      C   += this.CHistory[i];
+      chi += this.chiHistory[i];
     }
-    E_ /= this.additionalHistoryLength * (this.Nx * this.Ny);
-    M_ /= this.additionalHistoryLength * (this.Nx * this.Ny);
-    C_ /= this.additionalHistoryLength * (this.Nx * this.Ny);
-    chi_ /= this.additionalHistoryLength * (this.Nx * this.Ny);
-
-    this.graphT.push(this.T);
-    this.EGraph.push(E_);
-    this.MGraph.push(M_);
-    this.CGraph.push(C_);
-    this.chiGraph.push(chi_);
+    E   /= (this.graphHistoryLength * this.Nx * this.Ny);
+    M   /= (this.graphHistoryLength * this.Nx * this.Ny);
+    C   /= (this.graphHistoryLength * this.Nx * this.Ny);
+    chi /= (this.graphHistoryLength * this.Nx * this.Ny);
+    this.TGraph.push(this.T);
+    this.EGraph.push(E);
+    this.MGraph.push(M);
+    this.CGraph.push(C);
+    this.chiGraph.push(chi);
     this.graphDrawer.draw();
+    this.drawStat(E, M, C, chi);
 
     this.timesAutoran = 0;
     this.TIndex++;
     if (this.TIndex % 500 !== 1) {
       this.setT(this.TIndex * 0.01);
-      this.states.fill(0);
-
-      this.EHistory = Array(this.historyLength);
-      this.MHistory = Array(this.historyLength);
-      this.CHistory = Array(this.historyLength);
-      /*
-      if (!this.requestId) {
-          this.requestId = requestAnimationFrame(this.autorun.bind(this));
-      }
-      */
-      this.timeoutId = setTimeout(() => { this.autorun(); });
+      this.resetStates();
+      this.timeoutId = setTimeout(() => this.autorun());
     } else {
       $id("continue").removeAttribute("disabled");
     }
@@ -358,82 +424,6 @@ class Model {
         this.states[this.Nx * y + x] = prop;
       }
     }
-  }
-
-  calculateStatistics() {
-    let M = 0;
-    let E = 0;
-    for (let y = 0; y < this.Ny; y++) {
-      for (let x = 0; x < this.Nx; x++) {
-        E += (
-          /* No double counting! */
-          - this.J1 * this.sigma(x + 1, y    )
-          - this.J2 * this.sigma(x,     y + 1)
-          - this.J3 * this.sigma(x + 1, y + 1)
-          - this.J4 * this.sigma(x - 1, y + 1)
-          - this.J0 * this.sigmas[this.states[this.Nx * y + x]]
-          - this.h
-        ) * this.sigmas[this.states[this.Nx * y + x]];
-        M += this.sigmas[this.states[this.Nx * y + x]];
-      }
-    }
-
-    this.EHistory.pop();
-    this.EHistory.unshift(E);
-    this.MHistory.pop();
-    this.MHistory.unshift(M);
-    let EExpval = 0;
-    let E2Expval = 0;
-    let MExpval = 0;
-    let M2Expval = 0;
-    for (let a = 0; a < this.historyLength; a++) {
-      EExpval += this.EHistory[a];
-      E2Expval += this.EHistory[a] ** 2;
-      MExpval += this.MHistory[a];
-      M2Expval += this.MHistory[a] ** 2;
-    }
-    EExpval /= this.historyLength;
-    E2Expval /= this.historyLength;
-    MExpval /= this.historyLength;
-    M2Expval /= this.historyLength;
-    const C = (E2Expval - EExpval ** 2) / this.T ** 2;  // Actually C/k
-    const chi = (M2Expval - MExpval ** 2) / this.T;
-    this.CHistory.pop();
-    this.CHistory.unshift(C);
-    this.chiHistory.pop();
-    this.chiHistory.unshift(chi);
-
-    const MPerCell = M / (this.Nx * this.Ny);
-    const EPerCell = E / (this.Nx * this.Ny);
-    const CPerCell = C / (this.Nx * this.Ny);
-    const chiPerCell = chi / (this.Nx * this.Ny);
-    $id("M").innerText = formatToFixed(MPerCell);
-    $id("E").innerText = formatToFixed(EPerCell);
-    $id("C").innerText = formatToFixed(CPerCell);
-    $id("chi").innerText = formatToFixed(chiPerCell);
-
-    this.E = EPerCell;
-    this.M = MPerCell;
-    this.C = CPerCell;
-    this.chi = chiPerCell;
-  }
-
-  sigma(x, y) {
-    // Get sigma with taking the periodic boundary condition into account.
-
-    if (x === -1) {
-      x = this.Nx - 1;
-    } else if (x === this.Nx) {
-      x = 0;
-    }
-
-    if (y === -1) {
-      y = this.Ny - 1;
-    } else if (y === this.Ny) {
-      y = 0;
-    }
-
-    return this.sigmas[this.states[this.Nx * y + x]];
   }
 }
 
@@ -487,56 +477,6 @@ function getPredrawnCanvases(sigmas, zoom) {
   return canvases;
 }
 
-class CanvasDrawer {
-  constructor(model) {
-    this.model = model;
-    this.context = $id("canvas").getContext("2d", {alpha: false});
-
-    // Watch for changes on window.devicePixelRatio.
-    window.matchMedia("(min-resolution: 2dppx)")
-    .addEventListener("change", (event) => {
-      this.resize();
-      this.draw();
-    });
-
-    new ResizeObserver(() => {
-      this.resize();
-      this.draw();
-    }).observe($id("canvas-container"));
-
-    this.resize();
-  }
-
-  resize() {
-    const dpr = window.devicePixelRatio;
-    this.zoom = Math.max(
-      Math.floor(Math.min(
-        $id("canvas-container").offsetWidth / this.model.Nx * dpr,
-        $id("canvas-container").offsetHeight / this.model.Ny * dpr,
-      )),
-      1,
-    );
-
-    $id("canvas").style.width = `${this.model.Nx * this.zoom / dpr}px`;
-    $id("canvas").style.height = `${this.model.Ny * this.zoom / dpr}px`;
-    $id("canvas").width = this.model.Nx * this.zoom;
-    $id("canvas").height = this.model.Ny * this.zoom;
-
-    this.canvases = getPredrawnCanvases(this.model.sigmas, this.zoom);
-  }
-
-  draw() {
-    for (let y = 0; y < this.model.Ny; y++) {
-      for (let x = 0; x < this.model.Nx; x++) {
-        this.context.drawImage(
-          this.canvases[this.model.states[this.model.Nx * y + x]],
-          x * this.zoom, y * this.zoom,
-        );
-      }
-    }
-  }
-}
-
 class SigmaDrawer {
   constructor(model) {
     this.model = model;
@@ -585,11 +525,15 @@ class SigmaDrawer {
         range.value = number.valueAsNumber;
         this.model.sigmas[i] = number.valueAsNumber;
         this.draw();
+        this.model.canvasDrawer.resize();
+        this.model.canvasDrawer.draw();
       });
       range.addEventListener("input", (event) => {
         number.value = range.valueAsNumber;
         this.model.sigmas[i] = range.valueAsNumber;
         this.draw();
+        this.model.canvasDrawer.resize();
+        this.model.canvasDrawer.draw();
       });
     }
 
@@ -607,6 +551,57 @@ class SigmaDrawer {
       canvas.width = zoom;
       canvas.height = zoom;
       canvas.getContext("2d").drawImage(canvases[i], 0, 0);
+    }
+  }
+}
+
+class CanvasDrawer {
+  constructor(model) {
+    this.model = model;
+    this.context = $id("canvas").getContext("2d", {alpha: false});
+
+    // Watch for changes on window.devicePixelRatio.
+    window.matchMedia("(min-resolution: 2dppx)")
+    .addEventListener("change", (event) => {
+      this.resize();
+      this.draw();
+    });
+
+    new ResizeObserver(() => {
+      this.resize();
+      this.draw();
+    }).observe($id("canvas-container"));
+
+    this.resize();
+    this.draw();
+  }
+
+  resize() {
+    const dpr = window.devicePixelRatio;
+    this.zoom = Math.max(
+      Math.floor(Math.min(
+        $id("canvas-container").offsetWidth / this.model.Nx * dpr,
+        $id("canvas-container").offsetHeight / this.model.Ny * dpr,
+      )),
+      1,
+    );
+
+    $id("canvas").style.width = `${this.model.Nx * this.zoom / dpr}px`;
+    $id("canvas").style.height = `${this.model.Ny * this.zoom / dpr}px`;
+    $id("canvas").width = this.model.Nx * this.zoom;
+    $id("canvas").height = this.model.Ny * this.zoom;
+
+    this.canvases = getPredrawnCanvases(this.model.sigmas, this.zoom);
+  }
+
+  draw() {
+    for (let y = 0; y < this.model.Ny; y++) {
+      for (let x = 0; x < this.model.Nx; x++) {
+        this.context.drawImage(
+          this.canvases[this.model.states[this.model.Nx * y + x]],
+          x * this.zoom, y * this.zoom,
+        );
+      }
     }
   }
 }
@@ -742,7 +737,7 @@ class GraphDrawer {
       }
 
       // Draw dots.
-      for (const [i, T] of model.graphT.entries()) {
+      for (const [i, T] of model.TGraph.entries()) {
         const Q = QGraph[i];
 
         const X = this.XLeft + T / TMax * (this.XRight - this.XLeft);
