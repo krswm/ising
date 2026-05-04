@@ -1,5 +1,23 @@
 const $id = id => document.getElementById(id);
 
+// Expected values are calculated
+// by averaging expvalHistoryLength most recent values.
+const expvalHistoryLength = 50;
+
+// The y-axis values on the graph are calculated
+// by averaging graphHistoryLength most recent values.
+const graphHistoryLength = 50;
+
+const historyLength = Math.max(expvalHistoryLength, graphHistoryLength);
+
+const TPerGraphStep = 0.01;
+
+// "\u2212": MINUS SIGN
+// "\u2014": EM DASH
+const format = (value) => (
+  isFinite(value) ? value.toFixed(3).replace("-", "\u2212") : "\u2014"
+);
+
 // Shape of an arrow
 const arrowPath = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
 
@@ -13,20 +31,9 @@ class Model {
     // this.states[this.Nx * y + x]: State on (x, y)
     this.states = new Array(this.Nx * this.Ny);
 
-    // Expected values are calculated
-    // by averaging this.expvalHistoryLength most recent values.
-    this.expvalHistoryLength = 50;
-
-    // The y-axis values on the graph are calculated
-    // by averaging this.graphHistoryLength most recent values.
-    this.graphHistoryLength = 50;
-
     // Store most recent values here.
     // The newest entry is on the index 0.
-    // The oldest entry is on the index this.expvalHistoryLength - 1.
-    const historyLength = Math.max(
-      this.expvalHistoryLength, this.graphHistoryLength
-    );
+    // The oldest entry is on the index expvalHistoryLength - 1.
     this.EHistory   = new Array(historyLength);
     this.MHistory   = new Array(historyLength);
     this.CHistory   = new Array(historyLength);
@@ -58,9 +65,10 @@ class Model {
 
   resetStates() {
     this.states.fill(0);
-    this.EHistory.fill(undefined);
-    this.MHistory.fill(undefined);
-    this.CHistory.fill(undefined);
+
+    this.EHistory  .fill(undefined);
+    this.MHistory  .fill(undefined);
+    this.CHistory  .fill(undefined);
     this.chiHistory.fill(undefined);
   }
 
@@ -68,9 +76,10 @@ class Model {
     for (const [i, ] of this.states.entries()) {
       this.states[i] = Math.floor(2 * Math.random());
     }
-    this.EHistory.fill(undefined);
-    this.MHistory.fill(undefined);
-    this.CHistory.fill(undefined);
+
+    this.EHistory  .fill(undefined);
+    this.MHistory  .fill(undefined);
+    this.CHistory  .fill(undefined);
     this.chiHistory.fill(undefined);
   }
 
@@ -90,48 +99,39 @@ class Model {
         M += this.sigma(x, y);
       }
     }
-    this.EHistory.pop();
-    this.EHistory.unshift(E);
-    this.MHistory.pop();
-    this.MHistory.unshift(M);
 
     let EExpval  = 0;
     let E2Expval = 0;
     let MExpval  = 0;
     let M2Expval = 0;
-    for (let i = 0; i < this.expvalHistoryLength; i++) {
+    for (let i = 0; i < expvalHistoryLength; i++) {
       EExpval  += this.EHistory[i];
       E2Expval += this.EHistory[i] ** 2;
       MExpval  += this.MHistory[i];
       M2Expval += this.MHistory[i] ** 2;
     }
-    EExpval  /= this.expvalHistoryLength;
-    E2Expval /= this.expvalHistoryLength;
-    MExpval  /= this.expvalHistoryLength;
-    M2Expval /= this.expvalHistoryLength;
-    const C = (E2Expval - EExpval ** 2) / this.T ** 2;
+    EExpval  /= expvalHistoryLength;
+    E2Expval /= expvalHistoryLength;
+    MExpval  /= expvalHistoryLength;
+    M2Expval /= expvalHistoryLength;
+    const C   = (E2Expval - EExpval ** 2) / this.T ** 2;
     const chi = (M2Expval - MExpval ** 2) / this.T;
-    this.CHistory.pop();
-    this.CHistory.unshift(C);
+
+    this.EHistory  .pop();
+    this.EHistory  .unshift(E);
+    this.MHistory  .pop();
+    this.MHistory  .unshift(M);
+    this.CHistory  .pop();
+    this.CHistory  .unshift(C);
     this.chiHistory.pop();
     this.chiHistory.unshift(chi);
-
-    return [
-      E   / (this.Nx * this.Ny),
-      M   / (this.Nx * this.Ny),
-      C   / (this.Nx * this.Ny),
-      chi / (this.Nx * this.Ny),
-    ];
   }
 
-  drawStat(E, M, C, chi) {
-    for (const [id, value] of [["E", E], ["M", M], ["C", C], ["chi", chi]]) {
-      // "\u2212": MINUS SIGN
-      // "\u2014": EM DASH
-      $id(id).innerText = (
-        isFinite(value) ? value.toFixed(3).replace("-", "\u2212") : "\u2014"
-      );
-    }
+  drawStat() {
+    $id("E").innerText   = format(this.EHistory  [0] / (this.Nx * this.Ny));
+    $id("M").innerText   = format(this.MHistory  [0] / (this.Nx * this.Ny));
+    $id("C").innerText   = format(this.CHistory  [0] / (this.Nx * this.Ny));
+    $id("chi").innerText = format(this.chiHistory[0] / (this.Nx * this.Ny));
   }
 
   setUpControl() {
@@ -203,12 +203,14 @@ class Model {
 
     $id("reset").addEventListener("click", () => {
       this.resetStates()
-      this.drawStat(...this.calculateStat());
+      this.calculateStat();
+      this.drawStat();
       this.canvasDrawer.draw();
     });
     $id("randomize").addEventListener("click", () => {
       this.randomizeStates();
-      this.drawStat(...this.calculateStat());
+      this.calculateStat();
+      this.drawStat();
       this.canvasDrawer.draw();
     });
 
@@ -218,7 +220,8 @@ class Model {
       this.sigmaDrawer.draw();
 
       this.resetStates();
-      this.drawStat(...this.calculateStat());
+      this.calculateStat();
+      this.drawStat();
       this.canvasDrawer.resize();
       this.canvasDrawer.draw();
     });
@@ -233,7 +236,8 @@ class Model {
       this.sigmaDrawer.draw();
 
       this.resetStates();
-      this.drawStat(...this.calculateStat());
+      this.calculateStat();
+      this.drawStat();
       this.canvasDrawer.resize();
       this.canvasDrawer.draw();
     });
@@ -260,9 +264,8 @@ class Model {
       this.CGraph.length = 0;
       this.chiGraph.length = 0;
 
-      this.timesAutoran = 0;
-      this.TIndex = 1;
-      this.setT(this.TIndex * 0.1);
+      this.graphStep = 1;
+      this.T = TPerGraphStep;
 
       this.resetStates();
 
@@ -314,20 +317,14 @@ class Model {
     });
   }
 
-  setT(T) {
-    this.T = T;
-    for (const elem of document.querySelectorAll("#T input")) {
-      elem.value = `${this.T.toFixed(2).replace(/\.?0*$/, "")}`;
-    }
-  }
-
   run(timestamp) {
     this.requestId = undefined;
 
     for (let i = 0; i < this.speed * this.Nx * this.Ny; i++) {
       this.proposeNewConfiguration();
     }
-    this.drawStat(...this.calculateStat());
+    this.calculateStat();
+    this.drawStat();
     this.canvasDrawer.draw();
 
     if (!this.requestId) {
@@ -341,7 +338,7 @@ class Model {
 
     this.resetStates();
 
-    for (let i = 0; i < (this.expvalHistoryLength + this.graphHistoryLength) * this.Nx * this.Ny; i++) {
+    for (let i = 0; i < (expvalHistoryLength + graphHistoryLength) * this.Nx * this.Ny; i++) {
       this.proposeNewConfiguration();
       if (i % (this.Nx * this.Ny) === 0) {
         this.calculateStat();
@@ -349,34 +346,39 @@ class Model {
     }
     this.canvasDrawer.draw();
 
-    this.timesAutoran++;
-
     let E   = 0;
     let M   = 0;
     let C   = 0;
     let chi = 0;
-    for (let i = 0; i < this.graphHistoryLength; i++) {
+    for (let i = 0; i < graphHistoryLength; i++) {
       E   += this.EHistory[i];
       M   += this.MHistory[i];
       C   += this.CHistory[i];
       chi += this.chiHistory[i];
     }
-    E   /= (this.graphHistoryLength * this.Nx * this.Ny);
-    M   /= (this.graphHistoryLength * this.Nx * this.Ny);
-    C   /= (this.graphHistoryLength * this.Nx * this.Ny);
-    chi /= (this.graphHistoryLength * this.Nx * this.Ny);
-    this.TGraph.push(this.T);
-    this.EGraph.push(E);
-    this.MGraph.push(M);
-    this.CGraph.push(C);
+    E   /= (graphHistoryLength * this.Nx * this.Ny);
+    M   /= (graphHistoryLength * this.Nx * this.Ny);
+    C   /= (graphHistoryLength * this.Nx * this.Ny);
+    chi /= (graphHistoryLength * this.Nx * this.Ny);
+
+    this.TGraph  .push(this.T);
+    this.EGraph  .push(E);
+    this.MGraph  .push(M);
+    this.CGraph  .push(C);
     this.chiGraph.push(chi);
     this.graphDrawer.draw();
-    this.drawStat(E, M, C, chi);
 
-    this.timesAutoran = 0;
-    this.TIndex++;
-    if (this.TIndex % 500 !== 1) {
-      this.setT(this.TIndex * 0.01);
+    for (const elem of document.querySelectorAll("#T > input")) {
+      elem.value = this.T.toFixed(2).replace(/\.?0*$/, "");
+    }
+    $id("E").innerText   = format(E  );
+    $id("M").innerText   = format(M  );
+    $id("C").innerText   = format(C  );
+    $id("chi").innerText = format(chi);
+
+    this.graphStep++;
+    if (this.graphStep % 500 !== 1) {
+      this.T = TPerGraphStep * this.graphStep;
       this.resetStates();
       this.timeoutId = setTimeout(() => this.autorun());
     } else {
