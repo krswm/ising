@@ -2,11 +2,11 @@ const $id = id => document.getElementById(id);
 
 // Expected values are calculated
 // by averaging expvalHistoryLength most recent values.
-const expvalHistoryLength = 50;
+const expvalHistoryLength = 60;
 
 // The y-axis values on the graph are calculated
 // by averaging graphHistoryLength most recent values.
-const graphHistoryLength = 50;
+const graphHistoryLength = 30;
 
 const historyLength = Math.max(expvalHistoryLength, graphHistoryLength);
 
@@ -50,7 +50,9 @@ class Model {
     this.sigmaDrawer = new SigmaDrawer(this);
     this.canvasDrawer = new CanvasDrawer(this);
     this.graphDrawer = new GraphDrawer(this);
-    this.requestId = requestAnimationFrame(() => this.run());
+
+    this.requestId = undefined;
+    this.runOneFrame();
   }
 
   sigma(x, y) {
@@ -63,24 +65,23 @@ class Model {
     return this.sigmas[this.states[this.Nx * y + x]];
   }
 
-  resetStates() {
-    this.states.fill(0);
-
+  eraseHistory() {
     this.EHistory  .fill(undefined);
     this.MHistory  .fill(undefined);
     this.CHistory  .fill(undefined);
     this.chiHistory.fill(undefined);
   }
 
+  resetStates() {
+    this.states.fill(0);
+    this.eraseHistory();
+  }
+
   randomizeStates() {
     for (const [i, ] of this.states.entries()) {
       this.states[i] = Math.floor(2 * Math.random());
     }
-
-    this.EHistory  .fill(undefined);
-    this.MHistory  .fill(undefined);
-    this.CHistory  .fill(undefined);
-    this.chiHistory.fill(undefined);
+    this.eraseHistory();
   }
 
   calculateStat() {
@@ -134,6 +135,60 @@ class Model {
     $id("chi").innerText = format(this.chiHistory[0] / (this.Nx * this.Ny));
   }
 
+  doOneMonteCarloStep() {
+    // Select a cell.
+    const x = Math.floor(Math.random() * this.Nx);
+    const y = Math.floor(Math.random() * this.Ny);
+
+    // Get current state and sigma of the cell.
+    const stateCurr = this.states[this.Nx * y + x];
+    const sigmaCurr = this.sigmas[stateCurr];
+
+    // Propose a new state and sigma for the cell.
+    // The new state must be different to the current one.
+    const stateProp = (
+      (Math.floor(Math.random() * (this.sigmas.length - 1)) + stateCurr + 1)
+      % this.sigmas.length
+    );
+    const sigmaProp = this.sigmas[stateProp];
+
+    // Calculate EProp - ECurr, where:
+    // - EProp = energy of the system when the proposal is accepted.
+    // - ECurr = current energy of the system
+    // You don't have to calculate EProp and ECurr directly
+    // since only the cell and its neighbors contribute to the difference.
+    const EDifference = (
+      - this.J1 * (this.sigma(x + 1, y    ) + this.sigma(x - 1, y    ))
+      - this.J2 * (this.sigma(x,     y + 1) + this.sigma(x,     y - 1))
+      - this.J3 * (this.sigma(x + 1, y + 1) + this.sigma(x - 1, y - 1))
+      - this.J4 * (this.sigma(x - 1, y + 1) + this.sigma(x + 1, y - 1))
+      - this.J0 * (sigmaProp + sigmaCurr)
+      - this.h
+    ) * (sigmaProp - sigmaCurr);
+
+    if (EDifference < 0) {
+      // Always accept the proposal if it's energetically advantageous.
+      this.states[this.Nx * y + x] = stateProp;
+    } else {
+      // Accept the proposal according to the acceptance probability.
+      if (this.T > 0) {
+        if (Math.random() < Math.exp(-EDifference / this.T)) {
+          this.states[this.Nx * y + x] = stateProp;
+        }
+      }
+    }
+  }
+
+  runOneFrame() {
+    for (let i = 0; i < this.speed * this.Nx * this.Ny; i++) {
+      this.doOneMonteCarloStep();
+    }
+    this.calculateStat();
+    this.drawStat();
+    this.canvasDrawer.draw();
+    this.requestId = requestAnimationFrame(() => this.runOneFrame());
+  }
+
   setUpControl() {
     for (const [id, numberMin, rangeMin, rangeMax, initialValue] of [
       ["speed", 0,     0,  1, 0.5],
@@ -147,25 +202,53 @@ class Model {
     ]) {
       this[id] = initialValue;
       
-      const number = $id(id).querySelector('input[type="number"]');
+      const number = document.querySelector(`#${id} > input[type="number"]`);
       if (numberMin !== null) {
         number.min = numberMin;
       }
       number.step = 0.01;
       number.value = initialValue;
-      number.addEventListener("input", () => {
-        this[id] = number.valueAsNumber;
-        range.value = number.valueAsNumber;
-      });
       
-      const range = $id(id).querySelector('input[type="range"]');
+      const range = $id(id).querySelector(`#${id} > input[type="range"]`);
       range.min = rangeMin;
       range.max = rangeMax;
       range.step = 0.01;
       range.value = initialValue;
+
+      number.addEventListener("input", () => {
+        this[id] = number.valueAsNumber;
+        range.value = number.valueAsNumber;
+      });
       range.addEventListener("input", () => {
         this[id] = range.valueAsNumber;
         number.value = range.valueAsNumber;
+      });
+    }
+
+    {
+      const initialValue = 2;
+      this.T = initialValue;
+
+      const number = document.querySelector('#T > input[type="number"]');
+      number.min = 0;
+      number.step = 0.01;
+      number.value = initialValue;
+
+      const range = document.querySelector('#T > input[type="range"]');
+      range.min = 0;
+      range.max = 10;
+      range.step = 0.01;
+      range.value = initialValue;
+
+      number.addEventListener("input", () => {
+        this.T = number.valueAsNumber;
+        range.value = number.valueAsNumber;
+        this.eraseHistory();
+      });
+      range.addEventListener("input", () => {
+        this.T = range.valueAsNumber;
+        number.value = range.valueAsNumber;
+        this.eraseHistory();
       });
     }
 
@@ -176,7 +259,7 @@ class Model {
       $id(id).addEventListener("input", () => {
         this[id] = $id(id).valueAsNumber;
         this.states.length = this.Nx * this.Ny;
-        this.resetStates();
+        this.randomizeStates();
         this.canvasDrawer.resize();
         this.canvasDrawer.draw();
       });
@@ -189,7 +272,7 @@ class Model {
         cancelAnimationFrame(this.requestId);
         this.requestId = undefined;
       }
-      this.requestId = requestAnimationFrame(this.run.bind(this));
+      this.runOneFrame();
     });
 
     $id("pause").addEventListener("click", () => {
@@ -219,7 +302,7 @@ class Model {
       this.sigmaDrawer.changeNumberOfStates();
       this.sigmaDrawer.draw();
 
-      this.resetStates();
+      this.randomizeStates();
       this.calculateStat();
       this.drawStat();
       this.canvasDrawer.resize();
@@ -235,7 +318,7 @@ class Model {
       this.sigmaDrawer.changeNumberOfStates();
       this.sigmaDrawer.draw();
 
-      this.resetStates();
+      this.randomizeStates();
       this.calculateStat();
       this.drawStat();
       this.canvasDrawer.resize();
@@ -292,7 +375,7 @@ class Model {
       cancelAnimationFrame(this.requestId);
 
       clearTimeout(this.timeoutId);
-      this.run();
+      this.runOneFrame();
     });
 
     $id("continue").addEventListener("click", (event) => {
@@ -317,21 +400,6 @@ class Model {
     });
   }
 
-  run(timestamp) {
-    this.requestId = undefined;
-
-    for (let i = 0; i < this.speed * this.Nx * this.Ny; i++) {
-      this.proposeNewConfiguration();
-    }
-    this.calculateStat();
-    this.drawStat();
-    this.canvasDrawer.draw();
-
-    if (!this.requestId) {
-      this.requestId = requestAnimationFrame(this.run.bind(this));
-    }
-  }
-
   autorun() {
     this.requestId = undefined;
     this.timeoutId = undefined;
@@ -339,7 +407,7 @@ class Model {
     this.resetStates();
 
     for (let i = 0; i < (expvalHistoryLength + graphHistoryLength) * this.Nx * this.Ny; i++) {
-      this.proposeNewConfiguration();
+      this.doOneMonteCarloStep();
       if (i % (this.Nx * this.Ny) === 0) {
         this.calculateStat();
       }
@@ -371,9 +439,9 @@ class Model {
     for (const elem of document.querySelectorAll("#T > input")) {
       elem.value = this.T.toFixed(2).replace(/\.?0*$/, "");
     }
-    $id("E").innerText   = format(E  );
-    $id("M").innerText   = format(M  );
-    $id("C").innerText   = format(C  );
+    $id("E")  .innerText = format(E  );
+    $id("M")  .innerText = format(M  );
+    $id("C")  .innerText = format(C  );
     $id("chi").innerText = format(chi);
 
     this.graphStep++;
@@ -383,48 +451,6 @@ class Model {
       this.timeoutId = setTimeout(() => this.autorun());
     } else {
       $id("continue").removeAttribute("disabled");
-    }
-  }
-
-  proposeNewConfiguration() {
-    // Randomly select a cell to change its state.
-    const x = Math.floor(Math.random() * this.Nx);
-    const y = Math.floor(Math.random() * this.Ny);
-
-    // Current state
-    const curr = this.states[this.Nx * y + x];
-
-    // Proposed state
-    const prop = (
-      (Math.floor(Math.random() * (this.sigmas.length - 1)) + curr + 1)
-      % this.sigmas.length
-    );
-
-    const currSpin = this.sigmas[curr];
-    const propSpin = this.sigmas[prop];
-
-    const energyDifference = (
-        this.J1 * (this.sigma(x + 1, y    ) + this.sigma(x - 1, y    ))
-      + this.J2 * (this.sigma(x,     y + 1) + this.sigma(x,     y - 1))
-      + this.J3 * (this.sigma(x + 1, y + 1) + this.sigma(x - 1, y - 1))
-      + this.J4 * (this.sigma(x - 1, y + 1) + this.sigma(x + 1, y - 1))
-      + this.J0 * (currSpin + propSpin)
-      + this.h
-    ) * (currSpin - propSpin);
-
-    if (energyDifference < 0) {
-      // If the new configuration has less energy,
-      // always change the state.
-      this.states[this.Nx * y + x] = prop;
-    } else {
-      // If the new configuration has more energy,
-      // change the state by the acceptance ratio.
-      const acceptanceRatio = (
-        this.T <= 0 ? 0 : Math.exp(-energyDifference / this.T)
-      );
-      if (Math.random() < acceptanceRatio) {
-        this.states[this.Nx * y + x] = prop;
-      }
     }
   }
 }
