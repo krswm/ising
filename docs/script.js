@@ -10,6 +10,9 @@ const graphHistoryLength = 30;
 
 const historyLength = Math.max(expvalHistoryLength, graphHistoryLength);
 
+const graphLength = 120;
+console.assert(graphLength >= expvalHistoryLength + graphHistoryLength);
+
 const TPerGraphStep = 0.01;
 
 // "\u2212": MINUS SIGN
@@ -52,6 +55,7 @@ class Model {
     this.graphDrawer = new GraphDrawer(this);
 
     this.requestId = undefined;
+    this.timeoutId = undefined;
     this.runOneFrame();
   }
 
@@ -189,16 +193,66 @@ class Model {
     this.requestId = requestAnimationFrame(() => this.runOneFrame());
   }
 
+  runOneGraphStep() {
+    this.resetStates();
+
+    for (let i = 0; i < graphLength * this.Nx * this.Ny; i++) {
+      this.doOneMonteCarloStep();
+      if (i % (this.Nx * this.Ny) === 0) {
+        this.calculateStat();
+      }
+    }
+    this.canvasDrawer.draw();
+
+    let E   = 0;
+    let M   = 0;
+    let C   = 0;
+    let chi = 0;
+    for (let i = 0; i < graphHistoryLength; i++) {
+      E   += this.EHistory[i];
+      M   += this.MHistory[i];
+      C   += this.CHistory[i];
+      chi += this.chiHistory[i];
+    }
+    E   /= (graphHistoryLength * this.Nx * this.Ny);
+    M   /= (graphHistoryLength * this.Nx * this.Ny);
+    C   /= (graphHistoryLength * this.Nx * this.Ny);
+    chi /= (graphHistoryLength * this.Nx * this.Ny);
+
+    this.TGraph  .push(this.T);
+    this.EGraph  .push(E);
+    this.MGraph  .push(M);
+    this.CGraph  .push(C);
+    this.chiGraph.push(chi);
+    this.graphDrawer.draw();
+
+    for (const elem of document.querySelectorAll("#T > input")) {
+      elem.value = this.T.toFixed(2).replace(/\.?0*$/, "");
+    }
+    $id("E")  .innerText = format(E  );
+    $id("M")  .innerText = format(M  );
+    $id("C")  .innerText = format(C  );
+    $id("chi").innerText = format(chi);
+
+    if (this.graphStep % 500 === 0) {
+      $id("continue").removeAttribute("disabled");
+    } else {
+      this.graphStep++;
+      this.T = TPerGraphStep * this.graphStep;
+      this.timeoutId = setTimeout(() => this.runOneGraphStep());
+    }
+  }
+
   setUpControl() {
     for (const [id, numberMin, rangeMin, rangeMax, initialValue] of [
-      ["speed", 0,     0,  1, 0.5],
-      ["T",     0,     0, 10, 2  ],
-      ["J1",    null, -1,  1, 1  ],
-      ["J2",    null, -1,  1, 1  ],
-      ["J3",    null, -1,  1, 0  ],
-      ["J4",    null, -1,  1, 0  ],
-      ["J0",    null, -1,  1, 0  ],
-      ["h",     null, -2,  2, 0  ],
+      ["speed", 0,     0,  1, 1],
+      ["T",     0,     0, 10, 2],
+      ["J1",    null, -1,  1, 1],
+      ["J2",    null, -1,  1, 1],
+      ["J3",    null, -1,  1, 0],
+      ["J4",    null, -1,  1, 0],
+      ["J0",    null, -1,  1, 0],
+      ["h",     null, -2,  2, 0],
     ]) {
       this[id] = initialValue;
       
@@ -353,7 +407,7 @@ class Model {
       this.resetStates();
 
       cancelAnimationFrame(this.requestId);
-      this.autorun();
+      this.runOneGraphStep();
     });
 
     $id("leave").addEventListener("click", (event) => {
@@ -372,8 +426,6 @@ class Model {
       $id("canvas").style.filter = "";
       $id("canvas").style.opacity = "";
 
-      cancelAnimationFrame(this.requestId);
-
       clearTimeout(this.timeoutId);
       this.runOneFrame();
     });
@@ -386,72 +438,14 @@ class Model {
       $id("enter").style.display = "none";
       $id("leave").removeAttribute("style");
 
-      cancelAnimationFrame(this.requestId);
-
       $id("graph-container").removeAttribute("style");
 
       $id("canvas").style.filter = "blur(0.5rem)";
       $id("canvas").style.opacity = "10%";
 
-      this.resetStates();
-
-      cancelAnimationFrame(this.requestId);
-      this.autorun();
+      this.graphStep++;
+      this.runOneGraphStep();
     });
-  }
-
-  autorun() {
-    this.requestId = undefined;
-    this.timeoutId = undefined;
-
-    this.resetStates();
-
-    for (let i = 0; i < (expvalHistoryLength + graphHistoryLength) * this.Nx * this.Ny; i++) {
-      this.doOneMonteCarloStep();
-      if (i % (this.Nx * this.Ny) === 0) {
-        this.calculateStat();
-      }
-    }
-    this.canvasDrawer.draw();
-
-    let E   = 0;
-    let M   = 0;
-    let C   = 0;
-    let chi = 0;
-    for (let i = 0; i < graphHistoryLength; i++) {
-      E   += this.EHistory[i];
-      M   += this.MHistory[i];
-      C   += this.CHistory[i];
-      chi += this.chiHistory[i];
-    }
-    E   /= (graphHistoryLength * this.Nx * this.Ny);
-    M   /= (graphHistoryLength * this.Nx * this.Ny);
-    C   /= (graphHistoryLength * this.Nx * this.Ny);
-    chi /= (graphHistoryLength * this.Nx * this.Ny);
-
-    this.TGraph  .push(this.T);
-    this.EGraph  .push(E);
-    this.MGraph  .push(M);
-    this.CGraph  .push(C);
-    this.chiGraph.push(chi);
-    this.graphDrawer.draw();
-
-    for (const elem of document.querySelectorAll("#T > input")) {
-      elem.value = this.T.toFixed(2).replace(/\.?0*$/, "");
-    }
-    $id("E")  .innerText = format(E  );
-    $id("M")  .innerText = format(M  );
-    $id("C")  .innerText = format(C  );
-    $id("chi").innerText = format(chi);
-
-    this.graphStep++;
-    if (this.graphStep % 500 !== 1) {
-      this.T = TPerGraphStep * this.graphStep;
-      this.resetStates();
-      this.timeoutId = setTimeout(() => this.autorun());
-    } else {
-      $id("continue").removeAttribute("disabled");
-    }
   }
 }
 
