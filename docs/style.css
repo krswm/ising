@@ -382,12 +382,12 @@ button:not(:disabled):hover {
 button:not(:disabled):active {
   background-color: oklch(90% 0% 0deg);
 }
-#play, #pause, #add, #remove {
+#resume, #pause, #add, #remove {
   background-position: center center;
   background-repeat: no-repeat;
 }
-#play {
-  background-image: url("img/play.svg");
+#resume {
+  background-image: url("img/resume.svg");
 }
 #pause {
   background-image: url("img/pause.svg");

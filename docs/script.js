@@ -59,6 +59,162 @@ class Model {
     this.runOneFrame();
   }
 
+  setUpControl() {
+    for (const [
+      id, numberMin, rangeMin, rangeMax, initialValue, eraseHistory
+    ] of [
+      ["speed", 0,     0,  1, 1, false],
+      ["T",     0,     0, 10, 2, true ],
+      ["J1",    null, -1,  1, 1, false],
+      ["J2",    null, -1,  1, 1, false],
+      ["J3",    null, -1,  1, 0, false],
+      ["J4",    null, -1,  1, 0, false],
+      ["J0",    null, -1,  1, 0, false],
+      ["h",     null, -2,  2, 0, false],
+    ]) {
+      this[id] = initialValue;
+      
+      const number = document.querySelector(`#${id} > input[type="number"]`);
+      if (numberMin !== null) {
+        number.min = numberMin;
+      }
+      number.step = 0.01;
+      number.value = initialValue;
+      
+      const range = $id(id).querySelector(`#${id} > input[type="range"]`);
+      range.min = rangeMin;
+      range.max = rangeMax;
+      range.step = 0.01;
+      range.value = initialValue;
+
+      number.addEventListener("input", () => {
+        this[id] = number.valueAsNumber;
+        range.value = number.valueAsNumber;
+        if (eraseHistory) {
+          this.eraseHistory();
+        }
+      });
+      range.addEventListener("input", () => {
+        this[id] = range.valueAsNumber;
+        number.value = range.valueAsNumber;
+        if (eraseHistory) {
+          this.eraseHistory();
+        }
+      });
+    }
+
+    for (const [id, initialValue] of [["Nx", 50], ["Ny", 50]]) {
+      this[id] = initialValue;
+      $id(id).min = 1;
+      $id(id).value = initialValue;
+      $id(id).addEventListener("input", () => {
+        this[id] = $id(id).valueAsNumber;
+        this.states.length = this.Nx * this.Ny;
+        this.randomizeStates();
+        this.calculateStat();
+        this.drawStat();
+        this.canvasDrawer.resize();
+        this.canvasDrawer.draw();
+      });
+    }
+
+    $id("resume").addEventListener("click", () => {
+      $id("pause").style.display = "";
+      $id("resume").style.display = "none";
+      this.runOneFrame();
+    });
+    $id("pause").addEventListener("click", () => {
+      $id("pause").style.display = "none";
+      $id("resume").style.display = "";
+      cancelAnimationFrame(this.requestId);
+    });
+    $id("continue").addEventListener("click", (event) => {
+      $id("continue").disabled = true;
+      this.graphStep++;
+      this.runOneGraphStep();
+    });
+    $id("enter").addEventListener("click", (event) => {
+      $id("resume").style.display = "none";
+      $id("pause").style.display = "none";
+      $id("continue").style.display = "";
+      $id("continue").disabled = true;
+      $id("enter").style.display = "none";
+      $id("leave").style.display = "";
+      $id("graph-container").style.display = "";
+      $id("canvas").style.filter = "blur(0.5rem)";
+      $id("canvas").style.opacity = "10%";
+
+      cancelAnimationFrame(this.requestId);
+
+      this.TGraph.length = 0;
+      this.EGraph.length = 0;
+      this.MGraph.length = 0;
+      this.CGraph.length = 0;
+      this.chiGraph.length = 0;
+
+      this.graphStep = 1;
+      this.T = TPerGraphStep;
+      this.resetStates();
+      this.runOneGraphStep();
+    });
+    $id("leave").addEventListener("click", (event) => {
+      $id("resume").style.display = "none";
+      $id("pause").style.display = "";
+      $id("continue").style.display = "none";
+      $id("continue").disabled = false;
+      $id("enter").style.display = "";
+      $id("leave").style.display = "none";
+      $id("graph-container").style.display = "none";
+      $id("canvas").style.filter = "";
+      $id("canvas").style.opacity = "";
+
+      clearTimeout(this.timeoutId);
+      this.runOneFrame();
+    });
+
+    $id("reset").addEventListener("click", () => {
+      this.resetStates()
+      this.calculateStat();
+      this.drawStat();
+      this.canvasDrawer.draw();
+    });
+    $id("randomize").addEventListener("click", () => {
+      this.randomizeStates();
+      this.calculateStat();
+      this.drawStat();
+      this.canvasDrawer.draw();
+    });
+
+    $id("add").addEventListener("click", (event) => {
+      this.sigmas.push(0);
+      this.sigmaDrawer.changeNumberOfStates();
+      this.sigmaDrawer.draw();
+
+      $id("remove").disabled = false;
+      this.randomizeStates();
+      this.calculateStat();
+      this.drawStat();
+      this.canvasDrawer.resize();
+      this.canvasDrawer.draw();
+    });
+    $id("remove").addEventListener("click", (event) => {
+      if (this.sigmas.length <= 2) {
+        return;
+      }
+
+      this.sigmas.pop();
+      this.sigmaDrawer.changeNumberOfStates();
+      this.sigmaDrawer.draw();
+
+      $id("remove").disabled = this.sigmas.length <= 2;
+      this.randomizeStates();
+      this.calculateStat();
+      this.drawStat();
+      this.canvasDrawer.resize();
+      this.canvasDrawer.draw();
+    });
+  }
+
   sigma(x, y) {
     // Get sigma with taking the periodic boundary condition into account.
 
@@ -157,7 +313,7 @@ class Model {
     const sigmaProp = this.sigmas[stateProp];
 
     // Calculate EProp - ECurr, where:
-    // - EProp = energy of the system when the proposal is accepted.
+    // - EProp = energy of the system when the proposal is accepted
     // - ECurr = current energy of the system
     // You don't have to calculate EProp and ECurr directly
     // since only the cell and its neighbors contribute to the difference.
@@ -235,217 +391,12 @@ class Model {
     $id("chi").innerText = format(chi);
 
     if (this.graphStep % 500 === 0) {
-      $id("continue").removeAttribute("disabled");
+      $id("continue").disabled = false;
     } else {
       this.graphStep++;
       this.T = TPerGraphStep * this.graphStep;
       this.timeoutId = setTimeout(() => this.runOneGraphStep());
     }
-  }
-
-  setUpControl() {
-    for (const [id, numberMin, rangeMin, rangeMax, initialValue] of [
-      ["speed", 0,     0,  1, 1],
-      ["T",     0,     0, 10, 2],
-      ["J1",    null, -1,  1, 1],
-      ["J2",    null, -1,  1, 1],
-      ["J3",    null, -1,  1, 0],
-      ["J4",    null, -1,  1, 0],
-      ["J0",    null, -1,  1, 0],
-      ["h",     null, -2,  2, 0],
-    ]) {
-      this[id] = initialValue;
-      
-      const number = document.querySelector(`#${id} > input[type="number"]`);
-      if (numberMin !== null) {
-        number.min = numberMin;
-      }
-      number.step = 0.01;
-      number.value = initialValue;
-      
-      const range = $id(id).querySelector(`#${id} > input[type="range"]`);
-      range.min = rangeMin;
-      range.max = rangeMax;
-      range.step = 0.01;
-      range.value = initialValue;
-
-      number.addEventListener("input", () => {
-        this[id] = number.valueAsNumber;
-        range.value = number.valueAsNumber;
-      });
-      range.addEventListener("input", () => {
-        this[id] = range.valueAsNumber;
-        number.value = range.valueAsNumber;
-      });
-    }
-
-    {
-      const initialValue = 2;
-      this.T = initialValue;
-
-      const number = document.querySelector('#T > input[type="number"]');
-      number.min = 0;
-      number.step = 0.01;
-      number.value = initialValue;
-
-      const range = document.querySelector('#T > input[type="range"]');
-      range.min = 0;
-      range.max = 10;
-      range.step = 0.01;
-      range.value = initialValue;
-
-      number.addEventListener("input", () => {
-        this.T = number.valueAsNumber;
-        range.value = number.valueAsNumber;
-        this.eraseHistory();
-      });
-      range.addEventListener("input", () => {
-        this.T = range.valueAsNumber;
-        number.value = range.valueAsNumber;
-        this.eraseHistory();
-      });
-    }
-
-    for (const [id, initialValue] of [["Nx", 50], ["Ny", 50]]) {
-      this[id] = initialValue;
-      $id(id).min = 1;
-      $id(id).value = initialValue;
-      $id(id).addEventListener("input", () => {
-        this[id] = $id(id).valueAsNumber;
-        this.states.length = this.Nx * this.Ny;
-        this.randomizeStates();
-        this.canvasDrawer.resize();
-        this.canvasDrawer.draw();
-      });
-    }
-
-    $id("play").addEventListener("click", () => {
-      $id("play").style.display = "none";
-      $id("pause").style.display = "";
-      if (this.requestId) {
-        cancelAnimationFrame(this.requestId);
-        this.requestId = undefined;
-      }
-      this.runOneFrame();
-    });
-
-    $id("pause").addEventListener("click", () => {
-      $id("pause").style.display = "none";
-      $id("play").style.display = "";
-      if (this.requestId) {
-        cancelAnimationFrame(this.requestId);
-        this.requestId = undefined;
-      }
-    });
-
-    $id("reset").addEventListener("click", () => {
-      this.resetStates()
-      this.calculateStat();
-      this.drawStat();
-      this.canvasDrawer.draw();
-    });
-    $id("randomize").addEventListener("click", () => {
-      this.randomizeStates();
-      this.calculateStat();
-      this.drawStat();
-      this.canvasDrawer.draw();
-    });
-
-    $id("add").addEventListener("click", (event) => {
-      this.sigmas.push(0);
-      this.sigmaDrawer.changeNumberOfStates();
-      this.sigmaDrawer.draw();
-
-      this.randomizeStates();
-      this.calculateStat();
-      this.drawStat();
-      this.canvasDrawer.resize();
-      this.canvasDrawer.draw();
-    });
-
-    $id("remove").addEventListener("click", (event) => {
-      if (this.sigmas.length <= 2) {
-        return;
-      }
-
-      this.sigmas.pop();
-      this.sigmaDrawer.changeNumberOfStates();
-      this.sigmaDrawer.draw();
-
-      this.randomizeStates();
-      this.calculateStat();
-      this.drawStat();
-      this.canvasDrawer.resize();
-      this.canvasDrawer.draw();
-    });
-
-    $id("enter").addEventListener("click", (event) => {
-      $id("play").style.display = "none";
-      $id("pause").style.display = "none";
-      $id("continue").removeAttribute("style");
-      $id("continue").setAttribute("disabled", "");
-      $id("enter").style.display = "none";
-      $id("leave").removeAttribute("style");
-
-      cancelAnimationFrame(this.requestId);
-
-      $id("graph-container").removeAttribute("style");
-
-      $id("canvas-container").style.overflow = "hidden";
-      $id("canvas").style.filter = "blur(0.5rem)";
-      $id("canvas").style.opacity = "10%";
-
-      this.TGraph.length = 0;
-      this.EGraph.length = 0;
-      this.MGraph.length = 0;
-      this.CGraph.length = 0;
-      this.chiGraph.length = 0;
-
-      this.graphStep = 1;
-      this.T = TPerGraphStep;
-
-      this.resetStates();
-
-      cancelAnimationFrame(this.requestId);
-      this.runOneGraphStep();
-    });
-
-    $id("leave").addEventListener("click", (event) => {
-      $id("play").style.display = "none";
-      $id("pause").removeAttribute("style");
-      $id("continue").style.display = "none";
-      $id("continue").removeAttribute("disabled");
-      $id("enter").removeAttribute("style");
-      $id("leave").style.display = "none";
-
-      $id("graph-container").style.display = "none";
-
-      // Do not use removeAttribute,
-      // otherwise style.width and style.height will be lost.
-      $id("canvas").style.overflow = "";
-      $id("canvas").style.filter = "";
-      $id("canvas").style.opacity = "";
-
-      clearTimeout(this.timeoutId);
-      this.runOneFrame();
-    });
-
-    $id("continue").addEventListener("click", (event) => {
-      $id("play").style.display = "none";
-      $id("pause").style.display = "none";
-      $id("continue").removeAttribute("style");
-      $id("continue").setAttribute("disabled", "");
-      $id("enter").style.display = "none";
-      $id("leave").removeAttribute("style");
-
-      $id("graph-container").removeAttribute("style");
-
-      $id("canvas").style.filter = "blur(0.5rem)";
-      $id("canvas").style.opacity = "10%";
-
-      this.graphStep++;
-      this.runOneGraphStep();
-    });
   }
 }
 
@@ -558,8 +509,6 @@ class SigmaDrawer {
         this.model.canvasDrawer.draw();
       });
     }
-
-    $id("remove").disabled = this.model.sigmas.length <= 2;
   }
 
   draw() {
@@ -600,12 +549,12 @@ class CanvasDrawer {
 
   resize() {
     const dpr = window.devicePixelRatio;
-    this.zoom = Math.max(
+    this.zoom = Math.min(Math.max(
       Math.floor(Math.min(
         $id("canvas-container").offsetWidth / this.model.Nx * dpr,
         $id("canvas-container").offsetHeight / this.model.Ny * dpr,
       )),
-      1,
+      1), 32 * dpr
     );
 
     $id("canvas").style.width = `${this.model.Nx * this.zoom / dpr}px`;
