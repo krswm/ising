@@ -54,6 +54,7 @@ class Model {
     this.canvasDrawer = new CanvasDrawer(this);
     this.graphDrawer = new GraphDrawer(this);
 
+    this.TSaved = this.T;
     this.requestId = undefined;
     this.timeoutId = undefined;
     this.runOneFrame();
@@ -113,7 +114,7 @@ class Model {
         this.randomizeStates();
         this.calculateStat();
         this.drawStat();
-        this.canvasDrawer.resize();
+        this.canvasDrawer.configure();
         this.canvasDrawer.draw();
       });
     }
@@ -146,6 +147,17 @@ class Model {
 
       cancelAnimationFrame(this.requestId);
 
+      for (const elem of document.querySelectorAll(
+        "#control input, #control button:not(#continue):not(#leave)"
+      )) {
+        elem.style.pointerEvents = "none";
+      }
+      this.TSaved = this.T;
+      document.querySelector('#speed > input[type="number"]').value = "";
+      document.querySelector('#speed > input[type="range"]').value = (
+        document.querySelector('#speed > input[type="range"]').max
+      );
+
       this.TGraph.length = 0;
       this.EGraph.length = 0;
       this.MGraph.length = 0;
@@ -169,6 +181,20 @@ class Model {
       $id("canvas").style.opacity = "";
 
       clearTimeout(this.timeoutId);
+
+      for (const elem of document.querySelectorAll(
+        "#control input, #control button"
+      )) {
+        elem.style.pointerEvents = "";
+      }
+      this.T = this.TSaved;
+      for (const elem of document.querySelectorAll("#speed > input")) {
+        elem.value = this.speed.toFixed(2).replace(/\.?0*$/, "");
+      }
+      for (const elem of document.querySelectorAll("#T > input")) {
+        elem.value = this.T.toFixed(2).replace(/\.?0*$/, "");
+      }
+
       this.runOneFrame();
     });
 
@@ -187,14 +213,14 @@ class Model {
 
     $id("add").addEventListener("click", (event) => {
       this.sigmas.push(0);
-      this.sigmaDrawer.changeNumberOfStates();
+      this.sigmaDrawer.configure();
       this.sigmaDrawer.draw();
 
       $id("remove").disabled = false;
       this.randomizeStates();
       this.calculateStat();
       this.drawStat();
-      this.canvasDrawer.resize();
+      this.canvasDrawer.configure();
       this.canvasDrawer.draw();
     });
     $id("remove").addEventListener("click", (event) => {
@@ -203,14 +229,14 @@ class Model {
       }
 
       this.sigmas.pop();
-      this.sigmaDrawer.changeNumberOfStates();
+      this.sigmaDrawer.configure();
       this.sigmaDrawer.draw();
 
       $id("remove").disabled = this.sigmas.length <= 2;
       this.randomizeStates();
       this.calculateStat();
       this.drawStat();
-      this.canvasDrawer.resize();
+      this.canvasDrawer.configure();
       this.canvasDrawer.draw();
     });
   }
@@ -401,8 +427,8 @@ class Model {
 }
 
 function getPredrawnCanvases(sigmas, zoom) {
-  const lightnessMin = 5;
-  const lightnessMax = 95;
+  const lightnessMin = 10;
+  const lightnessMax = 90;
   const lightnessRange = lightnessMax - lightnessMin;
   const lightnessMiddle = (lightnessMin + lightnessMax) / 2;
 
@@ -460,11 +486,11 @@ class SigmaDrawer {
       this.draw();
     });
 
-    this.changeNumberOfStates();
+    this.configure();
     this.draw();
   }
 
-  changeNumberOfStates() {
+  configure() {
     for (const div of document.querySelectorAll(".sigma")) {
       div.remove();
     }
@@ -498,14 +524,14 @@ class SigmaDrawer {
         range.value = number.valueAsNumber;
         this.model.sigmas[i] = number.valueAsNumber;
         this.draw();
-        this.model.canvasDrawer.resize();
+        this.model.canvasDrawer.configure();
         this.model.canvasDrawer.draw();
       });
       range.addEventListener("input", (event) => {
         number.value = range.valueAsNumber;
         this.model.sigmas[i] = range.valueAsNumber;
         this.draw();
-        this.model.canvasDrawer.resize();
+        this.model.canvasDrawer.configure();
         this.model.canvasDrawer.draw();
       });
     }
@@ -534,20 +560,20 @@ class CanvasDrawer {
     // Watch for changes on window.devicePixelRatio.
     window.matchMedia("(min-resolution: 2dppx)")
     .addEventListener("change", (event) => {
-      this.resize();
+      this.configure();
       this.draw();
     });
 
     new ResizeObserver(() => {
-      this.resize();
+      this.configure();
       this.draw();
     }).observe($id("canvas-container"));
 
-    this.resize();
+    this.configure();
     this.draw();
   }
 
-  resize() {
+  configure() {
     const dpr = window.devicePixelRatio;
     this.zoom = Math.min(Math.max(
       Math.floor(Math.min(
@@ -589,14 +615,14 @@ class GraphDrawer {
     // Watch for changes on window.devicePixelRatio.
     window.matchMedia("(min-resolution: 2dppx)")
     .addEventListener("change", (event) => {
-      this.resize();
+      this.configure();
       this.draw();
     });
 
-    this.resize();
+    this.configure();
   }
 
-  resize() {
+  configure() {
     // Canvas pixel per 1rem.
     this.rem = 16 * window.devicePixelRatio;
 
@@ -621,11 +647,11 @@ class GraphDrawer {
     const TMax = 5;
 
     // Q stands for quantity.
-    for (const [QGraph, QHistory, QContext, isQAlwaysPositive] of [
-      [model.EGraph,   model.EHistory,   this.EContext,   false],
-      [model.MGraph,   model.MHistory,   this.MContext,   false],
-      [model.CGraph,   model.CHistory,   this.CContext,   true ],
-      [model.chiGraph, model.chiHistory, this.chiContext, true ],
+    for (const [QGraph, QHistory, QContext] of [
+      [model.EGraph,   model.EHistory,   this.EContext  ],
+      [model.MGraph,   model.MHistory,   this.MContext  ],
+      [model.CGraph,   model.CHistory,   this.CContext  ],
+      [model.chiGraph, model.chiHistory, this.chiContext],
     ]) {
       // Erase.
       QContext.clearRect(0, 0, QContext.canvas.width, QContext.canvas.height);
@@ -651,60 +677,27 @@ class GraphDrawer {
       }
 
       // Draw horizontal lines.
-      if (isQAlwaysPositive) {
-        for (let i = 0; i <= 5; i++) {
-          const Q = QMax / 5 * i;
+      for (let i = 0; i <= 5; i++) {
+        const Q = QMax / 5 * i + QMin;
 
-          let Y;
-          if (QMin === QMax) {
-            Y = isQAlwaysPositive ? this.YBottom : this.YBottom - (this.YBottom - this.YTop) / 2;
-          } else {
-            Y = this.YBottom - (Q - QMin) / (QMax - QMin) * (this.YBottom - this.YTop);
-          }
+        const Y = this.YBottom - i * 64;
 
-          QContext.beginPath();
-          QContext.moveTo(this.XLeft, Y);
-          QContext.lineTo(this.XRight, Y);
-          QContext.strokeStyle = "oklch(80% 0% 0deg)";
-          QContext.strokeWidth = `{this.rem}`;
-          QContext.stroke();
+        QContext.beginPath();
+        QContext.moveTo(this.XLeft, Y);
+        QContext.lineTo(this.XRight, Y);
+        QContext.strokeStyle = "oklch(80% 0% 0deg)";
+        QContext.strokeWidth = `{this.rem}`;
+        QContext.stroke();
 
-          QContext.save();
-          QContext.font = `${this.rem / 2}px system-ui`;
-          QContext.textAlign = "center";
-          QContext.textBaseline = "middle";
-          QContext.fillStyle = "oklch(80% 0% 0deg)";
-          QContext.translate(this.XLeft - this.rem / 2, Y);
-          QContext.rotate(-Math.PI / 2);
-          QContext.fillText(QTicks[i], 0, 0);
-          QContext.restore();
-        }
-      } else {
-        for (let Q = QMin; Q <= QMax; Q++) {
-          let Y;
-          if (QMin === QMax) {
-            Y = isQAlwaysPositive ? this.YBottom : this.YBottom - (this.YBottom - this.YTop) / 2;
-          } else {
-            Y = this.YBottom - (Q - QMin) / (QMax - QMin) * (this.YBottom - this.YTop);
-          }
-
-          QContext.beginPath();
-          QContext.moveTo(this.XLeft, Y);
-          QContext.lineTo(this.XRight, Y);
-          QContext.strokeStyle = "oklch(80% 0% 0deg)";
-          QContext.strokeWidth = `{this.rem}`;
-          QContext.stroke();
-
-          QContext.save();
-          QContext.font = `${this.rem / 2}px system-ui`;
-          QContext.textAlign = "center";
-          QContext.textBaseline = "middle";
-          QContext.fillStyle = "oklch(80% 0% 0deg)";
-          QContext.translate(this.XLeft - this.rem / 2, Y);
-          QContext.rotate(-Math.PI / 2);
-          QContext.fillText(`${Q}`, 0, 0);
-          QContext.restore();
-        }
+        QContext.save();
+        QContext.font = `${this.rem / 2}px system-ui`;
+        QContext.textAlign = "center";
+        QContext.textBaseline = "middle";
+        QContext.fillStyle = "oklch(80% 0% 0deg)";
+        QContext.translate(this.XLeft - this.rem / 2, Y);
+        QContext.rotate(-Math.PI / 2);
+        QContext.fillText(QTicks[i], 0, 0);
+        QContext.restore();
       }
 
       // Draw dots.
@@ -713,12 +706,7 @@ class GraphDrawer {
 
         const X = this.XLeft + T / TMax * (this.XRight - this.XLeft);
 
-        let Y;
-        if (QMin === QMax) {
-          Y = isQAlwaysPositive ? this.YBottom : this.YBottom - (this.YBottom - this.YTop) / 2;
-        } else {
-          Y = this.YBottom - (Q - QMin) / (QMax - QMin) * (this.YBottom - this.YTop);
-        }
+        const Y = this.YBottom - (Q - QMin) / (QMax - QMin) * (this.YBottom - this.YTop);
 
         QContext.beginPath();
         QContext.ellipse(X, Y, this.rem / 16, this.rem / 16, 0, 0, 2 * Math.PI);
@@ -734,6 +722,11 @@ class GraphDrawer {
     const ran = max - min;
     let exp = Math.ceil(Math.log10(ran)) - 1;
     let man = ran / 10 ** exp;
+
+    if (exp <= -3) {
+      exp = -3;
+      man = 10;
+    }
 
     for (const [newMan, altExp, altMan] of [
       [2.5, exp, 5], [5, exp, 10], [10, exp + 1, 2.5],
@@ -759,14 +752,11 @@ class GraphDrawer {
     const QMax = man * 10 ** exp + min;
 
     const QTicks = [];
-    if (exp >= -2 && exp <= 2) {
-      for (let i = 0; i <= 5; i++) {
-        QTicks.push((man * i * 10 ** exp / 5 + min).toString().replace("-", "\u2212"));
-      }
-    } else {
-      for (let i = 0; i <= 5; i++) {
-        QTicks.push((man * i * 10 ** exp / 5 + min).toExponential().replace("-", "\u2212"));
-      }
+    for (let i = 0; i <= 5; i++) {
+      QTicks.push(
+        (man * i * 10 ** exp / 5 + min).toFixed(6)
+        .replace(/\.?0*$/, "").replace("-", "\u2212")
+      );
     }
 
     return [QMin, QMax, QTicks];
