@@ -607,9 +607,9 @@ class GraphDrawer {
   constructor(model) {
     this.model = model;
 
-    this.EContext = $id("E-canvas").getContext("2d");
-    this.MContext = $id("M-canvas").getContext("2d");
-    this.CContext = $id("C-canvas").getContext("2d");
+    this.EContext   = $id("E-canvas"  ).getContext("2d");
+    this.MContext   = $id("M-canvas"  ).getContext("2d");
+    this.CContext   = $id("C-canvas"  ).getContext("2d");
     this.chiContext = $id("chi-canvas").getContext("2d");
 
     // Watch for changes on window.devicePixelRatio.
@@ -628,16 +628,16 @@ class GraphDrawer {
 
     // X and Y are in canvas coordinates.
     // Do not confuse them with x and y.
-    this.XLeft = 1 * this.rem;
-    this.XRight = 11 * this.rem;
-    this.YTop = 0.5 * this.rem;
-    this.YBottom = 10.5 * this.rem;
+    this.XLeft   = 1  * this.rem;
+    this.XRight  = 11 * this.rem;
+    this.YTop    = 1  * this.rem;
+    this.YBottom = 11 * this.rem;
 
     for (const canvas of [
       $id("E-canvas"), $id("M-canvas"), $id("C-canvas"), $id("chi-canvas")
     ]) {
-      canvas.width = 11.5 * this.rem;
-      canvas.height = 11.5 * this.rem;
+      canvas.width  = 12 * this.rem;
+      canvas.height = 12 * this.rem;
     }
   }
 
@@ -719,9 +719,9 @@ class GraphDrawer {
   getQMinQMax(QGraph) {
     const max = Math.max(...QGraph);
     let min = Math.min(...QGraph);
-    const ran = max - min;
-    let exp = Math.ceil(Math.log10(ran)) - 1;
-    let man = ran / 10 ** exp;
+    const ran = max - min;  /* Range */
+    let exp = Math.ceil(Math.log10(ran)) - 1;  /* Exponent */
+    let man = ran / 10 ** exp;  /* Mantissa */
 
     if (exp <= -3) {
       exp = -3;

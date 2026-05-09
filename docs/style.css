@@ -82,16 +82,15 @@ body {
 .graph {
   display: grid;
   grid:
-    ". c c c" 0.5rem
-    "y c c c" 10rem
-    ". c c c" 1rem
-    ". . x ." 1rem /
-    1rem 1rem 10rem 0.5rem;
+    ". . c c c" 1rem
+    ". y c c c" 10rem
+    ". . c c c" 1rem
+    ". . . x ." 1rem
+    ". . . . ." 0.5rem /
+    0.5rem 1rem 1rem 10rem 1rem;
 
-  /* 0.5rem + 12.5rem + 0.5rem = 13.5rem */
-  height: 12.5rem;
-  width: 12.5rem;
-  padding: 0.5rem;
+  height: 13.5rem;
+  width: 13.5rem;
   border: 1px solid oklch(80% 0% 0deg);
   border-radius: 0.5rem;
 
@@ -100,9 +99,8 @@ body {
 .graph > canvas {
   grid-area: c;  /* canvas */
 
-  /* 0.5rem + 10rem + 1rem = 11.5rem */
-  height: 11.5rem;
-  width: 11.5rem;
+  height: 12rem;
+  width: 12rem;
 }
 .graph > div {
   place-self: center;
