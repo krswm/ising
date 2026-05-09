@@ -70,14 +70,14 @@ body {
   #graph-container {
     grid: auto auto / auto auto;
   }
+  #graph-container > div:nth-of-type(even) {
+    order: 1;
+  }
 }
 @media (height < 46rem) {
   #graph-container {
     grid: auto / auto auto auto auto;
   }
-}
-#graph-container > div:nth-of-type(even) {
-  order: 1;
 }
 .graph {
   display: grid;
@@ -108,10 +108,10 @@ body {
   font-size: 0.75rem;
 }
 .graph > div:nth-of-type(1) {
-  grid-area: x;  /* x label */
+  grid-area: x;  /* X label */
 }
 .graph > div:nth-of-type(2) {
-  grid-area: y;  /* y label */
+  grid-area: y;  /* Y label */
 
   transform: rotate(-90deg);
 }

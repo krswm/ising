@@ -1,15 +1,8 @@
 const $id = id => document.getElementById(id);
 
-// Expected values are calculated
-// by averaging expvalHistoryLength most recent values.
 const expvalHistoryLength = 60;
-
-// The y-axis values on the graph are calculated
-// by averaging graphHistoryLength most recent values.
 const graphHistoryLength = 30;
-
 const historyLength = Math.max(expvalHistoryLength, graphHistoryLength);
-
 const graphLength = 120;
 console.assert(graphLength >= expvalHistoryLength + graphHistoryLength);
 
@@ -65,7 +58,7 @@ class Model {
       id, numberMin, rangeMin, rangeMax, initialValue, eraseHistory
     ] of [
       ["speed", 0,     0,  1, 1, false],
-      ["T",     0,     0, 10, 2, true ],
+      ["T",     0,     0, 10, 1, true ],
       ["J1",    null, -1,  1, 1, false],
       ["J2",    null, -1,  1, 1, false],
       ["J3",    null, -1,  1, 0, false],
@@ -287,6 +280,8 @@ class Model {
       }
     }
 
+    // Expected values are calculated (approximated)
+    // by averaging expvalHistoryLength most recent values.
     let EExpval  = 0;
     let E2Expval = 0;
     let MExpval  = 0;
@@ -366,6 +361,7 @@ class Model {
   }
 
   runOneFrame() {
+    // this.speed = Number of Monte Carlo steps / N / animation frame
     for (let i = 0; i < this.speed * this.Nx * this.Ny; i++) {
       this.doOneMonteCarloStep();
     }
@@ -386,6 +382,8 @@ class Model {
     }
     this.canvasDrawer.draw();
 
+    // The Y-axis values on the graph are calculated
+    // by averaging graphHistoryLength most recent values.
     let E   = 0;
     let M   = 0;
     let C   = 0;
@@ -427,6 +425,8 @@ class Model {
 }
 
 function getPredrawnCanvases(sigmas, zoom) {
+  // Pre-draw arrows to improve performance.
+
   const lightnessMin = 10;
   const lightnessMax = 90;
   const lightnessRange = lightnessMax - lightnessMin;
@@ -639,127 +639,159 @@ class GraphDrawer {
       canvas.width  = 12 * this.rem;
       canvas.height = 12 * this.rem;
     }
-  }
 
-  draw() {
-    const model = this.model;
-
-    const TMax = 5;
-
-    // Q stands for quantity.
-    for (const [QGraph, QHistory, QContext] of [
-      [model.EGraph,   model.EHistory,   this.EContext  ],
-      [model.MGraph,   model.MHistory,   this.MContext  ],
-      [model.CGraph,   model.CHistory,   this.CContext  ],
-      [model.chiGraph, model.chiHistory, this.chiContext],
-    ]) {
-      // Erase.
-      QContext.clearRect(0, 0, QContext.canvas.width, QContext.canvas.height);
-
-      const [QMin, QMax, QTicks] = this.getQMinQMax(QGraph);
+    // Pre-draw gridlines.
+    {
+      this.gridlineCanvas = new OffscreenCanvas(12 * this.rem, 12 * this.rem);
+      const context = this.gridlineCanvas.getContext(
+        "2d", {transparent: false}
+      );
+      context.strokeStyle = "oklch(90% 0% 0deg)";
+      context.lineCap = "square";
+      context.lineWidth = this.rem / 16;
 
       // Draw vertical lines.
-      for (let T = 0; T <= TMax; T++) {
-        const X = this.XLeft + T / TMax * (this.XRight - this.XLeft);
-
-        QContext.beginPath();
-        QContext.moveTo(X, this.YTop);
-        QContext.lineTo(X, this.YBottom);
-        QContext.strokeStyle = "oklch(80% 0% 0deg)";
-        QContext.strokeWidth = `{this.rem}`;
-        QContext.stroke();
-
-        QContext.font = `${this.rem / 2}px system-ui`;
-        QContext.textAlign = "center";
-        QContext.textBaseline = "middle";
-        QContext.fillStyle = "oklch(80% 0% 0deg)";
-        QContext.fillText(`${T}`, X, this.YBottom + this.rem / 2);
+      for (let i = 0; i <= 5; i++) {
+        const X = this.XLeft + (this.XRight - this.XLeft) * i / 5;
+        context.beginPath();
+        context.moveTo(X, this.YTop);
+        context.lineTo(X, this.YBottom);
+        context.stroke();
       }
 
       // Draw horizontal lines.
       for (let i = 0; i <= 5; i++) {
-        const Q = QMax / 5 * i + QMin;
-
-        const Y = this.YBottom - i * 64;
-
-        QContext.beginPath();
-        QContext.moveTo(this.XLeft, Y);
-        QContext.lineTo(this.XRight, Y);
-        QContext.strokeStyle = "oklch(80% 0% 0deg)";
-        QContext.strokeWidth = `{this.rem}`;
-        QContext.stroke();
-
-        QContext.save();
-        QContext.font = `${this.rem / 2}px system-ui`;
-        QContext.textAlign = "center";
-        QContext.textBaseline = "middle";
-        QContext.fillStyle = "oklch(80% 0% 0deg)";
-        QContext.translate(this.XLeft - this.rem / 2, Y);
-        QContext.rotate(-Math.PI / 2);
-        QContext.fillText(QTicks[i], 0, 0);
-        QContext.restore();
-      }
-
-      // Draw dots.
-      for (const [i, T] of model.TGraph.entries()) {
-        const Q = QGraph[i];
-
-        const X = this.XLeft + T / TMax * (this.XRight - this.XLeft);
-
-        const Y = this.YBottom - (Q - QMin) / (QMax - QMin) * (this.YBottom - this.YTop);
-
-        QContext.beginPath();
-        QContext.ellipse(X, Y, this.rem / 16, this.rem / 16, 0, 0, 2 * Math.PI);
-        QContext.fillStyle = "black";
-        QContext.fill();
+        const Y = this.YBottom - (this.YBottom - this.YTop) * i / 5;
+        context.beginPath();
+        context.moveTo(this.XLeft, Y);
+        context.lineTo(this.XRight, Y);
+        context.stroke();
       }
     }
   }
 
-  getQMinQMax(QGraph) {
-    const max = Math.max(...QGraph);
-    let min = Math.min(...QGraph);
-    const ran = max - min;  /* Range */
-    let exp = Math.ceil(Math.log10(ran)) - 1;  /* Exponent */
-    let man = ran / 10 ** exp;  /* Mantissa */
+  draw() {
+    const TMax = Math.ceil(Math.max(...this.model.TGraph) / 5) * 5;
 
-    if (exp <= -3) {
-      exp = -3;
-      man = 10;
+    for (const [graph, context] of [
+      [this.model.EGraph,   this.EContext  ],
+      [this.model.MGraph,   this.MContext  ],
+      [this.model.CGraph,   this.CContext  ],
+      [this.model.chiGraph, this.chiContext],
+    ]) {
+      const [min, max, ticks] = this.getVisibleRangeOfYAxis(graph);
+
+      // Erase the canvas.
+      context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+      // Draw gridlines.
+      context.drawImage(this.gridlineCanvas, 0, 0);
+
+      // Draw X labels.
+      for (let i = 0; i <= 5; i++) {
+        const T = TMax * i / 5;
+        const X = this.XLeft + (this.XRight - this.XLeft) * i / 5;
+
+        context.font = `${this.rem / 2}px system-ui`;
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+
+        context.fillStyle = "oklch(90% 0% 0deg)";
+        context.fillText(`${T}`, X, this.YBottom + this.rem / 2);
+      }
+
+      // Draw Y labels.
+      for (let i = 0; i <= 5; i++) {
+        const Y = this.YBottom - (this.YBottom - this.YTop) * i / 5;
+
+        context.font = `${this.rem / 2}px system-ui`;
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+
+        context.save();
+        context.translate(this.XLeft - this.rem / 2, Y);
+        context.rotate(-Math.PI / 2);
+        context.fillStyle = "oklch(90% 0% 0deg)";
+        context.fillText(ticks[i], 0, 0);
+        context.restore();
+      }
+
+      // Draw points.
+      for (const [i, T] of this.model.TGraph.entries()) {
+        const X = this.XLeft + T / TMax * (this.XRight - this.XLeft);
+        const Y = (
+          this.YBottom
+          - (graph[i] - min) / (max - min) * (this.YBottom - this.YTop)
+        );
+
+        context.beginPath();
+        context.ellipse(X, Y, this.rem / 16, this.rem / 16, 0, 0, 2 * Math.PI);
+        context.fillStyle = "black";
+        context.fill();
+      }
+    }
+  }
+
+  getVisibleRangeOfYAxis(graph) {
+    // Get an appropriate visible range for the Y axis.
+    // I have the following criteria.
+    // - All points are visible.
+    // - The span of the visible range is snapped to one of:
+    //   10e-3, 2.5e-2, 5e-2, 10e-2, 2.5e-1, 5e-1, 10e-1, 2.5e0, 5e0, 10e0, ...
+    // - Each tick (the six horizontal lines) is snapped to
+    //   a multiple of span / 5.
+    
+    let min0 = Math.min(...graph);
+    let max0 = Math.max(...graph);
+    let spn0 = max0 - min0;
+    let exp0 = Math.ceil(Math.log10(spn0)) - 1;  /* Exponent */
+    let sig0 = spn0 / 10 ** exp0;  /* Significand */
+    if (exp0 <= -3) {
+      exp0 = -3;
+      sig0 = 10;
     }
 
-    for (const [newMan, altExp, altMan] of [
-      [2.5, exp, 5], [5, exp, 10], [10, exp + 1, 2.5],
+    let min;
+    let max;
+    let exp;
+    let sig;
+    for (const [exp1, sig1, exp2, sig2] of [
+      [exp0, 2.5, exp0, 5], [exp0, 5, exp0, 10], [exp0, 10, exp0 + 1, 2.5],
     ]) {
-      if (man <= newMan) {
-        let inc = newMan * 10 ** exp / 5;
-        const newMin = Math.floor(min / inc) * inc;
-        const newMax = newMan * 10 ** exp + newMin
-        if (max <= newMax) {
-          min = newMin;
-          man = newMan;
+      if (sig0 <= sig1) {
+        let inc1 = sig1 * 10 ** exp1 / 5;  /* Increment */
+        let min1 = Math.floor(min0 / inc1) * inc1;
+        let max1 = min1 + sig1 * 10 ** exp1;
+
+        if (max0 <= max1) {
+          min = min1;
+          max = max1;
+          exp = exp1;
+          sig = sig1;
         } else {
-          exp = altExp;
-          man = altMan;
-          inc = man * 10 ** exp / 5;
-          min = Math.floor(min / inc) * inc;
+          inc2 = sig2 * 10 ** exp2 / 5;
+          min2 = Math.floor(min0 / inc2) * inc2;
+          max2 = min2 + sig2 * 10 ** exp2;
+
+          min = min2;
+          max = max2;
+          exp = exp2;
+          sig = sig2;
         }
         break;
       }
     }
-    
-    const QMin = min;
-    const QMax = man * 10 ** exp + min;
 
-    const QTicks = [];
+    // Use toFixed(12) to prevent a float arithmetic error to be displayed.
+    const ticks = [];
     for (let i = 0; i <= 5; i++) {
-      QTicks.push(
-        (man * i * 10 ** exp / 5 + min).toFixed(6)
+      ticks.push(
+        (sig * 10 ** exp * i / 5 + min).toFixed(12)
         .replace(/\.?0*$/, "").replace("-", "\u2212")
       );
     }
 
-    return [QMin, QMax, QTicks];
+    return [min, max, ticks];
   }
 }
 
