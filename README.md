@@ -6,6 +6,10 @@ I wrote it in HTML+CSS+JavaScript with the Metropolis algorithm.
 
 ## Features
 
+![Website](img/website.png)
+
+![Graph mode](img/graph-mode.png)
+
 Visualize the spin configuration real-time.
 
 Display the quantities real-time.
