@@ -11,7 +11,7 @@ const TPerGraphStep = 0.01;
 // "\u2212": MINUS SIGN
 // "\u2014": EM DASH
 const format = (value) => (
-  isFinite(value) ? value.toFixed(3).replace("-", "\u2212") : "\u2014"
+  Number.isFinite(value) ? value.toFixed(3).replace("-", "\u2212") : "\u2014"
 );
 
 // Shape of an arrow
@@ -102,6 +102,11 @@ class Model {
       $id(id).min = 1;
       $id(id).value = initialValue;
       $id(id).addEventListener("input", () => {
+        const value = $id(id).valueAsNumber;
+        if (!Number.isFinite(value) || value < 1) {
+          return;
+        }
+
         this[id] = $id(id).valueAsNumber;
         this.states.length = this.Nx * this.Ny;
         this.randomizeStates();
@@ -450,7 +455,7 @@ function getPredrawnCanvases(sigmas, zoom) {
     context.fillRect(0, 0, zoom, zoom);
 
     // Draw an arrow.
-    if (zoom >= 8 * window.devicePixelRatio) {
+    if (zoom >= 8 * window.devicePixelRatio && sigma !== 0) {
       const transformedArrowPath = new Path2D();
       transformedArrowPath.addPath(arrowPath, {
         a: zoom / 16,
@@ -769,9 +774,9 @@ class GraphDrawer {
           exp = exp1;
           sig = sig1;
         } else {
-          inc2 = sig2 * 10 ** exp2 / 5;
-          min2 = Math.floor(min0 / inc2) * inc2;
-          max2 = min2 + sig2 * 10 ** exp2;
+          let inc2 = sig2 * 10 ** exp2 / 5;
+          let min2 = Math.floor(min0 / inc2) * inc2;
+          let max2 = min2 + sig2 * 10 ** exp2;
 
           min = min2;
           max = max2;
