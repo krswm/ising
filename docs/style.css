@@ -30,7 +30,7 @@ body {
   height: 100vh;
   padding: 1rem;
 
-  overflow: hidden scroll;
+  overflow: hidden auto;
 }
 
 #canvas-container {
@@ -43,7 +43,7 @@ body {
   height: 100%;
   width: 100%;
 
-  overflow: scroll;
+  overflow: auto;
 }
 #canvas {
   place-self: center;
@@ -62,7 +62,7 @@ body {
   max-height: 100%;
   max-width: 100%;
 
-  overflow: scroll;
+  overflow: auto;
 }
 /* 1rem + 13.5rem + 1rem + 13.5rem + 1rem + 14rem + 1rem = 45rem */
 /* 45rem + 1rem = 46rem for slight thickness of border. */
@@ -156,7 +156,7 @@ body {
   padding: 1rem;
 
   background-color: oklch(95% 0% 0deg);
-  overflow: hidden scroll;
+  overflow: hidden auto;
 }
 .box {
   align-self: center;
