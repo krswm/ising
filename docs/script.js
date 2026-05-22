@@ -97,7 +97,7 @@ class Model {
       });
     }
 
-    for (const [id, initialValue] of [["Nx", 50], ["Ny", 50]]) {
+    for (const [id, initialValue] of [["Nx", 20], ["Ny", 20]]) {
       this[id] = initialValue;
       $id(id).min = 1;
       $id(id).value = initialValue;
