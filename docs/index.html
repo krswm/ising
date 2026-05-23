@@ -82,14 +82,6 @@
       </header>
 
       <div class="box">
-        <div class="button-container">
-          <button id="pause"></button>
-          <button id="resume" style="display: none;"></button>
-          <button id="continue" style="display: none;">Continue</button>
-          <button id="enter">Enter graph mode</button>
-          <button id="leave" style="display: none;">Leave graph mode</button>
-        </div>
-
         <div class="slider" id="speed">
           <div>Simulation speed</div>
           <input type="number" />
@@ -103,6 +95,11 @@
           <div>\(k_{\mathrm{B}} T =\)</div>
           <input type="number" />
           <input type="range" />
+        </div>
+
+        <div class="button-container">
+          <button id="enter">Cool the system and plot graphs</button>
+          <button id="leave" style="display: none;">Return to the interactive simulation</button>
         </div>
       </div>
 
@@ -122,8 +119,7 @@
 
       <div class="box">
         <div class="button-container">
-          <button id="reset">Reset states</button>
-          <button id="randomize">Randomize states</button>
+          <button id="randomize">Randomize states on all sites</button>
         </div>
 
         <details>

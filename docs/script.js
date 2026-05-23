@@ -114,26 +114,7 @@ class Model {
       });
     }
 
-    $id("resume").addEventListener("click", () => {
-      $id("pause").style.display = "";
-      $id("resume").style.display = "none";
-      this.runOneFrame();
-    });
-    $id("pause").addEventListener("click", () => {
-      $id("pause").style.display = "none";
-      $id("resume").style.display = "";
-      cancelAnimationFrame(this.requestId);
-    });
-    $id("continue").addEventListener("click", (event) => {
-      $id("continue").disabled = true;
-      this.graphStep++;
-      this.runOneGraphStep();
-    });
     $id("enter").addEventListener("click", (event) => {
-      $id("resume").style.display = "none";
-      $id("pause").style.display = "none";
-      $id("continue").style.display = "";
-      $id("continue").disabled = true;
       $id("enter").style.display = "none";
       $id("leave").style.display = "";
       $id("graph-container").style.display = "";
@@ -143,7 +124,7 @@ class Model {
       cancelAnimationFrame(this.requestId);
 
       for (const elem of document.querySelectorAll(
-        "#control input, #control button:not(#continue):not(#leave)"
+        "#control input, #control button:not(#leave)"
       )) {
         elem.style.pointerEvents = "none";
       }
@@ -173,10 +154,6 @@ class Model {
       this.runOneGraphStep();
     });
     $id("leave").addEventListener("click", (event) => {
-      $id("resume").style.display = "none";
-      $id("pause").style.display = "";
-      $id("continue").style.display = "none";
-      $id("continue").disabled = false;
       $id("enter").style.display = "";
       $id("leave").style.display = "none";
       $id("graph-container").style.display = "none";
@@ -201,12 +178,6 @@ class Model {
       this.runOneFrame();
     });
 
-    $id("reset").addEventListener("click", () => {
-      this.resetStates()
-      this.calculateStat();
-      this.drawStat();
-      this.canvasDrawer.draw();
-    });
     $id("randomize").addEventListener("click", () => {
       this.randomizeStates();
       this.calculateStat();
@@ -259,11 +230,6 @@ class Model {
     this.MHistory  .fill(undefined);
     this.CHistory  .fill(undefined);
     this.chiHistory.fill(undefined);
-  }
-
-  resetStates() {
-    this.states.fill(0);
-    this.eraseHistory();
   }
 
   randomizeStates() {
