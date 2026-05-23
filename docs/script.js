@@ -19,10 +19,10 @@ class Model {
     this.setUpControl();
 
     // this.sigmas[this.states[this.Nx * y + x]]: sigma on (x, y)
-    this.sigmas = [1, -1];
+    this.sigmas = [];
 
     // this.states[this.Nx * y + x]: State on (x, y)
-    this.states = new Array(this.Nx * this.Ny);
+    this.states = [];
 
     // Store most recent values here.
     // The newest entry is on the index 0.
@@ -39,10 +39,11 @@ class Model {
     this.CGraph   = [];
     this.chiGraph = [];
 
-    this.randomizeStates();
     this.sigmaDrawer = new SigmaDrawer(this);
     this.canvasDrawer = new CanvasDrawer(this);
     this.graphDrawer = new GraphDrawer(this);
+
+    this.resetToDefault();
 
     this.TSaved = this.T;
     this.requestId = undefined;
@@ -54,29 +55,25 @@ class Model {
     for (const [
       id, numberMin, rangeMin, rangeMax, initialValue, eraseHistory
     ] of [
-      ["speed", 0,     0, 1, 1,    false],
-      ["T",     0,     0, 5, 2.27, true ],
-      ["J1",    null, -1, 1, 1,    false],
-      ["J2",    null, -1, 1, 1,    false],
-      ["J3",    null, -1, 1, 0,    false],
-      ["J4",    null, -1, 1, 0,    false],
-      ["J0",    null, -1, 1, 0,    false],
-      ["h",     null, -2, 2, 0,    false],
+      ["speed", 0,     0, 1, false],
+      ["T",     0,     0, 5, true ],
+      ["J1",    null, -1, 1, false],
+      ["J2",    null, -1, 1, false],
+      ["J3",    null, -1, 1, false],
+      ["J4",    null, -1, 1, false],
+      ["J0",    null, -1, 1, false],
+      ["h",     null, -2, 2, false],
     ]) {
-      this[id] = initialValue;
-
       const number = document.querySelector(`#${id} > input[type="number"]`);
       if (numberMin !== null) {
         number.min = numberMin;
       }
       number.step = 0.01;
-      number.value = initialValue;
 
       const range = $id(id).querySelector(`#${id} > input[type="range"]`);
       range.min = rangeMin;
       range.max = rangeMax;
       range.step = 0.01;
-      range.value = initialValue;
 
       number.addEventListener("input", () => {
         this[id] = number.valueAsNumber;
@@ -95,9 +92,7 @@ class Model {
     }
 
     for (const [id, initialValue] of [["Nx", 20], ["Ny", 20]]) {
-      this[id] = initialValue;
       $id(id).min = 1;
-      $id(id).value = initialValue;
       $id(id).addEventListener("input", () => {
         const value = $id(id).valueAsNumber;
         if (!Number.isFinite(value) || value < 1) {
@@ -114,7 +109,11 @@ class Model {
       });
     }
 
-    $id("enter").addEventListener("click", (event) => {
+    $id("reset").addEventListener("click", event => {
+      this.resetToDefault();
+    });
+
+    $id("enter").addEventListener("click", event => {
       $id("enter").style.display = "none";
       $id("leave").style.display = "";
       $id("graph-container").style.display = "";
@@ -153,7 +152,7 @@ class Model {
       this.graphStep = totalGraphSteps;
       this.runOneGraphStep();
     });
-    $id("leave").addEventListener("click", (event) => {
+    $id("leave").addEventListener("click", event => {
       $id("enter").style.display = "";
       $id("leave").style.display = "none";
       $id("graph-container").style.display = "none";
@@ -185,7 +184,7 @@ class Model {
       this.canvasDrawer.draw();
     });
 
-    $id("add").addEventListener("click", (event) => {
+    $id("add").addEventListener("click", event => {
       this.sigmas.push(0);
       this.sigmaDrawer.configure();
       this.sigmaDrawer.draw();
@@ -197,7 +196,7 @@ class Model {
       this.canvasDrawer.configure();
       this.canvasDrawer.draw();
     });
-    $id("remove").addEventListener("click", (event) => {
+    $id("remove").addEventListener("click", event => {
       if (this.sigmas.length <= 2) {
         return;
       }
@@ -213,6 +212,39 @@ class Model {
       this.canvasDrawer.configure();
       this.canvasDrawer.draw();
     });
+  }
+
+  resetToDefault() {
+    for (const [id, defaultValue] of [
+      ["speed", 1   ],
+      ["T",     2.27],
+      ["J1",    1   ],
+      ["J2",    1   ],
+      ["J3",    0   ],
+      ["J4",    0   ],
+      ["J0",    0   ],
+      ["h",     0   ],
+    ]) {
+      this[id] = defaultValue;
+      for (const elem of document.querySelectorAll(`#${id} > input`)) {
+        elem.value = defaultValue;
+      }
+    }
+
+    for (const [id, defaultValue] of [["Nx", 20], ["Ny", 20]]) {
+      this[id] = defaultValue;
+      $id(id).value = defaultValue;
+    }
+
+    this.sigmas.splice(0, this.sigmas.length, 1, -1);
+    this.states.length = this.Nx * this.Ny;
+    this.randomizeStates();
+
+    this.sigmaDrawer.configure();
+    this.sigmaDrawer.draw();
+    this.canvasDrawer.configure();
+    this.canvasDrawer.draw();
+    this.graphDrawer.configure();
   }
 
   sigma(x, y) {
@@ -453,12 +485,9 @@ class SigmaDrawer {
 
     // Watch for changes on window.devicePixelRatio.
     window.matchMedia("(min-resolution: 2dppx)")
-    .addEventListener("change", (event) => {
+    .addEventListener("change", event => {
       this.draw();
     });
-
-    this.configure();
-    this.draw();
   }
 
   configure() {
@@ -487,18 +516,16 @@ class SigmaDrawer {
       div.append(canvas);
       div.append(number);
       div.append(range);
-      $id("sigma-container").insertBefore(
-        div, document.querySelector("#sigma-container > .button-container")
-      );
+      $id("sigma-container").insertBefore(div, $id("sigma-button"));
 
-      number.addEventListener("input", (event) => {
+      number.addEventListener("input", event => {
         range.value = number.valueAsNumber;
         this.model.sigmas[i] = number.valueAsNumber;
         this.draw();
         this.model.canvasDrawer.configure();
         this.model.canvasDrawer.draw();
       });
-      range.addEventListener("input", (event) => {
+      range.addEventListener("input", event => {
         number.value = range.valueAsNumber;
         this.model.sigmas[i] = range.valueAsNumber;
         this.draw();
@@ -530,7 +557,7 @@ class CanvasDrawer {
 
     // Watch for changes on window.devicePixelRatio.
     window.matchMedia("(min-resolution: 2dppx)")
-    .addEventListener("change", (event) => {
+    .addEventListener("change", event => {
       this.configure();
       this.draw();
     });
@@ -539,9 +566,6 @@ class CanvasDrawer {
       this.configure();
       this.draw();
     }).observe($id("canvas-container"));
-
-    this.configure();
-    this.draw();
   }
 
   configure() {
@@ -585,12 +609,10 @@ class GraphDrawer {
 
     // Watch for changes on window.devicePixelRatio.
     window.matchMedia("(min-resolution: 2dppx)")
-    .addEventListener("change", (event) => {
+    .addEventListener("change", event => {
       this.configure();
       this.draw();
     });
-
-    this.configure();
   }
 
   configure() {

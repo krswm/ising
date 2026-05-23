@@ -30,7 +30,7 @@ body {
   height: 100vh;
   padding: 1rem;
 
-  overflow: hidden auto;
+  overflow: hidden;
 }
 
 #canvas-container {
@@ -354,10 +354,6 @@ input[type="range"]::-moz-range-track:active {
   background-color: oklch(90% 0% 0deg);
 }
 
-.button-container {
-  display: flex;
-  gap: 1rem;
-}
 button {
   box-sizing: border-box;
   height: 2.5rem;
@@ -381,6 +377,10 @@ button:not(:disabled):hover {
 }
 button:not(:disabled):active {
   background-color: oklch(90% 0% 0deg);
+}
+#sigma-button {
+  display: flex;
+  gap: 1rem;
 }
 #add, #remove {
   background-position: center center;

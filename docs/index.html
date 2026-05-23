@@ -82,6 +82,10 @@
       </header>
 
       <div class="box">
+        <button id="reset">Reset to default</button>
+      </div>
+
+      <div class="box">
         <div class="slider" id="speed">
           <div>Simulation speed</div>
           <input type="number" />
@@ -97,10 +101,8 @@
           <input type="range" />
         </div>
 
-        <div class="button-container">
-          <button id="enter">Cool the system and plot graphs</button>
-          <button id="leave" style="display: none;">Return to the interactive simulation</button>
-        </div>
+        <button id="enter">Cool the system and plot graphs</button>
+        <button id="leave" style="display: none;">Return to the interactive simulation</button>
       </div>
 
       <div class="box">
@@ -118,9 +120,7 @@
       </div>
 
       <div class="box">
-        <div class="button-container">
-          <button id="randomize">Randomize states on all sites</button>
-        </div>
+        <button id="randomize">Randomize states on all sites</button>
 
         <details>
           <summary>
@@ -130,7 +130,7 @@
           </summary>
 
           <div id="sigma-container">
-            <div class="button-container">
+            <div id="sigma-button">
               <button id="add"></button>
               <button id="remove" disabled></button>
             </div>
