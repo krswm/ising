@@ -2,7 +2,7 @@ body {
   display: grid;
 
   margin: 0rem;
-  
+
   font-family: system-ui;
 }
 /* 32rem + 24rem = 56rem */
@@ -150,7 +150,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  
+
   box-sizing: border-box;
   width: 100%;
   padding: 1rem;
@@ -420,7 +420,7 @@ header > div:nth-of-type(2) > a:hover {
 
 #hamiltonian {
   place-self: center;
-  
+
   line-height: 4rem;
 }
 
