@@ -1,12 +1,9 @@
 const $id = id => document.getElementById(id);
 
 const expvalHistoryLength = 60;
-const graphHistoryLength = 30;
+const graphHistoryLength = 60;
 const historyLength = Math.max(expvalHistoryLength, graphHistoryLength);
-const graphLength = 120;
-console.assert(graphLength >= expvalHistoryLength + graphHistoryLength);
-
-const TPerGraphStep = 0.01;
+const totalGraphSteps = 500;
 
 // "\u2212": MINUS SIGN
 // "\u2014": EM DASH
@@ -57,24 +54,24 @@ class Model {
     for (const [
       id, numberMin, rangeMin, rangeMax, initialValue, eraseHistory
     ] of [
-      ["speed", 0,     0,  1, 1, false],
-      ["T",     0,     0, 10, 1, true ],
-      ["J1",    null, -1,  1, 1, false],
-      ["J2",    null, -1,  1, 1, false],
-      ["J3",    null, -1,  1, 0, false],
-      ["J4",    null, -1,  1, 0, false],
-      ["J0",    null, -1,  1, 0, false],
-      ["h",     null, -2,  2, 0, false],
+      ["speed", 0,     0, 1, 1,    false],
+      ["T",     0,     0, 5, 2.27, true ],
+      ["J1",    null, -1, 1, 1,    false],
+      ["J2",    null, -1, 1, 1,    false],
+      ["J3",    null, -1, 1, 0,    false],
+      ["J4",    null, -1, 1, 0,    false],
+      ["J0",    null, -1, 1, 0,    false],
+      ["h",     null, -2, 2, 0,    false],
     ]) {
       this[id] = initialValue;
-      
+
       const number = document.querySelector(`#${id} > input[type="number"]`);
       if (numberMin !== null) {
         number.min = numberMin;
       }
       number.step = 0.01;
       number.value = initialValue;
-      
+
       const range = $id(id).querySelector(`#${id} > input[type="range"]`);
       range.min = rangeMin;
       range.max = rangeMax;
@@ -162,9 +159,17 @@ class Model {
       this.CGraph.length = 0;
       this.chiGraph.length = 0;
 
-      this.graphStep = 1;
-      this.T = TPerGraphStep;
-      this.resetStates();
+      // Before start cooling the system
+      // let the system to be in thermal equibrium.
+      this.randomizeStates();
+      for (let i = 0; i < 600 * this.Nx * this.Ny; i++) {
+        this.doOneMonteCarloStep();
+        if (i % (this.Nx * this.Ny) === 0) {
+          this.calculateStat();
+        }
+      }
+
+      this.graphStep = totalGraphSteps;
       this.runOneGraphStep();
     });
     $id("leave").addEventListener("click", (event) => {
@@ -377,9 +382,7 @@ class Model {
   }
 
   runOneGraphStep() {
-    this.resetStates();
-
-    for (let i = 0; i < graphLength * this.Nx * this.Ny; i++) {
+    for (let i = 0; i < graphHistoryLength * this.Nx * this.Ny; i++) {
       this.doOneMonteCarloStep();
       if (i % (this.Nx * this.Ny) === 0) {
         this.calculateStat();
@@ -419,11 +422,8 @@ class Model {
     $id("C")  .innerText = format(C  );
     $id("chi").innerText = format(chi);
 
-    if (this.graphStep % 500 === 0) {
-      $id("continue").disabled = false;
-    } else {
-      this.graphStep++;
-      this.T = TPerGraphStep * this.graphStep;
+    if (--this.graphStep >= 0) {
+      this.T = this.TSaved * this.graphStep / totalGraphSteps;
       this.timeoutId = setTimeout(() => this.runOneGraphStep());
     }
   }
@@ -514,7 +514,7 @@ class SigmaDrawer {
       range.max = "2";
       range.step = "0.01";
       range.value = `${sigma}`;
-        
+
       const div = document.createElement("div");
       div.classList.add("sigma")
       div.classList.add("slider")
@@ -545,7 +545,7 @@ class SigmaDrawer {
   draw() {
     const zoom = 32 * window.devicePixelRatio;
     const canvases = getPredrawnCanvases(this.model.sigmas, zoom);
- 
+
     for (
       const [i, canvas]
       of document.querySelectorAll(".sigma > canvas").entries()
@@ -676,15 +676,20 @@ class GraphDrawer {
   }
 
   draw() {
-    const TMax = Math.ceil(Math.max(...this.model.TGraph) / 5) * 5;
+    const [, TMax, TTicks] = this.getVisibleRangeOfAxis(0, this.model.TSaved);
 
-    for (const [graph, context] of [
-      [this.model.EGraph,   this.EContext  ],
-      [this.model.MGraph,   this.MContext  ],
-      [this.model.CGraph,   this.CContext  ],
-      [this.model.chiGraph, this.chiContext],
+    for (const [graph, context, isAlwaysPositive] of [
+      [this.model.EGraph,   this.EContext,   false],
+      [this.model.MGraph,   this.MContext,   false],
+      [this.model.CGraph,   this.CContext,   true ],
+      [this.model.chiGraph, this.chiContext, true ],
     ]) {
-      const [min, max, ticks] = this.getVisibleRangeOfYAxis(graph);
+      const min0 = (
+        isAlwaysPositive
+        ? 0 : Math.min(...graph.filter(value => Number.isFinite(value)))
+      );
+      const max0 = Math.max(...graph.filter(value => Number.isFinite(value)));
+      const [min, max, ticks] = this.getVisibleRangeOfAxis(min0, max0);
 
       // Erase the canvas.
       context.clearRect(0, 0, context.canvas.width, context.canvas.height);
@@ -694,7 +699,6 @@ class GraphDrawer {
 
       // Draw X labels.
       for (let i = 0; i <= 5; i++) {
-        const T = TMax * i / 5;
         const X = this.XLeft + (this.XRight - this.XLeft) * i / 5;
 
         context.font = `${this.rem / 2}px system-ui`;
@@ -702,7 +706,7 @@ class GraphDrawer {
         context.textBaseline = "middle";
 
         context.fillStyle = "oklch(90% 0% 0deg)";
-        context.fillText(`${T}`, X, this.YBottom + this.rem / 2);
+        context.fillText(TTicks[i], X, this.YBottom + this.rem / 2);
       }
 
       // Draw Y labels.
@@ -723,6 +727,10 @@ class GraphDrawer {
 
       // Draw points.
       for (const [i, T] of this.model.TGraph.entries()) {
+        if (!Number.isFinite(graph[i])) {
+          continue;
+        }
+
         const X = this.XLeft + T / TMax * (this.XRight - this.XLeft);
         const Y = (
           this.YBottom
@@ -737,7 +745,7 @@ class GraphDrawer {
     }
   }
 
-  getVisibleRangeOfYAxis(graph) {
+  getVisibleRangeOfAxis(min0, max0) {
     // Get an appropriate visible range for the Y axis.
     // I have the following criteria.
     // - All points are visible.
@@ -745,9 +753,7 @@ class GraphDrawer {
     //   10e-3, 2.5e-2, 5e-2, 10e-2, 2.5e-1, 5e-1, 10e-1, 2.5e0, 5e0, 10e0, ...
     // - Each tick (the six horizontal lines) is snapped to
     //   a multiple of span / 5.
-    
-    let min0 = Math.min(...graph);
-    let max0 = Math.max(...graph);
+
     let spn0 = max0 - min0;
     let exp0 = Math.ceil(Math.log10(spn0)) - 1;  /* Exponent */
     let sig0 = spn0 / 10 ** exp0;  /* Significand */
