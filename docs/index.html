@@ -32,7 +32,7 @@
         <div class="graph">
           <canvas id="C-canvas">graph for heat capacity</canvas>
           <div>\(k_{\mathrm{B}} T\)</div>
-          <div>\(C / N k_{\mathrm{B}}\)</div>
+          <div>\(C / k_{\mathrm{B}} N\)</div>
         </div>
         <div class="graph">
           <canvas id="chi-canvas">graph for susceptibility</canvas>
@@ -58,7 +58,7 @@
         <div id="M"></div>
 
         <div>Heat capacity</div>
-        <div>\(\displaystyle \frac{C}{N k_{\mathrm{B}}}\)</div>
+        <div>\(\displaystyle \frac{C}{k_{\mathrm{B}} N}\)</div>
         <div>\(=\)</div>
         <div>\(\displaystyle \frac{1}{N}\)</div>
         <div>\(\displaystyle \frac{\langle E^2 \rangle - \langle E \rangle^2}{(k_{\mathrm{B}} T)^2}\)</div>
@@ -116,7 +116,7 @@
       </div>
 
       <div class="box">
-        <div id="hamiltonian">\(\displaystyle E = - \sum_{\langle i \, j \rangle} J_{i j} \sigma_i \sigma_j - h \sum_i \sigma_i\)</div>
+        <div id="hamiltonian">\(\displaystyle E = - \sum_{(i \, j)} J_{i j} \sigma_i \sigma_j - h \sum_i \sigma_i\)</div>
       </div>
 
       <div class="box">
@@ -177,7 +177,7 @@
 
             <div class="slider" id="J0">
               <img src="img/J0.svg"></img>
-              <div>Self</div>
+              <div>\(i = j\)</div>
               <input type="number" />
               <input type="range" />
             </div>
