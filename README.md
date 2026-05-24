@@ -1,39 +1,64 @@
-# Ising Model Simulation
+# Ising Model Simulation with the Metropolis Algorithm
 
-This is a simulation of the Ising model, a model studied in physics to modelize magnetic materials, etc.
-I wrote it in HTML+CSS+JavaScript with the Metropolis algorithm.
 [You can try it online!](https://krswm.github.io/ising)
 
 ## Features
 
 ![Website](img/website.png)
 
-![Graph mode](img/graph-mode.png)
+* Visualize the spin configuration.
+* Display the quantities: Energy $\frac{E}{N}$, magnetization $\frac{M}{N}$, heat capacity $\frac{C}{k_{\mathrm{B}} N}$, and susceptibility $\frac{\chi}{N}$.
+* You can adjust the parameters: Temperature $k_{\mathrm{B}} T$, size $N$, allowed states $\sigma$, coupling constants $J$, and external field $h$.
 
-Visualize the spin configuration real-time.
+![Graph](img/graph.png)
 
-Display the quantities real-time.
-You can see the temperature-to-quantities graph in the *graph mode*.
+* Plot the temperature dependence of the quantities.
+* To plot the graphs, please do the following:
+  1. Set the temperature to start cooling from.
+  2. Click *Cool the system and plot graphs*.
 
-- Energy $E$
-- Magnetization $M$
-- Heat capacity $\frac{C}{k_{\mathrm{B}}}$
-- Susceptibility $\chi$
+## Examples
 
-You can adjust parameters.
+### External Field
 
-- Size $N$ 
-- Temperature $k_{\mathrm{B}} T$
-- Coupling $J$
-- Field $h$
+1. Press *Reset to default*.
+2. Adjust external field $h$.
 
-## License
+### Antiferromagnetism
 
-[MIT License](LICENSE.txt)
+1. Press *Reset to default*.
+2. Set horizontal and vertical coupling constants $J$ to −1.
+
+### Frustration on a Triangular Lattice
+
+1. Press *Reset to default*.
+2. Set horizontal, vertical, and one of diagonal coupling constants $J$ to −1.
+
+### One-Dimensional
+
+1. Press *Reset to default*.
+2. Set size $N$ to 20 × 1.
+3. Set vertical coupling constant $J$ to 0.
+
+### Collinear State
+
+1. Press *Reset to default*.
+2. Set horizontal, vertical coupling constants $J$ to 0.
+3. Set two diagonal coupling constants $J$ to −1.
+
+### Spin-1 Boson
+
+1. Press *Reset to default*.
+2. Add a new allowed state 0.
 
 ## Development
 
-I started developing this project on November 2025, after I learned and was interested on the model at the statistical mechanics class.
+I learned the Ising model on a statistical mechanics lecture at university and was interested in it.
+I started working on this project on November 2025.
 
-This is one of my hobby project I wrote from scratch.
-I did not use any generative AI for this project.
+This project is written in HTML, CSS, and JavaScript.
+The website can display mathematics thanks to [KaTeX](https://github.com/KaTeX/KaTeX).
+Except for KaTeX, this project has no dependencies.
+
+This is a hobby project of mine I started from scratch.
+I did not use generative AI for this project.
