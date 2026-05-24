@@ -13,9 +13,10 @@
 ![Graph](img/graph.png)
 
 * Plot the temperature dependence of the quantities.
-* To plot the graphs, please do the following:
-  1. Set the temperature to start cooling from.
-  2. Click *Cool the system and plot graphs*.
+
+To plot the graphs:
+1. Set the temperature to start cooling from.
+2. Click *Cool the system and plot graphs*.
 
 ## Examples
 
@@ -49,7 +50,7 @@
 ### Spin-1 Boson
 
 1. Press *Reset to default*.
-2. Add a new allowed state 0.
+2. Add a new allowed state 0. Now we have $\sigma = 1, 0, -1$.
 
 ## Development
 
