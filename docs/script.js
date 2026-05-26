@@ -53,16 +53,16 @@ class Model {
 
   setUpControl() {
     for (const [
-      id, numberMin, rangeMin, rangeMax, initialValue, eraseHistory
+      id, numberMin, rangeMin, rangeMax, eraseHistory
     ] of [
-      ["speed", 0,     0, 1, false],
-      ["T",     0,     0, 5, true ],
-      ["J1",    null, -1, 1, false],
-      ["J2",    null, -1, 1, false],
-      ["J3",    null, -1, 1, false],
-      ["J4",    null, -1, 1, false],
-      ["J0",    null, -1, 1, false],
-      ["h",     null, -2, 2, false],
+      ["speed", 0,     0, false],
+      ["T",     0,     0, true ],
+      ["J1",    null, -1, false],
+      ["J2",    null, -1, false],
+      ["J3",    null, -1, false],
+      ["J4",    null, -1, false],
+      ["J0",    null, -1, false],
+      ["h",     null, -2, false],
     ]) {
       const number = document.querySelector(`#${id} > input[type="number"]`);
       if (numberMin !== null) {
@@ -91,7 +91,7 @@ class Model {
       });
     }
 
-    for (const [id, initialValue] of [["Nx", 20], ["Ny", 20]]) {
+    for (const id of ["Nx", "Ny"]) {
       $id(id).min = 1;
       $id(id).addEventListener("input", () => {
         const value = $id(id).valueAsNumber;
@@ -109,11 +109,11 @@ class Model {
       });
     }
 
-    $id("reset").addEventListener("click", event => {
+    $id("reset").addEventListener("click", () => {
       this.resetToDefault();
     });
 
-    $id("enter").addEventListener("click", event => {
+    $id("enter").addEventListener("click", () => {
       $id("enter").style.display = "none";
       $id("leave").style.display = "";
       $id("graph-container").style.display = "";
@@ -152,7 +152,7 @@ class Model {
       this.graphStep = totalGraphSteps;
       this.runOneGraphStep();
     });
-    $id("leave").addEventListener("click", event => {
+    $id("leave").addEventListener("click", () => {
       $id("enter").style.display = "";
       $id("leave").style.display = "none";
       $id("graph-container").style.display = "none";
@@ -184,7 +184,7 @@ class Model {
       this.canvasDrawer.draw();
     });
 
-    $id("add").addEventListener("click", event => {
+    $id("add").addEventListener("click", () => {
       this.sigmas.push(0);
       this.sigmaDrawer.configure();
       this.sigmaDrawer.draw();
@@ -196,7 +196,7 @@ class Model {
       this.canvasDrawer.configure();
       this.canvasDrawer.draw();
     });
-    $id("remove").addEventListener("click", event => {
+    $id("remove").addEventListener("click", () => {
       if (this.sigmas.length <= 2) {
         return;
       }
@@ -485,7 +485,7 @@ class SigmaDrawer {
 
     // Watch for changes on window.devicePixelRatio.
     window.matchMedia("(min-resolution: 2dppx)")
-    .addEventListener("change", event => {
+    .addEventListener("change", () => {
       this.draw();
     });
   }
@@ -518,14 +518,14 @@ class SigmaDrawer {
       div.append(range);
       $id("sigma-container").insertBefore(div, $id("sigma-button"));
 
-      number.addEventListener("input", event => {
+      number.addEventListener("input", () => {
         range.value = number.valueAsNumber;
         this.model.sigmas[i] = number.valueAsNumber;
         this.draw();
         this.model.canvasDrawer.configure();
         this.model.canvasDrawer.draw();
       });
-      range.addEventListener("input", event => {
+      range.addEventListener("input", () => {
         number.value = range.valueAsNumber;
         this.model.sigmas[i] = range.valueAsNumber;
         this.draw();
@@ -557,7 +557,7 @@ class CanvasDrawer {
 
     // Watch for changes on window.devicePixelRatio.
     window.matchMedia("(min-resolution: 2dppx)")
-    .addEventListener("change", event => {
+    .addEventListener("change", () => {
       this.configure();
       this.draw();
     });
@@ -609,7 +609,7 @@ class GraphDrawer {
 
     // Watch for changes on window.devicePixelRatio.
     window.matchMedia("(min-resolution: 2dppx)")
-    .addEventListener("change", event => {
+    .addEventListener("change", () => {
       this.configure();
       this.draw();
     });
@@ -794,4 +794,4 @@ class GraphDrawer {
   }
 }
 
-const model = new Model();
+new Model();
