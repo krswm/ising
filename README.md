@@ -58,8 +58,9 @@ I learned the Ising model on a statistical mechanics lecture at university and w
 I started working on this project on November 2025.
 
 This project is written in HTML, CSS, and JavaScript.
-The website can display mathematics thanks to [KaTeX](https://github.com/KaTeX/KaTeX).
-Except for KaTeX, this project has no dependencies.
+This project lints the codes thanks to [ESLint](https://github.com/eslint/eslint).
+The website displays mathematics thanks to [KaTeX](https://github.com/KaTeX/KaTeX).
+Except for KaTeX, this project has no runtime dependencies.
 
 This is a hobby project of mine I started from scratch.
 I did not use generative AI for this project.
