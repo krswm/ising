@@ -1,4 +1,4 @@
-const $id = id => document.getElementById(id);
+const $id = (id) => document.getElementById(id);
 
 const expvalHistoryLength = 60;
 const graphHistoryLength = 60;
@@ -7,9 +7,8 @@ const totalGraphSteps = 500;
 
 // "\u2212": MINUS SIGN
 // "\u2014": EM DASH
-const format = (value) => (
-  Number.isFinite(value) ? value.toFixed(3).replace("-", "\u2212") : "\u2014"
-);
+const format = (value) =>
+  Number.isFinite(value) ? value.toFixed(3).replace("-", "\u2212") : "\u2014";
 
 // Shape of an arrow
 const arrowPath = new Path2D("M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z");
@@ -27,16 +26,16 @@ class Model {
     // Store most recent values here.
     // The newest entry is on the index 0.
     // The oldest entry is on the index expvalHistoryLength - 1.
-    this.EHistory   = new Array(historyLength);
-    this.MHistory   = new Array(historyLength);
-    this.CHistory   = new Array(historyLength);
+    this.EHistory = new Array(historyLength);
+    this.MHistory = new Array(historyLength);
+    this.CHistory = new Array(historyLength);
     this.chiHistory = new Array(historyLength);
 
     // Store graph data here.
-    this.TGraph   = [];
-    this.EGraph   = [];
-    this.MGraph   = [];
-    this.CGraph   = [];
+    this.TGraph = [];
+    this.EGraph = [];
+    this.MGraph = [];
+    this.CGraph = [];
     this.chiGraph = [];
 
     this.sigmaDrawer = new SigmaDrawer(this);
@@ -52,17 +51,15 @@ class Model {
   }
 
   setUpControl() {
-    for (const [
-      id, numberMin, rangeMin, rangeMax, eraseHistory
-    ] of [
-      ["speed", 0,     0, false],
-      ["T",     0,     0, true ],
-      ["J1",    null, -1, false],
-      ["J2",    null, -1, false],
-      ["J3",    null, -1, false],
-      ["J4",    null, -1, false],
-      ["J0",    null, -1, false],
-      ["h",     null, -2, false],
+    for (const [id, numberMin, rangeMin, rangeMax, eraseHistory] of [
+      ["speed", 0, 0, 1, false],
+      ["T", 0, 0, 5, true],
+      ["J1", null, -1, 1, false],
+      ["J2", null, -1, 1, false],
+      ["J3", null, -1, 1, false],
+      ["J4", null, -1, 1, false],
+      ["J0", null, -1, 1, false],
+      ["h", null, -2, 2, false],
     ]) {
       const number = document.querySelector(`#${id} > input[type="number"]`);
       if (numberMin !== null) {
@@ -123,15 +120,14 @@ class Model {
       cancelAnimationFrame(this.requestId);
 
       for (const elem of document.querySelectorAll(
-        "#control input, #control button:not(#leave)"
+        "#control input, #control button:not(#leave)",
       )) {
         elem.style.pointerEvents = "none";
       }
       this.TSaved = this.T;
       document.querySelector('#speed > input[type="number"]').value = "";
-      document.querySelector('#speed > input[type="range"]').value = (
-        document.querySelector('#speed > input[type="range"]').max
-      );
+      document.querySelector('#speed > input[type="range"]').value =
+        document.querySelector('#speed > input[type="range"]').max;
 
       this.TGraph.length = 0;
       this.EGraph.length = 0;
@@ -162,7 +158,7 @@ class Model {
       clearTimeout(this.timeoutId);
 
       for (const elem of document.querySelectorAll(
-        "#control input, #control button"
+        "#control input, #control button",
       )) {
         elem.style.pointerEvents = "";
       }
@@ -216,14 +212,14 @@ class Model {
 
   resetToDefault() {
     for (const [id, defaultValue] of [
-      ["speed", 1   ],
-      ["T",     2.27],
-      ["J1",    1   ],
-      ["J2",    1   ],
-      ["J3",    0   ],
-      ["J4",    0   ],
-      ["J0",    0   ],
-      ["h",     0   ],
+      ["speed", 1],
+      ["T", 2.27],
+      ["J1", 1],
+      ["J2", 1],
+      ["J3", 0],
+      ["J4", 0],
+      ["J0", 0],
+      ["h", 0],
     ]) {
       this[id] = defaultValue;
       for (const elem of document.querySelectorAll(`#${id} > input`)) {
@@ -231,7 +227,10 @@ class Model {
       }
     }
 
-    for (const [id, defaultValue] of [["Nx", 20], ["Ny", 20]]) {
+    for (const [id, defaultValue] of [
+      ["Nx", 20],
+      ["Ny", 20],
+    ]) {
       this[id] = defaultValue;
       $id(id).value = defaultValue;
     }
@@ -258,14 +257,14 @@ class Model {
   }
 
   eraseHistory() {
-    this.EHistory  .fill(undefined);
-    this.MHistory  .fill(undefined);
-    this.CHistory  .fill(undefined);
+    this.EHistory.fill(undefined);
+    this.MHistory.fill(undefined);
+    this.CHistory.fill(undefined);
     this.chiHistory.fill(undefined);
   }
 
   randomizeStates() {
-    for (const [i, ] of this.states.entries()) {
+    for (const [i] of this.states.entries()) {
       this.states[i] = Math.floor(2 * Math.random());
     }
     this.eraseHistory();
@@ -276,51 +275,51 @@ class Model {
     let M = 0;
     for (let y = 0; y < this.Ny; y++) {
       for (let x = 0; x < this.Nx; x++) {
-        E += (
-          - this.J1 * this.sigma(x + 1, y    )
-          - this.J2 * this.sigma(x,     y + 1)
-          - this.J3 * this.sigma(x + 1, y + 1)
-          - this.J4 * this.sigma(x - 1, y + 1)
-          - this.J0 * this.sigma(x,     y    )
-          - this.h
-        ) * this.sigma(x, y);
+        E +=
+          (-this.J1 * this.sigma(x + 1, y) -
+            this.J2 * this.sigma(x, y + 1) -
+            this.J3 * this.sigma(x + 1, y + 1) -
+            this.J4 * this.sigma(x - 1, y + 1) -
+            this.J0 * this.sigma(x, y) -
+            this.h) *
+          this.sigma(x, y);
         M += this.sigma(x, y);
       }
     }
 
     // Expected values are calculated (approximated)
     // by averaging expvalHistoryLength most recent values.
-    let EExpval  = 0;
+    let EExpval = 0;
     let E2Expval = 0;
-    let MExpval  = 0;
+    let MExpval = 0;
     let M2Expval = 0;
     for (let i = 0; i < expvalHistoryLength; i++) {
-      EExpval  += this.EHistory[i];
+      EExpval += this.EHistory[i];
       E2Expval += this.EHistory[i] ** 2;
-      MExpval  += this.MHistory[i];
+      MExpval += this.MHistory[i];
       M2Expval += this.MHistory[i] ** 2;
     }
-    EExpval  /= expvalHistoryLength;
+    EExpval /= expvalHistoryLength;
     E2Expval /= expvalHistoryLength;
-    MExpval  /= expvalHistoryLength;
+    MExpval /= expvalHistoryLength;
     M2Expval /= expvalHistoryLength;
-    const C   = (E2Expval - EExpval ** 2) / this.T ** 2;
+    const C = (E2Expval - EExpval ** 2) / this.T ** 2;
     const chi = (M2Expval - MExpval ** 2) / this.T;
 
-    this.EHistory  .pop();
-    this.EHistory  .unshift(E);
-    this.MHistory  .pop();
-    this.MHistory  .unshift(M);
-    this.CHistory  .pop();
-    this.CHistory  .unshift(C);
+    this.EHistory.pop();
+    this.EHistory.unshift(E);
+    this.MHistory.pop();
+    this.MHistory.unshift(M);
+    this.CHistory.pop();
+    this.CHistory.unshift(C);
     this.chiHistory.pop();
     this.chiHistory.unshift(chi);
   }
 
   drawStat() {
-    $id("E").innerText   = format(this.EHistory  [0] / (this.Nx * this.Ny));
-    $id("M").innerText   = format(this.MHistory  [0] / (this.Nx * this.Ny));
-    $id("C").innerText   = format(this.CHistory  [0] / (this.Nx * this.Ny));
+    $id("E").innerText = format(this.EHistory[0] / (this.Nx * this.Ny));
+    $id("M").innerText = format(this.MHistory[0] / (this.Nx * this.Ny));
+    $id("C").innerText = format(this.CHistory[0] / (this.Nx * this.Ny));
     $id("chi").innerText = format(this.chiHistory[0] / (this.Nx * this.Ny));
   }
 
@@ -335,10 +334,9 @@ class Model {
 
     // Propose a new state and sigma for the cell.
     // The new state must be different to the current one.
-    const stateProp = (
-      (Math.floor(Math.random() * (this.sigmas.length - 1)) + stateCurr + 1)
-      % this.sigmas.length
-    );
+    const stateProp =
+      (Math.floor(Math.random() * (this.sigmas.length - 1)) + stateCurr + 1) %
+      this.sigmas.length;
     const sigmaProp = this.sigmas[stateProp];
 
     // Calculate EProp - ECurr, where:
@@ -346,14 +344,14 @@ class Model {
     // - ECurr = current energy of the system
     // You don't have to calculate EProp and ECurr directly
     // since only the cell and its neighbors contribute to the difference.
-    const EDifference = (
-      - this.J1 * (this.sigma(x + 1, y    ) + this.sigma(x - 1, y    ))
-      - this.J2 * (this.sigma(x,     y + 1) + this.sigma(x,     y - 1))
-      - this.J3 * (this.sigma(x + 1, y + 1) + this.sigma(x - 1, y - 1))
-      - this.J4 * (this.sigma(x - 1, y + 1) + this.sigma(x + 1, y - 1))
-      - this.J0 * (sigmaProp + sigmaCurr)
-      - this.h
-    ) * (sigmaProp - sigmaCurr);
+    const EDifference =
+      (-this.J1 * (this.sigma(x + 1, y) + this.sigma(x - 1, y)) -
+        this.J2 * (this.sigma(x, y + 1) + this.sigma(x, y - 1)) -
+        this.J3 * (this.sigma(x + 1, y + 1) + this.sigma(x - 1, y - 1)) -
+        this.J4 * (this.sigma(x - 1, y + 1) + this.sigma(x + 1, y - 1)) -
+        this.J0 * (sigmaProp + sigmaCurr) -
+        this.h) *
+      (sigmaProp - sigmaCurr);
 
     if (EDifference < 0) {
       // Always accept the proposal if it's energetically advantageous.
@@ -390,38 +388,38 @@ class Model {
 
     // The Y-axis values on the graph are calculated
     // by averaging graphHistoryLength most recent values.
-    let E   = 0;
-    let M   = 0;
-    let C   = 0;
+    let E = 0;
+    let M = 0;
+    let C = 0;
     let chi = 0;
     for (let i = 0; i < graphHistoryLength; i++) {
-      E   += this.EHistory[i];
-      M   += this.MHistory[i];
-      C   += this.CHistory[i];
+      E += this.EHistory[i];
+      M += this.MHistory[i];
+      C += this.CHistory[i];
       chi += this.chiHistory[i];
     }
-    E   /= (graphHistoryLength * this.Nx * this.Ny);
-    M   /= (graphHistoryLength * this.Nx * this.Ny);
-    C   /= (graphHistoryLength * this.Nx * this.Ny);
-    chi /= (graphHistoryLength * this.Nx * this.Ny);
+    E /= graphHistoryLength * this.Nx * this.Ny;
+    M /= graphHistoryLength * this.Nx * this.Ny;
+    C /= graphHistoryLength * this.Nx * this.Ny;
+    chi /= graphHistoryLength * this.Nx * this.Ny;
 
-    this.TGraph  .push(this.T);
-    this.EGraph  .push(E);
-    this.MGraph  .push(M);
-    this.CGraph  .push(C);
+    this.TGraph.push(this.T);
+    this.EGraph.push(E);
+    this.MGraph.push(M);
+    this.CGraph.push(C);
     this.chiGraph.push(chi);
     this.graphDrawer.draw();
 
     for (const elem of document.querySelectorAll("#T > input")) {
       elem.value = this.T.toFixed(2).replace(/\.?0*$/, "");
     }
-    $id("E")  .innerText = format(E  );
-    $id("M")  .innerText = format(M  );
-    $id("C")  .innerText = format(C  );
+    $id("E").innerText = format(E);
+    $id("M").innerText = format(M);
+    $id("C").innerText = format(C);
     $id("chi").innerText = format(chi);
 
     if (--this.graphStep >= 0) {
-      this.T = this.TSaved * this.graphStep / totalGraphSteps;
+      this.T = (this.TSaved * this.graphStep) / totalGraphSteps;
       this.timeoutId = setTimeout(() => this.runOneGraphStep());
     }
   }
@@ -443,12 +441,11 @@ function getPredrawnCanvases(sigmas, zoom) {
   const canvases = [];
   for (const sigma of sigmas) {
     const canvas = new OffscreenCanvas(zoom, zoom);
-    const context = canvas.getContext("2d", {transparent: false});
+    const context = canvas.getContext("2d", { transparent: false });
 
     // Draw background.
-    const backgroundLightness = (
-      (sigma - sigmaMin) / sigmaRange * lightnessRange + lightnessMin
-    );
+    const backgroundLightness =
+      ((sigma - sigmaMin) / sigmaRange) * lightnessRange + lightnessMin;
     context.fillStyle = `oklch(${backgroundLightness}% 0% 0deg)`;
     context.fillRect(0, 0, zoom, zoom);
 
@@ -457,15 +454,14 @@ function getPredrawnCanvases(sigmas, zoom) {
       const transformedArrowPath = new Path2D();
       transformedArrowPath.addPath(arrowPath, {
         a: zoom / 16,
-        d: sigma / sigmaAbsMax * zoom / 16,
+        d: ((sigma / sigmaAbsMax) * zoom) / 16,
         e: zoom / 2,
         f: zoom / 2,
       });
-      const arrowLightness = (
+      const arrowLightness =
         backgroundLightness < lightnessMiddle
-        ? backgroundLightness + lightnessRange / 2
-        : backgroundLightness - lightnessRange / 2
-      );
+          ? backgroundLightness + lightnessRange / 2
+          : backgroundLightness - lightnessRange / 2;
       context.fillStyle = `oklch(${arrowLightness}% 0% 0deg)`;
       context.fill(transformedArrowPath);
       context.lineWidth = zoom / 16;
@@ -484,10 +480,11 @@ class SigmaDrawer {
     this.model = model;
 
     // Watch for changes on window.devicePixelRatio.
-    window.matchMedia("(min-resolution: 2dppx)")
-    .addEventListener("change", () => {
-      this.draw();
-    });
+    window
+      .matchMedia("(min-resolution: 2dppx)")
+      .addEventListener("change", () => {
+        this.draw();
+      });
   }
 
   configure() {
@@ -511,8 +508,8 @@ class SigmaDrawer {
       range.value = `${sigma}`;
 
       const div = document.createElement("div");
-      div.classList.add("sigma")
-      div.classList.add("slider")
+      div.classList.add("sigma");
+      div.classList.add("slider");
       div.append(canvas);
       div.append(number);
       div.append(range);
@@ -539,10 +536,9 @@ class SigmaDrawer {
     const zoom = 32 * window.devicePixelRatio;
     const canvases = getPredrawnCanvases(this.model.sigmas, zoom);
 
-    for (
-      const [i, canvas]
-      of document.querySelectorAll(".sigma > canvas").entries()
-    ) {
+    for (const [i, canvas] of document
+      .querySelectorAll(".sigma > canvas")
+      .entries()) {
       canvas.width = zoom;
       canvas.height = zoom;
       canvas.getContext("2d").drawImage(canvases[i], 0, 0);
@@ -553,14 +549,15 @@ class SigmaDrawer {
 class CanvasDrawer {
   constructor(model) {
     this.model = model;
-    this.context = $id("canvas").getContext("2d", {alpha: false});
+    this.context = $id("canvas").getContext("2d", { alpha: false });
 
     // Watch for changes on window.devicePixelRatio.
-    window.matchMedia("(min-resolution: 2dppx)")
-    .addEventListener("change", () => {
-      this.configure();
-      this.draw();
-    });
+    window
+      .matchMedia("(min-resolution: 2dppx)")
+      .addEventListener("change", () => {
+        this.configure();
+        this.draw();
+      });
 
     new ResizeObserver(() => {
       this.configure();
@@ -570,16 +567,21 @@ class CanvasDrawer {
 
   configure() {
     const dpr = window.devicePixelRatio;
-    this.zoom = Math.min(Math.max(
-      Math.floor(Math.min(
-        $id("canvas-container").offsetWidth / this.model.Nx * dpr,
-        $id("canvas-container").offsetHeight / this.model.Ny * dpr,
-      )),
-      1), 32 * dpr
+    this.zoom = Math.min(
+      Math.max(
+        Math.floor(
+          Math.min(
+            ($id("canvas-container").offsetWidth / this.model.Nx) * dpr,
+            ($id("canvas-container").offsetHeight / this.model.Ny) * dpr,
+          ),
+        ),
+        1,
+      ),
+      32 * dpr,
     );
 
-    $id("canvas").style.width = `${this.model.Nx * this.zoom / dpr}px`;
-    $id("canvas").style.height = `${this.model.Ny * this.zoom / dpr}px`;
+    $id("canvas").style.width = `${(this.model.Nx * this.zoom) / dpr}px`;
+    $id("canvas").style.height = `${(this.model.Ny * this.zoom) / dpr}px`;
     $id("canvas").width = this.model.Nx * this.zoom;
     $id("canvas").height = this.model.Ny * this.zoom;
 
@@ -591,7 +593,8 @@ class CanvasDrawer {
       for (let x = 0; x < this.model.Nx; x++) {
         this.context.drawImage(
           this.canvases[this.model.states[this.model.Nx * y + x]],
-          x * this.zoom, y * this.zoom,
+          x * this.zoom,
+          y * this.zoom,
         );
       }
     }
@@ -602,17 +605,18 @@ class GraphDrawer {
   constructor(model) {
     this.model = model;
 
-    this.EContext   = $id("E-canvas"  ).getContext("2d");
-    this.MContext   = $id("M-canvas"  ).getContext("2d");
-    this.CContext   = $id("C-canvas"  ).getContext("2d");
+    this.EContext = $id("E-canvas").getContext("2d");
+    this.MContext = $id("M-canvas").getContext("2d");
+    this.CContext = $id("C-canvas").getContext("2d");
     this.chiContext = $id("chi-canvas").getContext("2d");
 
     // Watch for changes on window.devicePixelRatio.
-    window.matchMedia("(min-resolution: 2dppx)")
-    .addEventListener("change", () => {
-      this.configure();
-      this.draw();
-    });
+    window
+      .matchMedia("(min-resolution: 2dppx)")
+      .addEventListener("change", () => {
+        this.configure();
+        this.draw();
+      });
   }
 
   configure() {
@@ -621,31 +625,34 @@ class GraphDrawer {
 
     // X and Y are in canvas coordinates.
     // Do not confuse them with x and y.
-    this.XLeft   = 1  * this.rem;
-    this.XRight  = 11 * this.rem;
-    this.YTop    = 1  * this.rem;
+    this.XLeft = 1 * this.rem;
+    this.XRight = 11 * this.rem;
+    this.YTop = 1 * this.rem;
     this.YBottom = 11 * this.rem;
 
     for (const canvas of [
-      $id("E-canvas"), $id("M-canvas"), $id("C-canvas"), $id("chi-canvas")
+      $id("E-canvas"),
+      $id("M-canvas"),
+      $id("C-canvas"),
+      $id("chi-canvas"),
     ]) {
-      canvas.width  = 12 * this.rem;
+      canvas.width = 12 * this.rem;
       canvas.height = 12 * this.rem;
     }
 
     // Pre-draw gridlines.
     {
       this.gridlineCanvas = new OffscreenCanvas(12 * this.rem, 12 * this.rem);
-      const context = this.gridlineCanvas.getContext(
-        "2d", {transparent: false}
-      );
+      const context = this.gridlineCanvas.getContext("2d", {
+        transparent: false,
+      });
       context.strokeStyle = "oklch(90% 0% 0deg)";
       context.lineCap = "square";
       context.lineWidth = this.rem / 16;
 
       // Draw vertical lines.
       for (let i = 0; i <= 5; i++) {
-        const X = this.XLeft + (this.XRight - this.XLeft) * i / 5;
+        const X = this.XLeft + ((this.XRight - this.XLeft) * i) / 5;
         context.beginPath();
         context.moveTo(X, this.YTop);
         context.lineTo(X, this.YBottom);
@@ -654,7 +661,7 @@ class GraphDrawer {
 
       // Draw horizontal lines.
       for (let i = 0; i <= 5; i++) {
-        const Y = this.YBottom - (this.YBottom - this.YTop) * i / 5;
+        const Y = this.YBottom - ((this.YBottom - this.YTop) * i) / 5;
         context.beginPath();
         context.moveTo(this.XLeft, Y);
         context.lineTo(this.XRight, Y);
@@ -667,16 +674,15 @@ class GraphDrawer {
     const [, TMax, TTicks] = this.getVisibleRangeOfAxis(0, this.model.TSaved);
 
     for (const [graph, context, isAlwaysPositive] of [
-      [this.model.EGraph,   this.EContext,   false],
-      [this.model.MGraph,   this.MContext,   false],
-      [this.model.CGraph,   this.CContext,   true ],
-      [this.model.chiGraph, this.chiContext, true ],
+      [this.model.EGraph, this.EContext, false],
+      [this.model.MGraph, this.MContext, false],
+      [this.model.CGraph, this.CContext, true],
+      [this.model.chiGraph, this.chiContext, true],
     ]) {
-      const min0 = (
-        isAlwaysPositive
-        ? 0 : Math.min(...graph.filter(value => Number.isFinite(value)))
-      );
-      const max0 = Math.max(...graph.filter(value => Number.isFinite(value)));
+      const min0 = isAlwaysPositive
+        ? 0
+        : Math.min(...graph.filter((value) => Number.isFinite(value)));
+      const max0 = Math.max(...graph.filter((value) => Number.isFinite(value)));
       const [min, max, ticks] = this.getVisibleRangeOfAxis(min0, max0);
 
       // Erase the canvas.
@@ -687,7 +693,7 @@ class GraphDrawer {
 
       // Draw X labels.
       for (let i = 0; i <= 5; i++) {
-        const X = this.XLeft + (this.XRight - this.XLeft) * i / 5;
+        const X = this.XLeft + ((this.XRight - this.XLeft) * i) / 5;
 
         context.font = `${this.rem / 2}px system-ui`;
         context.textAlign = "center";
@@ -699,7 +705,7 @@ class GraphDrawer {
 
       // Draw Y labels.
       for (let i = 0; i <= 5; i++) {
-        const Y = this.YBottom - (this.YBottom - this.YTop) * i / 5;
+        const Y = this.YBottom - ((this.YBottom - this.YTop) * i) / 5;
 
         context.font = `${this.rem / 2}px system-ui`;
         context.textAlign = "center";
@@ -719,11 +725,10 @@ class GraphDrawer {
           continue;
         }
 
-        const X = this.XLeft + T / TMax * (this.XRight - this.XLeft);
-        const Y = (
-          this.YBottom
-          - (graph[i] - min) / (max - min) * (this.YBottom - this.YTop)
-        );
+        const X = this.XLeft + (T / TMax) * (this.XRight - this.XLeft);
+        const Y =
+          this.YBottom -
+          ((graph[i] - min) / (max - min)) * (this.YBottom - this.YTop);
 
         context.beginPath();
         context.ellipse(X, Y, this.rem / 16, this.rem / 16, 0, 0, 2 * Math.PI);
@@ -743,8 +748,8 @@ class GraphDrawer {
     //   a multiple of span / 5.
 
     let spn0 = max0 - min0;
-    let exp0 = Math.ceil(Math.log10(spn0)) - 1;  /* Exponent */
-    let sig0 = spn0 / 10 ** exp0;  /* Significand */
+    let exp0 = Math.ceil(Math.log10(spn0)) - 1; /* Exponent */
+    let sig0 = spn0 / 10 ** exp0; /* Significand */
     if (exp0 <= -3) {
       exp0 = -3;
       sig0 = 10;
@@ -755,10 +760,12 @@ class GraphDrawer {
     let exp;
     let sig;
     for (const [exp1, sig1, exp2, sig2] of [
-      [exp0, 2.5, exp0, 5], [exp0, 5, exp0, 10], [exp0, 10, exp0 + 1, 2.5],
+      [exp0, 2.5, exp0, 5],
+      [exp0, 5, exp0, 10],
+      [exp0, 10, exp0 + 1, 2.5],
     ]) {
       if (sig0 <= sig1) {
-        let inc1 = sig1 * 10 ** exp1 / 5;  /* Increment */
+        let inc1 = (sig1 * 10 ** exp1) / 5; /* Increment */
         let min1 = Math.floor(min0 / inc1) * inc1;
         let max1 = min1 + sig1 * 10 ** exp1;
 
@@ -768,7 +775,7 @@ class GraphDrawer {
           exp = exp1;
           sig = sig1;
         } else {
-          let inc2 = sig2 * 10 ** exp2 / 5;
+          let inc2 = (sig2 * 10 ** exp2) / 5;
           let min2 = Math.floor(min0 / inc2) * inc2;
           let max2 = min2 + sig2 * 10 ** exp2;
 
@@ -785,8 +792,10 @@ class GraphDrawer {
     const ticks = [];
     for (let i = 0; i <= 5; i++) {
       ticks.push(
-        (sig * 10 ** exp * i / 5 + min).toFixed(12)
-        .replace(/\.?0*$/, "").replace("-", "\u2212")
+        ((sig * 10 ** exp * i) / 5 + min)
+          .toFixed(12)
+          .replace(/\.?0*$/, "")
+          .replace("-", "\u2212"),
       );
     }
 

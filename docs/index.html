@@ -3,22 +3,41 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Ising Model Simulation with the Metropolis Algorithm" />
+    <meta
+      name="description"
+      content="Ising Model Simulation with the Metropolis Algorithm"
+    />
     <title>Ising Model Simulation</title>
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 
     <!-- KaTeX (https://katex.org/docs/browser) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css" integrity="sha384-UA8juhPf75SzzAMA/4fo3yOU7sBJ0om7SCD2GHq0fZqZco6tr1UCV7nUbk9J90JM" crossorigin="anonymous">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js" integrity="sha384-Tt7wBxLKwSzFVRET4O4U9H6v8MNaQ/CjN2FMP4xFm0ErrFu6aNqoonRVW5W40iGI" crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js" integrity="sha384-bjyGPfbij8/NDKJhSGZNP/khQVgtHUE5exjm4Ydllo42FwIgYsdLO2lXGmRBf5Mz" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
+      integrity="sha384-UA8juhPf75SzzAMA/4fo3yOU7sBJ0om7SCD2GHq0fZqZco6tr1UCV7nUbk9J90JM"
+      crossorigin="anonymous"
+    />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"
+      integrity="sha384-Tt7wBxLKwSzFVRET4O4U9H6v8MNaQ/CjN2FMP4xFm0ErrFu6aNqoonRVW5W40iGI"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"
+      integrity="sha384-bjyGPfbij8/NDKJhSGZNP/khQVgtHUE5exjm4Ydllo42FwIgYsdLO2lXGmRBf5Mz"
+      crossorigin="anonymous"
+      onload="renderMathInElement(document.body)"
+    ></script>
   </head>
   <body>
     <div id="output">
       <div id="canvas-container">
         <canvas id="canvas">visualization of the spin configuration</canvas>
       </div>
-      <div id="graph-container" style="display: none;">
+      <div id="graph-container" style="display: none">
         <div class="graph">
           <canvas id="E-canvas">graph for energy</canvas>
           <div>\(k_{\mathrm{B}} T\)</div>
@@ -61,7 +80,10 @@
         <div>\(\displaystyle \frac{C}{k_{\mathrm{B}} N}\)</div>
         <div>\(=\)</div>
         <div>\(\displaystyle \frac{1}{N}\)</div>
-        <div>\(\displaystyle \frac{\langle E^2 \rangle - \langle E \rangle^2}{(k_{\mathrm{B}} T)^2}\)</div>
+        <div>
+          \(\displaystyle \frac{\langle E^2 \rangle - \langle E
+          \rangle^2}{(k_{\mathrm{B}} T)^2}\)
+        </div>
         <div>\(=\)</div>
         <div id="C"></div>
 
@@ -69,7 +91,10 @@
         <div>\(\displaystyle \frac{\chi}{N}\)</div>
         <div>\(=\)</div>
         <div>\(\displaystyle \frac{1}{N}\)</div>
-        <div>\(\displaystyle \frac{\langle M^2 \rangle - \langle M \rangle^2}{k_{\mathrm{B}} T}\)</div>
+        <div>
+          \(\displaystyle \frac{\langle M^2 \rangle - \langle M
+          \rangle^2}{k_{\mathrm{B}} T}\)
+        </div>
         <div>\(=\)</div>
         <div id="chi"></div>
       </div>
@@ -78,7 +103,9 @@
       <header>
         <h1>Ising Model Simulation</h1>
         <div>with the Metropolis Algorithm</div>
-        <div><a href="https://github.com/krswm/ising">Repository on GitHub</a></div>
+        <div>
+          <a href="https://github.com/krswm/ising">Repository on GitHub</a>
+        </div>
       </header>
 
       <div class="box">
@@ -102,7 +129,9 @@
         </div>
 
         <button id="enter">Cool the system and plot graphs</button>
-        <button id="leave" style="display: none;">Return to the interactive simulation</button>
+        <button id="leave" style="display: none">
+          Return to the interactive simulation
+        </button>
       </div>
 
       <div class="box">
@@ -116,7 +145,10 @@
       </div>
 
       <div class="box">
-        <div id="hamiltonian">\(\displaystyle E = - \sum_{(i \, j)} J_{i j} \sigma_i \sigma_j - h \sum_i \sigma_i\)</div>
+        <div id="hamiltonian">
+          \(\displaystyle E = - \sum_{(i \, j)} J_{i j} \sigma_i \sigma_j - h
+          \sum_i \sigma_i\)
+        </div>
       </div>
 
       <div class="box">
@@ -148,35 +180,35 @@
 
           <div id="J-container">
             <div class="slider" id="J1">
-              <img src="img/J1.svg"></img>
+              <img src="img/J1.svg" />
               <div>Horizontal</div>
               <input type="number" />
               <input type="range" />
             </div>
 
             <div class="slider" id="J2">
-              <img src="img/J2.svg"></img>
+              <img src="img/J2.svg" />
               <div>Vertical</div>
               <input type="number" />
               <input type="range" />
             </div>
 
             <div class="slider" id="J3">
-              <img src="img/J3.svg"></img>
+              <img src="img/J3.svg" />
               <div>Diagonal</div>
               <input type="number" />
               <input type="range" />
             </div>
 
             <div class="slider" id="J4">
-              <img src="img/J4.svg"></img>
+              <img src="img/J4.svg" />
               <div>Diagonal</div>
               <input type="number" />
               <input type="range" />
             </div>
 
             <div class="slider" id="J0">
-              <img src="img/J0.svg"></img>
+              <img src="img/J0.svg" />
               <div>\(i = j\)</div>
               <input type="number" />
               <input type="range" />
