@@ -34,7 +34,7 @@ class Model {
     // Store graph data here.
     this.TGraph = [];
     this.EGraph = [];
-    this.MGraph = [];
+    this.MAbsGraph = [];
     this.CGraph = [];
     this.chiGraph = [];
 
@@ -131,7 +131,7 @@ class Model {
 
       this.TGraph.length = 0;
       this.EGraph.length = 0;
-      this.MGraph.length = 0;
+      this.MAbsGraph.length = 0;
       this.CGraph.length = 0;
       this.chiGraph.length = 0;
 
@@ -390,22 +390,25 @@ class Model {
     // by averaging graphHistoryLength most recent values.
     let E = 0;
     let M = 0;
+    let MAbs = 0;
     let C = 0;
     let chi = 0;
     for (let i = 0; i < graphHistoryLength; i++) {
       E += this.EHistory[i];
       M += this.MHistory[i];
+      MAbs += Math.abs(this.MHistory[i]);
       C += this.CHistory[i];
       chi += this.chiHistory[i];
     }
     E /= graphHistoryLength * this.Nx * this.Ny;
     M /= graphHistoryLength * this.Nx * this.Ny;
+    MAbs /= graphHistoryLength * this.Nx * this.Ny;
     C /= graphHistoryLength * this.Nx * this.Ny;
     chi /= graphHistoryLength * this.Nx * this.Ny;
 
     this.TGraph.push(this.T);
     this.EGraph.push(E);
-    this.MGraph.push(M);
+    this.MAbsGraph.push(MAbs);
     this.CGraph.push(C);
     this.chiGraph.push(chi);
     this.graphDrawer.draw();
@@ -606,7 +609,7 @@ class GraphDrawer {
     this.model = model;
 
     this.EContext = $id("E-canvas").getContext("2d");
-    this.MContext = $id("M-canvas").getContext("2d");
+    this.MAbsContex = $id("MAbs-canvas").getContext("2d");
     this.CContext = $id("C-canvas").getContext("2d");
     this.chiContext = $id("chi-canvas").getContext("2d");
 
@@ -632,7 +635,7 @@ class GraphDrawer {
 
     for (const canvas of [
       $id("E-canvas"),
-      $id("M-canvas"),
+      $id("MAbs-canvas"),
       $id("C-canvas"),
       $id("chi-canvas"),
     ]) {
@@ -675,7 +678,7 @@ class GraphDrawer {
 
     for (const [graph, context, isAlwaysPositive] of [
       [this.model.EGraph, this.EContext, false],
-      [this.model.MGraph, this.MContext, false],
+      [this.model.MAbsGraph, this.MAbsContex, true],
       [this.model.CGraph, this.CContext, true],
       [this.model.chiGraph, this.chiContext, true],
     ]) {
