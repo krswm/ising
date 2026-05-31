@@ -58,9 +58,9 @@ To plot the graphs:
 I learned the Ising model on a statistical mechanics lecture at university and was interested in it.
 I started working on this project on November 2025.
 
-This project is written in HTML, CSS, and JavaScript.
+I wrote this project in HTML, CSS, and JavaScript.
 
-- This project formats the codes thanks to [Prettier](https://github.com/prettier/prettier)
+- This project formats the codes thanks to [Prettier](https://github.com/prettier/prettier).
 - This project lints the codes thanks to [ESLint](https://github.com/eslint/eslint).
 - The website displays mathematics thanks to [KaTeX](https://github.com/KaTeX/KaTeX).
 
