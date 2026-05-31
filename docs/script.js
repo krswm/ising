@@ -275,12 +275,12 @@ class Model {
     let M = 0;
     for (let y = 0; y < this.Ny; y++) {
       for (let x = 0; x < this.Nx; x++) {
-        E +=
-          (-this.J1 * this.sigma(x + 1, y) -
-            this.J2 * this.sigma(x, y + 1) -
-            this.J3 * this.sigma(x + 1, y + 1) -
-            this.J4 * this.sigma(x - 1, y + 1) -
-            this.J0 * this.sigma(x, y) -
+        E -=
+          (this.J1 * this.sigma(x + 1, y) +
+            this.J2 * this.sigma(x, y + 1) +
+            this.J3 * this.sigma(x + 1, y + 1) +
+            this.J4 * this.sigma(x - 1, y + 1) +
+            this.J0 * this.sigma(x, y) +
             this.h) *
           this.sigma(x, y);
         M += this.sigma(x, y);
@@ -345,12 +345,14 @@ class Model {
     // You don't have to calculate EProp and ECurr directly
     // since only the cell and its neighbors contribute to the difference.
     const EDifference =
-      (-this.J1 * (this.sigma(x + 1, y) + this.sigma(x - 1, y)) -
-        this.J2 * (this.sigma(x, y + 1) + this.sigma(x, y - 1)) -
-        this.J3 * (this.sigma(x + 1, y + 1) + this.sigma(x - 1, y - 1)) -
-        this.J4 * (this.sigma(x - 1, y + 1) + this.sigma(x + 1, y - 1)) -
-        this.J0 * (sigmaProp + sigmaCurr) -
-        this.h) *
+      -(
+        this.J1 * (this.sigma(x + 1, y) + this.sigma(x - 1, y)) +
+        this.J2 * (this.sigma(x, y + 1) + this.sigma(x, y - 1)) +
+        this.J3 * (this.sigma(x + 1, y + 1) + this.sigma(x - 1, y - 1)) +
+        this.J4 * (this.sigma(x - 1, y + 1) + this.sigma(x + 1, y - 1)) +
+        this.J0 * (sigmaProp + sigmaCurr) +
+        this.h
+      ) *
       (sigmaProp - sigmaCurr);
 
     if (EDifference < 0) {
