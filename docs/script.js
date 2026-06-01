@@ -106,6 +106,15 @@ class Model {
       });
     }
 
+    for (const elem of document.querySelectorAll('input[type="radio"]')) {
+      elem.addEventListener("input", () => {
+        this.doOneMonteCarloStep = {
+          metropolis: this.doOneMetropolisStep,
+          "heat-bath": this.doOneHeatBathStep,
+        }[elem.value];
+      });
+    }
+
     $id("reset").addEventListener("click", () => {
       this.resetToDefault();
     });
@@ -235,6 +244,14 @@ class Model {
       $id(id).value = defaultValue;
     }
 
+    {
+      const elem = document.querySelector(
+        "#algorithm-container > :first-child > input",
+      );
+      this.doOneMonteCarloStep = this.doOneMetropolisStep;
+      elem.checked = true;
+    }
+
     this.sigmas.splice(0, this.sigmas.length, 1, -1);
     this.states.length = this.Nx * this.Ny;
     this.randomizeStates();
@@ -323,7 +340,7 @@ class Model {
     $id("chi").innerText = format(this.chiHistory[0] / (this.Nx * this.Ny));
   }
 
-  doOneMonteCarloStep() {
+  doOneMetropolisStep() {
     // Select a cell.
     const x = Math.floor(Math.random() * this.Nx);
     const y = Math.floor(Math.random() * this.Ny);
@@ -366,6 +383,48 @@ class Model {
         }
       }
     }
+  }
+
+  doOneHeatBathStep() {
+    if (this.T <= 0) {
+      return;
+    }
+
+    // Select a cell.
+    const x = Math.floor(Math.random() * this.Nx);
+    const y = Math.floor(Math.random() * this.Ny);
+
+    // Calculate Baltzmann factors.
+    const factors = [];
+    let factorSum = 0;
+    for (const sigma of this.sigmas) {
+      const ERelevant =
+        -(
+          this.J1 * (this.sigma(x + 1, y) + this.sigma(x - 1, y)) +
+          this.J2 * (this.sigma(x, y + 1) + this.sigma(x, y - 1)) +
+          this.J3 * (this.sigma(x + 1, y + 1) + this.sigma(x - 1, y - 1)) +
+          this.J4 * (this.sigma(x - 1, y + 1) + this.sigma(x + 1, y - 1)) +
+          this.J0 * sigma +
+          this.h
+        ) * sigma;
+      const factor = Math.exp(-ERelevant / this.T);
+      factors.push(factor);
+      factorSum += factor;
+    }
+
+    // Select a new state.
+    const random = Math.random() * factorSum;
+    let accum = 0;
+    let state;
+    for (const [i, factor] of factors.entries()) {
+      if (random >= accum && random < accum + factor) {
+        state = i;
+        break;
+      }
+      accum += factor;
+    }
+
+    this.states[this.Nx * y + x] = state;
   }
 
   runOneFrame() {
