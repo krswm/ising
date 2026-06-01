@@ -9,6 +9,7 @@
 - Visualize the spin configuration.
 - Display the quantities: Energy $\frac{E}{N}$, magnetization $\frac{M}{N}$, heat capacity $\frac{C}{k_{\mathrm{B}} N}$, and susceptibility $\frac{\chi}{N}$.
 - You can adjust the parameters: Temperature $k_{\mathrm{B}} T$, size $N$, allowed states $\sigma$, coupling constants $J$, and external field $h$.
+- You can select the algorithms: The Metropolis algorithm and the heat bath algorithm.
 
 ![Graph](img/graph.png)
 
