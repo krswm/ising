@@ -73,15 +73,25 @@ class Model {
       range.step = 0.01;
 
       number.addEventListener("input", () => {
-        this[id] = number.valueAsNumber;
-        range.value = number.valueAsNumber;
+        const value = number.valueAsNumber;
+        if (!Number.isFinite(value)) {
+          return;
+        }
+
+        this[id] = value;
+        range.value = value;
         if (eraseHistory) {
           this.eraseHistory();
         }
       });
       range.addEventListener("input", () => {
-        this[id] = range.valueAsNumber;
-        number.value = range.valueAsNumber;
+        const value = range.valueAsNumber;
+        if (!Number.isFinite(value)) {
+          return;
+        }
+
+        this[id] = value;
+        number.value = value;
         if (eraseHistory) {
           this.eraseHistory();
         }
@@ -580,15 +590,25 @@ class SigmaDrawer {
       $id("sigma-container").insertBefore(div, $id("sigma-button"));
 
       number.addEventListener("input", () => {
-        range.value = number.valueAsNumber;
-        this.model.sigmas[i] = number.valueAsNumber;
+        const value = number.valueAsNumber;
+        if (!Number.isFinite(value)) {
+          return;
+        }
+
+        range.value = value;
+        this.model.sigmas[i] = value;
         this.draw();
         this.model.canvasDrawer.configure();
         this.model.canvasDrawer.draw();
       });
       range.addEventListener("input", () => {
-        number.value = range.valueAsNumber;
-        this.model.sigmas[i] = range.valueAsNumber;
+        const value = range.valueAsNumber;
+        if (!Number.isFinite(value)) {
+          return;
+        }
+
+        number.value = value;
+        this.model.sigmas[i] = value;
         this.draw();
         this.model.canvasDrawer.configure();
         this.model.canvasDrawer.draw();
