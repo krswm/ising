@@ -1,2 +1,3 @@
-docs/**/*.svg linguist-detectable
+**/* -linguist-detectable
+docs/**/* linguist-detectable
 docs/** -linguist-documentation
