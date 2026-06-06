@@ -1,4 +1,4 @@
-# Ising Model Simulation with the Metropolis Algorithm
+# Ising Model Simulation
 
 [You can try it online!](https://krswm.github.io/ising)
 

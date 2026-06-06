@@ -447,13 +447,13 @@ header {
 header > h1 {
   margin: 0rem;
 }
-header > div:nth-of-type(2) {
+header > div {
   padding-top: 0.5rem;
 }
-header > div:nth-of-type(2) > a {
+header > div > a {
   color: oklch(50% 0% 0deg);
 }
-header > div:nth-of-type(2) > a:hover {
+header > div > a:hover {
   color: black;
 }
 
