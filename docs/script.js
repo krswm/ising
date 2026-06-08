@@ -291,8 +291,10 @@ class Model {
   }
 
   randomizeStates() {
-    for (const [i] of this.states.entries()) {
-      this.states[i] = Math.floor(2 * Math.random());
+    console.log(this.sigmas);
+    console.log(this.sigmas.length);
+    for (let i = 0; i < this.Nx * this.Ny; i++) {
+      this.states[i] = Math.floor(this.sigmas.length * Math.random());
     }
     this.eraseHistory();
   }
