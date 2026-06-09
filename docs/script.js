@@ -121,6 +121,7 @@ class Model {
         this.doOneMonteCarloStep = {
           metropolis: this.doOneMetropolisStep,
           "heat-bath": this.doOneHeatBathStep,
+          wolff: this.doOneWolffStep,
         }[elem.value];
       });
     }
@@ -435,6 +436,57 @@ class Model {
     }
 
     this.states[this.Nx * y + x] = state;
+  }
+
+  doOneWolffStep() {
+    // Implementation not completed yet!
+
+    // TODO: Only valid for
+    // this.J1 === this.J2 === 1 && this.J3 === this.J4 === this.J0!
+    const prob = 1 - Math.exp(-2 / this.T);
+
+    // Select a seed cell.
+    const x = Math.floor(Math.random() * this.Nx);
+    const y = Math.floor(Math.random() * this.Ny);
+
+    // Get current state and sigma of the seed cell.
+    const stateCurr = this.states[this.Nx * y + x];
+    const sigmaCurr = this.sigmas[stateCurr];
+
+    // TODO: Only valid for this.sigmas.length === 2!
+    const stateProp = (stateCurr + 1) % 2;
+    this.states[this.Nx * y + x] = stateProp;
+
+    // TODO: Will making a new stack each step make the program slow?
+    // TODO: Will unsized array make the program slow?
+    const stack = [];
+
+    // TODO: Storing this.Nx * y + x (single number) may be better...
+    stack.push([x, y]);
+
+    // Equivalent to i % j in Python.
+    const mod = (i, j) => ((i % j) + j) % j;
+
+    while (stack.length >= 1) {
+      const [x_, y_] = stack.pop();
+
+      // Ask the neighbors to join your team...
+      for (const [x__, y__] of [
+        [mod(x_ + 1), mod(y_)],
+        [mod(x_ - 1), mod(y_)],
+        [mod(x_), mod(y_ + 1)],
+        [mod(x_), mod(y_ - 1)],
+      ]) {
+        if (this.states[this.Nx * y__ + x__] === stateCurr) {
+          if (Math.random() < prob) {
+            stack.push([this.Nx * y__ + x__]);
+            this.states[this.Nx * y__ + x__] = stateProp;
+          }
+        }
+      }
+    }
+
+    // I hope it works...
   }
 
   runOneFrame() {
