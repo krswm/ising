@@ -451,7 +451,6 @@ class Model {
 
     // Get current state and sigma of the seed cell.
     const stateCurr = this.states[this.Nx * y + x];
-    const sigmaCurr = this.sigmas[stateCurr];
 
     // TODO: Only valid for this.sigmas.length === 2!
     const stateProp = (stateCurr + 1) % 2;
@@ -472,14 +471,14 @@ class Model {
 
       // Ask the neighbors to join your team...
       for (const [x__, y__] of [
-        [mod(x_ + 1), mod(y_)],
-        [mod(x_ - 1), mod(y_)],
-        [mod(x_), mod(y_ + 1)],
-        [mod(x_), mod(y_ - 1)],
+        [mod(x_ + 1, this.Nx * this.Ny), mod(y_, this.Nx * this.Ny)],
+        [mod(x_ - 1, this.Nx * this.Ny), mod(y_, this.Nx * this.Ny)],
+        [mod(x_, this.Nx * this.Ny), mod(y_ + 1, this.Nx * this.Ny)],
+        [mod(x_, this.Nx * this.Ny), mod(y_ - 1, this.Nx * this.Ny)],
       ]) {
         if (this.states[this.Nx * y__ + x__] === stateCurr) {
           if (Math.random() < prob) {
-            stack.push([this.Nx * y__ + x__]);
+            stack.push([x__, y__]);
             this.states[this.Nx * y__ + x__] = stateProp;
           }
         }
