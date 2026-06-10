@@ -452,9 +452,11 @@ class Model {
     // Get current state and sigma of the seed cell.
     const stateCurr = this.states[this.Nx * y + x];
 
-    // TODO: Only valid for this.sigmas.length === 2!
-    const stateProp = (stateCurr + 1) % 2;
-    this.states[this.Nx * y + x] = stateProp;
+    // Propose a new state and sigma for the cell.
+    // The new state must be different to the current one.
+    const stateProp =
+      (Math.floor(Math.random() * (this.sigmas.length - 1)) + stateCurr + 1) %
+      this.sigmas.length;
 
     // TODO: Will making a new stack each step make the program slow?
     // TODO: Will unsized array make the program slow?
@@ -471,10 +473,10 @@ class Model {
 
       // Ask the neighbors to join your team...
       for (const [x__, y__] of [
-        [mod(x_ + 1, this.Nx * this.Ny), mod(y_, this.Nx * this.Ny)],
-        [mod(x_ - 1, this.Nx * this.Ny), mod(y_, this.Nx * this.Ny)],
-        [mod(x_, this.Nx * this.Ny), mod(y_ + 1, this.Nx * this.Ny)],
-        [mod(x_, this.Nx * this.Ny), mod(y_ - 1, this.Nx * this.Ny)],
+        [mod(x_ + 1, this.Nx), mod(y_, this.Ny)],
+        [mod(x_ - 1, this.Nx), mod(y_, this.Ny)],
+        [mod(x_, this.Nx), mod(y_ + 1, this.Ny)],
+        [mod(x_, this.Nx), mod(y_ - 1, this.Ny)],
       ]) {
         if (this.states[this.Nx * y__ + x__] === stateCurr) {
           if (Math.random() < prob) {
@@ -484,8 +486,6 @@ class Model {
         }
       }
     }
-
-    // I hope it works...
   }
 
   runOneFrame() {
