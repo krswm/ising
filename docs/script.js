@@ -1,5 +1,8 @@
 const $id = (id) => document.getElementById(id);
 
+// For example, -11 % 10 is -1 in JavaScript.
+const mod = (a, b) => ((a % b) + b) % b;
+
 const expvalHistoryLength = 60;
 const graphHistoryLength = 60;
 const historyLength = Math.max(expvalHistoryLength, graphHistoryLength);
@@ -120,7 +123,7 @@ class Model {
       elem.addEventListener("input", () => {
         this.doOneMonteCarloStep = {
           metropolis: this.doOneMetropolisStep,
-          "heat-bath": this.doOneHeatBathStep,
+          heatBath: this.doOneHeatBathStep,
           wolff: this.doOneWolffStep,
         }[elem.value];
       });
@@ -140,7 +143,7 @@ class Model {
       cancelAnimationFrame(this.requestId);
 
       for (const elem of document.querySelectorAll(
-        "#control input, #control button:not(#leave)",
+        "#control input, #control button:not(#leave), .radio",
       )) {
         elem.style.pointerEvents = "none";
       }
@@ -277,10 +280,8 @@ class Model {
   sigma(x, y) {
     // Get sigma with taking the periodic boundary condition into account.
 
-    // For example, -11 % 10 is -1 in JavaScript.
-    x = ((x % this.Nx) + this.Nx) % this.Nx;
-    y = ((y % this.Ny) + this.Ny) % this.Ny;
-
+    x = mod(x, this.Nx);
+    y = mod(y, this.Ny);
     return this.sigmas[this.states[this.Nx * y + x]];
   }
 
@@ -464,9 +465,6 @@ class Model {
 
     // TODO: Storing this.Nx * y + x (single number) may be better...
     stack.push([x, y]);
-
-    // Equivalent to i % j in Python.
-    const mod = (i, j) => ((i % j) + j) % j;
 
     while (stack.length >= 1) {
       const [x_, y_] = stack.pop();
