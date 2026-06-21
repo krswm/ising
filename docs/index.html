@@ -131,6 +131,37 @@
       </div>
 
       <div class="box">
+        <div id="hamiltonian">
+          \(\displaystyle E = - \sum_{(i \, j)} J_{i j} \sigma_i \sigma_j - h
+          \sum_i \sigma_i\)
+        </div>
+      </div>
+
+      <div class="box">
+        <details>
+          <summary>
+            <div></div>
+            <div>Algorithm</div>
+          </summary>
+
+          <div id="algorithm-container">
+            <label class="radio">
+              <input type="radio" name="algorithm" value="metropolis" />
+              <div>Metropolis</div>
+            </label>
+            <label class="radio">
+              <input type="radio" name="algorithm" value="heatBath" />
+              <div>Heat bath</div>
+            </label>
+            <label class="radio">
+              <input type="radio" name="algorithm" value="wolff" />
+              <div>Wolff</div>
+            </label>
+          </div>
+        </details>
+      </div>
+
+      <div class="box">
         <div id="N">
           <div>Size</div>
           <div>\(N =\)</div>
@@ -141,15 +172,6 @@
       </div>
 
       <div class="box">
-        <div id="hamiltonian">
-          \(\displaystyle E = - \sum_{(i \, j)} J_{i j} \sigma_i \sigma_j - h
-          \sum_i \sigma_i\)
-        </div>
-      </div>
-
-      <div class="box">
-        <button id="randomize">Randomize states on all sites</button>
-
         <details>
           <summary>
             <div></div>
@@ -227,30 +249,6 @@
           <input type="number" />
           <input type="range" />
         </div>
-      </div>
-
-      <div class="box">
-        <details>
-          <summary>
-            <div></div>
-            <div>Algorithm</div>
-          </summary>
-
-          <div id="algorithm-container">
-            <label class="radio">
-              <input type="radio" name="algorithm" value="metropolis" />
-              <div>Metropolis</div>
-            </label>
-            <label class="radio">
-              <input type="radio" name="algorithm" value="heatBath" />
-              <div>Heat bath</div>
-            </label>
-            <label class="radio">
-              <input type="radio" name="algorithm" value="wolff" />
-              <div>Wolff</div>
-            </label>
-          </div>
-        </details>
       </div>
     </div>
 

@@ -205,13 +205,6 @@ class Model {
       this.runOneFrame();
     });
 
-    $id("randomize").addEventListener("click", () => {
-      this.randomizeStates();
-      this.calculateStat();
-      this.drawStat();
-      this.canvasDrawer.draw();
-    });
-
     $id("add").addEventListener("click", () => {
       this.sigmas.push(0);
       this.sigmaDrawer.configure();

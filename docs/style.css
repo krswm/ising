@@ -175,9 +175,9 @@ body {
 }
 
 details[open],
+#algorithm-container,
 #sigma-container,
-#J-container,
-#algorithm-container {
+#J-container {
   display: flex;
   flex-direction: column;
   gap: 1rem;
