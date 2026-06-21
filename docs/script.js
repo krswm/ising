@@ -62,6 +62,7 @@ class Model {
       ["J3", null, -1, 1, false],
       ["J4", null, -1, 1, false],
       ["J0", null, -1, 1, false],
+      ["J", 0, 0, 1, false],
       ["h", null, -2, 2, false],
     ]) {
       const number = document.querySelector(`#${id} > input[type="number"]`);
@@ -121,11 +122,19 @@ class Model {
 
     for (const elem of document.querySelectorAll('input[type="radio"]')) {
       elem.addEventListener("input", () => {
-        this.doOneMonteCarloStep = {
-          metropolis: this.doOneMetropolisStep,
-          heatBath: this.doOneHeatBathStep,
-          wolff: this.doOneWolffStep,
-        }[elem.value];
+        if (elem.value === "metropolis") {
+          this.doOneMonteCarloStep = this.doOneMetropolisStep;
+          $id("J-details").style.display = "";
+          $id("J").style.display = "none";
+        } else if (elem.value === "heatBath") {
+          this.doOneMonteCarloStep = this.doOneHeatBathStep;
+          $id("J-details").style.display = "";
+          $id("J").style.display = "none";
+        } else if (elem.value === "wolff") {
+          this.doOneMonteCarloStep = this.doOneWolffStep;
+          $id("J-details").style.display = "none";
+          $id("J").style.display = "";
+        }
       });
     }
 
@@ -181,7 +190,7 @@ class Model {
       clearTimeout(this.timeoutId);
 
       for (const elem of document.querySelectorAll(
-        "#control input, #control button",
+        "#control input, #control button, .radio",
       )) {
         elem.style.pointerEvents = "";
       }
@@ -242,6 +251,7 @@ class Model {
       ["J3", 0],
       ["J4", 0],
       ["J0", 0],
+      ["J", 1],
       ["h", 0],
     ]) {
       this[id] = defaultValue;
@@ -264,6 +274,8 @@ class Model {
       );
       this.doOneMonteCarloStep = this.doOneMetropolisStep;
       elem.checked = true;
+      $id("J-details").style.display = "";
+      $id("J").style.display = "none";
     }
 
     this.sigmas.splice(0, this.sigmas.length, 1, -1);
@@ -440,18 +452,12 @@ class Model {
   }
 
   doOneWolffStep() {
-    // Implementation not completed yet!
-
-    // TODO: Only valid for
-    // this.J1 === this.J2 === 1 && this.J3 === this.J4 === this.J0!
-    const prob = 1 - Math.exp(-2 / this.T);
-
     // Select a seed cell.
-    const x = Math.floor(Math.random() * this.Nx);
-    const y = Math.floor(Math.random() * this.Ny);
+    const xSeed = Math.floor(Math.random() * this.Nx);
+    const ySeed = Math.floor(Math.random() * this.Ny);
 
     // Get current state and sigma of the seed cell.
-    const stateCurr = this.states[this.Nx * y + x];
+    const stateCurr = this.states[this.Nx * ySeed + xSeed];
 
     // Propose a new state and sigma for the cell.
     // The new state must be different to the current one.
@@ -459,27 +465,25 @@ class Model {
       (Math.floor(Math.random() * (this.sigmas.length - 1)) + stateCurr + 1) %
       this.sigmas.length;
 
-    // TODO: Will making a new stack each step make the program slow?
-    // TODO: Will unsized array make the program slow?
-    const stack = [];
+    // Probability to add a new cell to the cluster.
+    const addProbability = 1 - Math.exp((-2 * this.J) / this.T);
 
-    // TODO: Storing this.Nx * y + x (single number) may be better...
-    stack.push([x, y]);
-
-    while (stack.length >= 1) {
-      const [x_, y_] = stack.pop();
-
-      // Ask the neighbors to join your team...
-      for (const [x__, y__] of [
-        [mod(x_ + 1, this.Nx), mod(y_, this.Ny)],
-        [mod(x_ - 1, this.Nx), mod(y_, this.Ny)],
-        [mod(x_, this.Nx), mod(y_ + 1, this.Ny)],
-        [mod(x_, this.Nx), mod(y_ - 1, this.Ny)],
+    // Form a cluster and change its state.
+    const cellStack = [];
+    cellStack.push([xSeed, ySeed]);
+    this.states[this.Nx * ySeed + xSeed] = stateProp;
+    while (cellStack.length >= 1) {
+      const [x, y] = cellStack.pop();
+      for (const [xNew, yNew] of [
+        [mod(x + 1, this.Nx), mod(y, this.Ny)],
+        [mod(x - 1, this.Nx), mod(y, this.Ny)],
+        [mod(x, this.Nx), mod(y + 1, this.Ny)],
+        [mod(x, this.Nx), mod(y - 1, this.Ny)],
       ]) {
-        if (this.states[this.Nx * y__ + x__] === stateCurr) {
-          if (Math.random() < prob) {
-            stack.push([x__, y__]);
-            this.states[this.Nx * y__ + x__] = stateProp;
+        if (this.states[this.Nx * yNew + xNew] === stateCurr) {
+          if (Math.random() < addProbability) {
+            cellStack.push([xNew, yNew]);
+            this.states[this.Nx * yNew + xNew] = stateProp;
           }
         }
       }
