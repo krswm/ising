@@ -41,6 +41,7 @@ class Model {
     this.CGraph = [];
     this.chiGraph = [];
 
+    this.step = 0;
     this.sigmaDrawer = new SigmaDrawer(this);
     this.canvasDrawer = new CanvasDrawer(this);
     this.graphDrawer = new GraphDrawer(this);
@@ -122,17 +123,14 @@ class Model {
     for (const elem of document.querySelectorAll('input[type="radio"]')) {
       elem.addEventListener("input", () => {
         if (elem.value === "metropolis") {
-          this.algorithm = "metropolis";
           this.doOneMonteCarloStep = this.doOneMetropolisStep;
           $id("J-details").style.display = "";
           $id("J").style.display = "none";
         } else if (elem.value === "heatBath") {
-          this.algorithm = "heatBath";
           this.doOneMonteCarloStep = this.doOneHeatBathStep;
           $id("J-details").style.display = "";
           $id("J").style.display = "none";
         } else if (elem.value === "wolff") {
-          this.algorithm = "wolff";
           this.doOneMonteCarloStep = this.doOneWolffStep;
           $id("J-details").style.display = "none";
           $id("J").style.display = "";
@@ -490,8 +488,11 @@ class Model {
       this.doOneMonteCarloStep();
     }
     this.calculateStat();
-    this.drawStat();
-    this.canvasDrawer.draw();
+    if (this.step % 15 === 0) {
+      this.drawStat();
+      this.canvasDrawer.draw();
+    }
+    this.step++;
     this.requestId = requestAnimationFrame(() => this.runOneFrame());
   }
 
@@ -681,7 +682,6 @@ class CanvasDrawer {
   constructor(model) {
     this.model = model;
     this.context = $id("canvas").getContext("2d", { alpha: false });
-    this.step = 0;
 
     // Watch for changes on window.devicePixelRatio.
     window
@@ -721,18 +721,15 @@ class CanvasDrawer {
   }
 
   draw() {
-    if (this.step % 15 == 0) {
-      for (let y = 0; y < this.model.Ny; y++) {
-        for (let x = 0; x < this.model.Nx; x++) {
-          this.context.drawImage(
-            this.canvases[this.model.states[this.model.Nx * y + x]],
-            x * this.zoom,
-            y * this.zoom,
-          );
-        }
+    for (let y = 0; y < this.model.Ny; y++) {
+      for (let x = 0; x < this.model.Nx; x++) {
+        this.context.drawImage(
+          this.canvases[this.model.states[this.model.Nx * y + x]],
+          x * this.zoom,
+          y * this.zoom,
+        );
       }
     }
-    this.step += 1;
   }
 }
 
