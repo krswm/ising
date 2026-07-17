@@ -3,8 +3,6 @@ const $id = (id) => document.getElementById(id);
 // For example, -11 % 10 is -1 in JavaScript.
 const mod = (a, b) => ((a % b) + b) % b;
 
-const stateListLength = 4;
-
 const expvalHistoryLength = 60;
 const graphHistoryLength = 60;
 const historyLength = Math.max(expvalHistoryLength, graphHistoryLength);
@@ -22,12 +20,11 @@ class Model {
   constructor() {
     this.setUpControl();
 
-    // this.sigmas[this.statesList[0][this.Nx * y + x]]: sigma on (x, y)
+    // this.sigmas[this.states[this.Nx * y + x]]: sigma on (x, y)
     this.sigmas = [];
 
-    // this.statesList[0][this.Nx * y + x]: State on (x, y)
-    this.statesList = new Array(stateListLength);
-    this.statesList[0] = [];
+    // this.states[this.Nx * y + x]: State on (x, y)
+    this.states = [];
 
     // Store most recent values here.
     // The newest entry is on the index 0.
@@ -291,7 +288,7 @@ class Model {
 
     x = mod(x, this.Nx);
     y = mod(y, this.Ny);
-    return this.sigmas[this.statesList[0][this.Nx * y + x]];
+    return this.sigmas[this.states[this.Nx * y + x]];
   }
 
   eraseHistory() {
@@ -303,7 +300,7 @@ class Model {
 
   randomizeStates() {
     for (let i = 0; i < this.Nx * this.Ny; i++) {
-      this.statesList[0][i] = Math.floor(this.sigmas.length * Math.random());
+      this.states[i] = Math.floor(this.sigmas.length * Math.random());
     }
     this.eraseHistory();
   }
@@ -367,7 +364,7 @@ class Model {
     const y = Math.floor(Math.random() * this.Ny);
 
     // Get current state and sigma of the cell.
-    const stateCurr = this.statesList[0][this.Nx * y + x];
+    const stateCurr = this.states[this.Nx * y + x];
     const sigmaCurr = this.sigmas[stateCurr];
 
     // Propose a new state and sigma for the cell.
@@ -395,12 +392,12 @@ class Model {
 
     if (EDifference < 0) {
       // Always accept the proposal if it's energetically advantageous.
-      this.statesList[0][this.Nx * y + x] = stateProp;
+      this.states[this.Nx * y + x] = stateProp;
     } else {
       // Accept the proposal according to the acceptance probability.
       if (this.T > 0) {
         if (Math.random() < Math.exp(-EDifference / this.T)) {
-          this.statesList[0][this.Nx * y + x] = stateProp;
+          this.states[this.Nx * y + x] = stateProp;
         }
       }
     }
@@ -445,7 +442,7 @@ class Model {
       accum += factor;
     }
 
-    this.statesList[0][this.Nx * y + x] = state;
+    this.states[this.Nx * y + x] = state;
   }
 
   doOneWolffStep() {
@@ -454,7 +451,7 @@ class Model {
     const ySeed = Math.floor(Math.random() * this.Ny);
 
     // Get current state and sigma of the seed cell.
-    const stateCurr = this.statesList[0][this.Nx * ySeed + xSeed];
+    const stateCurr = this.states[this.Nx * ySeed + xSeed];
 
     // Propose a new state and sigma for the cell.
     // The new state must be different to the current one.
@@ -468,7 +465,7 @@ class Model {
     // Form a cluster and change its state.
     const cellStack = [];
     cellStack.push([xSeed, ySeed]);
-    this.statesList[0][this.Nx * ySeed + xSeed] = stateProp;
+    this.states[this.Nx * ySeed + xSeed] = stateProp;
     while (cellStack.length >= 1) {
       const [x, y] = cellStack.pop();
       for (const [xNew, yNew] of [
@@ -477,10 +474,10 @@ class Model {
         [mod(x, this.Nx), mod(y + 1, this.Ny)],
         [mod(x, this.Nx), mod(y - 1, this.Ny)],
       ]) {
-        if (this.statesList[0][this.Nx * yNew + xNew] === stateCurr) {
+        if (this.states[this.Nx * yNew + xNew] === stateCurr) {
           if (Math.random() < addProbability) {
             cellStack.push([xNew, yNew]);
-            this.statesList[0][this.Nx * yNew + xNew] = stateProp;
+            this.states[this.Nx * yNew + xNew] = stateProp;
           }
         }
       }
@@ -684,6 +681,7 @@ class CanvasDrawer {
   constructor(model) {
     this.model = model;
     this.context = $id("canvas").getContext("2d", { alpha: false });
+    this.step = 0;
 
     // Watch for changes on window.devicePixelRatio.
     window
@@ -697,8 +695,6 @@ class CanvasDrawer {
       this.configure();
       this.draw();
     }).observe($id("canvas-container"));
-
-    this.step = 0;
   }
 
   configure() {
@@ -725,88 +721,18 @@ class CanvasDrawer {
   }
 
   draw() {
+    if (this.step % 15 == 0) {
+      for (let y = 0; y < this.model.Ny; y++) {
+        for (let x = 0; x < this.model.Nx; x++) {
+          this.context.drawImage(
+            this.canvases[this.model.states[this.model.Nx * y + x]],
+            x * this.zoom,
+            y * this.zoom,
+          );
+        }
+      }
+    }
     this.step += 1;
-    if (this.step % 15 != 0) {
-      return;
-    }
-    // if (this.model.algorithm === "wolff") {
-    if (false) {
-      for (let y = 0; y < this.model.Ny; y++) {
-        for (let x = 0; x < this.model.Nx; x++) {
-          // TODO: reduce code duplication
-
-          const lightnessMin = 10;
-          const lightnessMax = 90;
-          const lightnessRange = lightnessMax - lightnessMin;
-          const lightnessMiddle = (lightnessMin + lightnessMax) / 2;
-
-          const sigmaMin = Math.min(...this.model.sigmas);
-          const sigmaMax = Math.max(...this.model.sigmas);
-          const sigmaRange = sigmaMax - sigmaMin;
-          const sigmaAbsMax = Math.max(Math.abs(sigmaMax), Math.abs(sigmaMin));
-
-          let sigmaAverage = 0;
-          for (let i = 0; i < stateListLength; i++) {
-            let val = this.model.statesList[i];
-            if (val !== undefined) {
-              sigmaAverage += this.model.sigmas[val[this.model.Nx * y + x]];
-            }
-          }
-          sigmaAverage /= stateListLength;
-
-          const canvas = new OffscreenCanvas(this.zoom, this.zoom);
-          const context = canvas.getContext("2d", { transparent: false });
-
-          // Draw background.
-          const backgroundLightness =
-            ((sigmaAverage - sigmaMin) / sigmaRange) * lightnessRange + lightnessMin;
-          context.fillStyle = `oklch(${backgroundLightness}% 0% 0deg)`;
-          context.fillRect(0, 0, this.zoom, this.zoom);
-
-          const sigma = this.model.sigmas[this.model.statesList[0][this.model.Nx * y + x]];
-
-          // Draw an arrow.
-          if (this.zoom >= 8 * window.devicePixelRatio && sigma !== 0) {
-            const transformedArrowPath = new Path2D();
-            transformedArrowPath.addPath(arrowPath, {
-              a: this.zoom / 16,
-              d: ((sigma / sigmaAbsMax) * this.zoom) / 16,
-              e: this.zoom / 2,
-              f: this.zoom / 2,
-            });
-            const arrowLightness =
-              backgroundLightness < lightnessMiddle
-                ? backgroundLightness + lightnessRange / 2
-                : backgroundLightness - lightnessRange / 2;
-            context.fillStyle = `oklch(${arrowLightness}% 0% 0deg)`;
-            context.fill(transformedArrowPath);
-            context.lineWidth = this.zoom / 16;
-            context.lineJoin = "round";
-            context.strokeStyle = `oklch(${arrowLightness}% 0% 0deg)`;
-            context.stroke(transformedArrowPath);
-          }
-
-          this.context.drawImage(
-            canvas,
-            x * this.zoom,
-            y * this.zoom,
-          );
-        }
-      }
-
-      this.model.statesList.pop();
-      this.model.statesList.unshift(this.model.statesList[0].slice());
-    } else {
-      for (let y = 0; y < this.model.Ny; y++) {
-        for (let x = 0; x < this.model.Nx; x++) {
-          this.context.drawImage(
-            this.canvases[this.model.statesList[0][this.model.Nx * y + x]],
-            x * this.zoom,
-            y * this.zoom,
-          );
-        }
-      }
-    }
   }
 }
 
