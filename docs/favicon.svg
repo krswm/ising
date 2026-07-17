@@ -4,7 +4,7 @@
 >
   <rect
     x="-8" y="-8" width="16" height="16" rx="2" ry="2"
-    fill="oklch(90% 0% 0deg)"
+    fill="oklch(75% 0% 0deg)"
   />
   <path
     d="M 0 -6 L 3 0 H 1 V 6 H -1 V 0 H -3 Z"
