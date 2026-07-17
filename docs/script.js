@@ -552,8 +552,8 @@ class Model {
 function getPredrawnCanvases(sigmas, zoom) {
   // Pre-draw arrows to improve performance.
 
-  const lightnessMin = 10;
-  const lightnessMax = 90;
+  const lightnessMin = 25;
+  const lightnessMax = 75;
   const lightnessRange = lightnessMax - lightnessMin;
   const lightnessMiddle = (lightnessMin + lightnessMax) / 2;
 
@@ -697,6 +697,8 @@ class CanvasDrawer {
       this.configure();
       this.draw();
     }).observe($id("canvas-container"));
+
+    this.step = 0;
   }
 
   configure() {
@@ -723,10 +725,12 @@ class CanvasDrawer {
   }
 
   draw() {
-    if (this.model.algorithm === "wolff") {
-      this.model.statesList.pop();
-      this.model.statesList.unshift(this.model.statesList[0].slice());
-
+    this.step += 1;
+    if (this.step % 15 != 0) {
+      return;
+    }
+    // if (this.model.algorithm === "wolff") {
+    if (false) {
       for (let y = 0; y < this.model.Ny; y++) {
         for (let x = 0; x < this.model.Nx; x++) {
           // TODO: reduce code duplication
@@ -759,7 +763,7 @@ class CanvasDrawer {
           context.fillStyle = `oklch(${backgroundLightness}% 0% 0deg)`;
           context.fillRect(0, 0, this.zoom, this.zoom);
 
-          const sigma = this.model.sigmas[this.model.statesList[0]];
+          const sigma = this.model.sigmas[this.model.statesList[0][this.model.Nx * y + x]];
 
           // Draw an arrow.
           if (this.zoom >= 8 * window.devicePixelRatio && sigma !== 0) {
@@ -789,6 +793,9 @@ class CanvasDrawer {
           );
         }
       }
+
+      this.model.statesList.pop();
+      this.model.statesList.unshift(this.model.statesList[0].slice());
     } else {
       for (let y = 0; y < this.model.Ny; y++) {
         for (let x = 0; x < this.model.Nx; x++) {
