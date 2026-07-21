@@ -3,6 +3,8 @@ const $id = (id) => document.getElementById(id);
 // For example, -11 % 10 is -1 in JavaScript.
 const mod = (a, b) => ((a % b) + b) % b;
 
+const updateSteps = 15;
+
 const expvalHistoryLength = 60;
 const graphHistoryLength = 60;
 const historyLength = Math.max(expvalHistoryLength, graphHistoryLength);
@@ -484,11 +486,11 @@ class Model {
 
   runOneFrame() {
     // this.speed = Number of Monte Carlo steps / N / animation frame
-    for (let i = 0; i < this.speed * this.Nx * this.Ny; i++) {
+    for (let i = 0; i < this.speed * this.Nx * this.Ny / updateSteps; i++) {
       this.doOneMonteCarloStep();
     }
     this.calculateStat();
-    if (this.step % 15 === 0) {
+    if (this.step % updateSteps === 0) {
       this.drawStat();
       this.canvasDrawer.draw();
     }
